@@ -18,3 +18,12 @@ export type ItemFormData = {
   weekendAvailability: string;
   imageUrl?: string | null;
 };
+
+// Add the missing ItemFormValues type
+export type ItemFormValues = {
+  name: string;
+  category: string;
+  description: string;
+  weekdayAvailability: string;
+  weekendAvailability: string;
+};
