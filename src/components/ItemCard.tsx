@@ -7,7 +7,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import BorrowRequestDialog from "./borrow/BorrowRequestDialog";
 import ImageContainer from "./items/ImageContainer";
 import ItemDetails from "./items/ItemDetails";
-import { formatAvailability } from "./items/utils/availability-utils";
 import { categoryColors } from "./items/utils/category-utils";
 
 type ItemCardProps = {
@@ -110,7 +109,6 @@ const ItemCard = ({
           locationAddress={locationAddress}
           weekdayAvailability={weekdayAvailability}
           weekendAvailability={weekendAvailability}
-          formatAvailability={formatAvailability}
         />
         
         {/* Action Button */}
