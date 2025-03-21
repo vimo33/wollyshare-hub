@@ -73,6 +73,7 @@ const MyItemsList = forwardRef<MyItemsListRef>((props, ref) => {
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [itemToEdit, setItemToEdit] = useState<Item | null>(null);
+  const [imageError, setImageError] = useState<Record<string, boolean>>({});
 
   // Fetch items from Supabase
   const fetchItems = async () => {
@@ -167,6 +168,10 @@ const MyItemsList = forwardRef<MyItemsListRef>((props, ref) => {
     setEditDialogOpen(true);
   };
 
+  const handleImageError = (itemId: string) => {
+    setImageError(prev => ({ ...prev, [itemId]: true }));
+  };
+
   if (!user) {
     return (
       <div className="text-center py-12">
@@ -202,17 +207,21 @@ const MyItemsList = forwardRef<MyItemsListRef>((props, ref) => {
     );
   }
 
+  // Default image URL to use if the provided URL is null or fails to load
+  const defaultImageUrl = "https://images.unsplash.com/photo-1504148455328-c376907d081c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80";
+
   return (
     <div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {items.map((item) => (
           <Card key={item.id} className="overflow-hidden">
             <div className="relative h-48 bg-muted">
-              {item.image_url ? (
+              {item.image_url && !imageError[item.id] ? (
                 <img
                   src={item.image_url}
                   alt={item.name}
                   className="w-full h-full object-cover"
+                  onError={() => handleImageError(item.id)}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-muted">
