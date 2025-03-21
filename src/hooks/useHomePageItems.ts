@@ -1,7 +1,8 @@
 
 import { useState, useMemo, useCallback } from "react";
-import { useItems } from "./useItems";
+import { useItemsQuery } from "./useItemsQuery";
 import { Item } from "@/types/item";
+import { QueryObserverResult, RefetchOptions } from "@tanstack/react-query";
 
 export interface UseHomePageItemsResult {
   items: Item[];
@@ -12,7 +13,7 @@ export interface UseHomePageItemsResult {
   setSearchQuery: (query: string) => void;
   activeCategory: string | null;
   setActiveCategory: (category: string | null) => void;
-  refreshItems: () => Promise<void>;
+  refreshItems: () => Promise<QueryObserverResult<Item[], Error>>;
 }
 
 /**
@@ -23,7 +24,15 @@ export const useHomePageItems = (): UseHomePageItemsResult => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   
-  const { items, isLoading, error, fetchItems } = useItems();
+  // Important: We're directly using useItemsQuery here to ensure we get all items
+  // without any user filtering from useItems hook
+  const { 
+    data: items = [], 
+    isLoading, 
+    error, 
+    refetch,
+    locationData
+  } = useItemsQuery({ userId: undefined, enabled: true });
   
   // Memoized callback for category changes
   const handleCategoryChange = useCallback((category: string | null) => {
@@ -39,12 +48,8 @@ export const useHomePageItems = (): UseHomePageItemsResult => {
 
   // Refresh items function
   const refreshItems = useCallback(async () => {
-    try {
-      await fetchItems();
-    } catch (error) {
-      console.error("Error refreshing items:", error);
-    }
-  }, [fetchItems]);
+    return await refetch();
+  }, [refetch]);
 
   // Filter items based on search query and active category
   const filteredItems = useMemo(() => {

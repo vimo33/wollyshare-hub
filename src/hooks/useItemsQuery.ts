@@ -81,6 +81,7 @@ export const useItemsQuery = ({ userId, enabled = true }: UseItemsQueryOptions =
       
       let queryBuilder = supabase.from('items').select('*');
       
+      // Only filter by userId if provided
       if (userId) {
         queryBuilder = queryBuilder.eq('user_id', userId);
       }
