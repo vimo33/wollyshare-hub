@@ -25,13 +25,16 @@ export const useItems = (locationData: Map<string, {name: string, address: strin
   const fetchItems = async () => {
     setIsLoading(true);
     try {
-      console.log(userId ? `Fetching items for user: ${userId}` : "Fetching all items from all users");
+      console.log(`useItems hook - Fetching items. Filter by userId: ${userId ? userId : 'No - getting all items'}`);
       
       let query = supabase.from('items').select('*');
       
       // If userId is provided, filter by that user's items only
       if (userId) {
         query = query.eq('user_id', userId);
+        console.log(`useItems hook - Filtering by user_id: ${userId}`);
+      } else {
+        console.log("useItems hook - No userId filter, getting ALL items");
       }
       
       const { data: itemsData, error: itemsError } = await query;
@@ -40,6 +43,8 @@ export const useItems = (locationData: Map<string, {name: string, address: strin
         console.error('Error fetching items:', itemsError);
         return;
       }
+
+      console.log(`useItems hook - Retrieved ${itemsData?.length || 0} items from database`);
 
       // Get unique user IDs from the items
       const userIds = [...new Set(itemsData.map(item => item.user_id))];
@@ -91,7 +96,7 @@ export const useItems = (locationData: Map<string, {name: string, address: strin
         } as Item; // Cast to Item after validation
       });
 
-      console.log(`Found ${itemsWithOwners.length} items${userId ? ' for this user' : ' from all users'}`);
+      console.log(`useItems hook - Processed ${itemsWithOwners.length} items with owner data`);
       setItems(itemsWithOwners);
       
       // Simulate some loading time for smoother UI

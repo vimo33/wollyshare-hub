@@ -10,6 +10,9 @@ const Index = () => {
   useEffect(() => {
     // Scroll to top when component mounts
     window.scrollTo(0, 0);
+    
+    // Add debugging to verify we're on the home page
+    console.log("Home page mounted - should show ALL items");
   }, []);
 
   return (

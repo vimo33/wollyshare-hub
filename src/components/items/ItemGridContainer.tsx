@@ -49,7 +49,7 @@ const ItemGridContainer = () => {
   const userLocationInfo = getUserLocationInfo();
 
   // Add debug logging to understand what items we're showing
-  console.log(`Showing ${filteredItems.length} filtered items from ${items.length} total items`);
+  console.log(`ItemGridContainer: Showing ${filteredItems.length} filtered items from ${items.length} total items`);
 
   return (
     <section className="py-16 px-6 bg-gradient-to-b from-white to-gray-50">
