@@ -25,9 +25,11 @@ const AdminBreadcrumb = ({ items }: AdminBreadcrumbProps) => {
     <Breadcrumb className="mb-6">
       <BreadcrumbList>
         <BreadcrumbItem>
-          <BreadcrumbLink as={Link} to="/admin" className="flex items-center">
-            <Home className="h-4 w-4 mr-1" />
-            Dashboard
+          <BreadcrumbLink asChild>
+            <Link to="/admin" className="flex items-center">
+              <Home className="h-4 w-4 mr-1" />
+              Dashboard
+            </Link>
           </BreadcrumbLink>
         </BreadcrumbItem>
         
@@ -38,8 +40,10 @@ const AdminBreadcrumb = ({ items }: AdminBreadcrumbProps) => {
               {index === items.length - 1 || !item.href ? (
                 <BreadcrumbPage>{item.label}</BreadcrumbPage>
               ) : (
-                <BreadcrumbLink as={Link} to={item.href}>
-                  {item.label}
+                <BreadcrumbLink asChild>
+                  <Link to={item.href}>
+                    {item.label}
+                  </Link>
                 </BreadcrumbLink>
               )}
             </BreadcrumbItem>
