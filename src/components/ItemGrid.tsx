@@ -23,7 +23,9 @@ const ItemGrid = () => {
   const fetchItems = async () => {
     setIsLoading(true);
     try {
-      // Fetch all items from Supabase - no filtering by current user
+      console.log("Fetching all items from all users");
+      
+      // Fetch all items from Supabase without any user filtering
       const { data: itemsData, error: itemsError } = await supabase
         .from('items')
         .select('*');
@@ -36,7 +38,7 @@ const ItemGrid = () => {
       // Get unique user IDs from the items
       const userIds = [...new Set(itemsData.map(item => item.user_id))];
       
-      // Fetch user profiles for those IDs, but also get username field
+      // Fetch user profiles for those IDs
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('id, full_name, username')
@@ -49,7 +51,6 @@ const ItemGrid = () => {
       // Create a map of user IDs to names
       const userMap = new Map();
       profilesData?.forEach(profile => {
-        // Use username if available, otherwise use full_name or fallback
         userMap.set(profile.id, profile.username || profile.full_name || 'Unknown User');
       });
 
@@ -58,11 +59,11 @@ const ItemGrid = () => {
         return {
           ...item,
           ownerName: userMap.get(item.user_id) || 'Unknown User',
-          // Extract a location from the description or use a default
           location: extractLocationFromDescription(item.description)
         };
       });
 
+      console.log(`Found ${itemsWithOwners.length} items from all users`);
       setItems(itemsWithOwners);
       
       // Simulate some loading time for smoother UI

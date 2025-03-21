@@ -1,8 +1,6 @@
 
-import { ChevronRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 
 const Hero = () => {
@@ -24,18 +22,20 @@ const Hero = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        // Fetch total items count - no user filtering
+        console.log("Fetching total stats from all users");
+        
+        // Fetch total items count without user filtering
         const { count: itemsCount, error: itemsError } = await supabase
           .from('items')
           .select('id', { count: 'exact', head: true });
 
-        // Fetch members count - correctly filtering by is_member flag
+        // Fetch members count
         const { data: membersData, error: membersError } = await supabase
           .from('profiles')
           .select('id')
           .eq('is_member', true);
 
-        // Fetch unique categories count from all items
+        // Fetch unique categories from all items
         const { data: categoriesData, error: categoriesError } = await supabase
           .from('items')
           .select('category')
@@ -58,6 +58,8 @@ const Hero = () => {
           ? [...new Set(categoriesData.map(item => item.category))]
           : [];
 
+        console.log(`Stats: ${itemsCount} items, ${membersData?.length} members, ${uniqueCategories.length} categories`);
+        
         setStats({
           itemsCount: itemsCount?.toString() || '0',
           membersCount: membersData?.length.toString() || '0',
