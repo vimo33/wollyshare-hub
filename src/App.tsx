@@ -13,6 +13,7 @@ import AdminAuth from "./pages/AdminAuth";
 import Admin from "./pages/Admin";
 import AdminMembers from "./pages/AdminMembers";
 import AdminCommunitySettings from "./pages/AdminCommunitySettings";
+import HowItWorks from "./pages/HowItWorks";
 import { useAuth } from "@/contexts/AuthContext";
 
 const queryClient = new QueryClient();
@@ -38,6 +39,7 @@ const AppRoutes = () => {
       <Route path="/" element={<Index />} />
       <Route path="/auth" element={<Auth />} />
       <Route path="/admin/auth" element={<AdminAuth />} />
+      <Route path="/how-it-works" element={<HowItWorks />} />
       
       {/* Protected Admin Routes */}
       <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />

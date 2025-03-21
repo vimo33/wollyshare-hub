@@ -2,6 +2,7 @@
 import { ChevronRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { Link } from 'react-router-dom';
 
 const Hero = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -47,10 +48,10 @@ const Hero = () => {
             <button className="px-8 py-3 rounded-full bg-primary text-white hover:bg-primary/90 transition-colors shadow-sm w-full sm:w-auto">
               Discover Items
             </button>
-            <button className="px-8 py-3 rounded-full bg-secondary hover:bg-secondary/80 transition-colors flex items-center justify-center gap-1 w-full sm:w-auto">
+            <Link to="/how-it-works" className="px-8 py-3 rounded-full bg-secondary hover:bg-secondary/80 transition-colors flex items-center justify-center gap-1 w-full sm:w-auto">
               <span>How it works</span>
               <ChevronRight className="h-4 w-4" />
-            </button>
+            </Link>
           </div>
         </div>
         

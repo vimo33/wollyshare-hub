@@ -2,7 +2,7 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { User, LogIn, LogOut } from "lucide-react";
+import { User, LogIn, LogOut, Info } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   DropdownMenu,
@@ -28,17 +28,25 @@ const Header = () => {
           <span className="font-semibold text-lg hidden sm:inline-block">WollyShare</span>
         </Link>
 
-        {/* Navigation Links - Only show if user is logged in */}
-        {user && (
-          <nav className="hidden md:flex items-center space-x-6">
-            <Link to="/" className="text-sm font-medium hover:text-primary/80 transition-colors">
-              Home
-            </Link>
-            <Link to="/my-items" className="text-sm font-medium hover:text-primary/80 transition-colors">
-              My Items
-            </Link>
-          </nav>
-        )}
+        {/* Navigation Links */}
+        <nav className="hidden md:flex items-center space-x-6">
+          <Link to="/how-it-works" className="text-sm font-medium hover:text-primary/80 transition-colors flex items-center gap-1">
+            <Info className="h-4 w-4" />
+            <span>How It Works</span>
+          </Link>
+          
+          {/* Only show these links if user is logged in */}
+          {user && (
+            <>
+              <Link to="/" className="text-sm font-medium hover:text-primary/80 transition-colors">
+                Home
+              </Link>
+              <Link to="/my-items" className="text-sm font-medium hover:text-primary/80 transition-colors">
+                My Items
+              </Link>
+            </>
+          )}
+        </nav>
 
         {/* Auth buttons */}
         <div className="flex items-center gap-2">
