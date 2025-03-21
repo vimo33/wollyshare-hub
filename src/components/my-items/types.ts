@@ -19,7 +19,7 @@ export type ItemFormData = {
   imageUrl?: string | null;
 };
 
-// Add the missing ItemFormValues type
+// Export the ItemFormValues type properly
 export type ItemFormValues = {
   name: string;
   category: string;
