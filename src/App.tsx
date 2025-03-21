@@ -7,6 +7,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import Auth from "./pages/Auth";
+import AdminAuth from "./pages/AdminAuth";
+import Admin from "./pages/Admin";
 
 const queryClient = new QueryClient();
 
@@ -19,6 +22,9 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/admin/auth" element={<AdminAuth />} />
+            <Route path="/admin" element={<Admin />} />
             <Route path="/browse" element={<Index />} /> {/* Temporary routing to Index */}
             <Route path="/my-items" element={<Index />} /> {/* Temporary routing to Index */}
             <Route path="/requests" element={<Index />} /> {/* Temporary routing to Index */}
