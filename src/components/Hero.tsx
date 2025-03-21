@@ -1,3 +1,4 @@
+
 import { ChevronRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
@@ -9,7 +10,7 @@ const Hero = () => {
   const [stats, setStats] = useState({
     itemsCount: '0',
     membersCount: '0',
-    sharesCount: '120' // Static for now
+    categoriesCount: '0'
   });
 
   useEffect(() => {
@@ -28,11 +29,17 @@ const Hero = () => {
           .from('items')
           .select('id', { count: 'exact', head: true });
 
-        // Fetch members count
-        const { count: membersCount, error: membersError } = await supabase
+        // Fetch members count - ensure we're properly counting members
+        const { data: membersData, error: membersError } = await supabase
           .from('profiles')
-          .select('id', { count: 'exact', head: true })
+          .select('id')
           .eq('is_member', true);
+
+        // Fetch unique categories count
+        const { data: categoriesData, error: categoriesError } = await supabase
+          .from('items')
+          .select('category')
+          .limit(1000);
 
         if (itemsError) {
           console.error('Error fetching items count:', itemsError);
@@ -42,10 +49,19 @@ const Hero = () => {
           console.error('Error fetching members count:', membersError);
         }
 
+        if (categoriesError) {
+          console.error('Error fetching categories:', categoriesError);
+        }
+
+        // Get unique categories count
+        const uniqueCategories = categoriesData 
+          ? [...new Set(categoriesData.map(item => item.category))]
+          : [];
+
         setStats({
           itemsCount: itemsCount?.toString() || '0',
-          membersCount: membersCount?.toString() || '0',
-          sharesCount: '120' // Keep this static as we don't have this data
+          membersCount: membersData?.length.toString() || '0',
+          categoriesCount: uniqueCategories.length.toString() || '0'
         });
       } catch (error) {
         console.error('Error fetching statistics:', error);
@@ -109,8 +125,8 @@ const Hero = () => {
             <p className="text-muted-foreground">Active Members</p>
           </div>
           <div className="glass rounded-2xl p-6 text-center hover-lift">
-            <div className="text-3xl font-bold mb-2">{stats.sharesCount}</div>
-            <p className="text-muted-foreground">Successful Shares</p>
+            <div className="text-3xl font-bold mb-2">{stats.categoriesCount}</div>
+            <p className="text-muted-foreground">Categories Available</p>
           </div>
         </div>
       </div>
