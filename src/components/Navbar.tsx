@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { Bell, Search, Menu, X } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -11,11 +11,14 @@ import {
   DrawerTrigger,
   DrawerClose
 } from "@/components/ui/drawer";
+import { Button } from "@/components/ui/button";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const { user } = useAuth();
   const isMobile = useIsMobile();
+  const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -24,6 +27,12 @@ const Navbar = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Function to handle navigation and close drawer
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    setOpen(false);
+  };
 
   return (
     <nav
@@ -73,7 +82,7 @@ const Navbar = () => {
 
         {/* Mobile Menu */}
         {isMobile && (
-          <Drawer>
+          <Drawer open={open} onOpenChange={setOpen}>
             <DrawerTrigger asChild>
               <button 
                 className="md:hidden p-2 focus:outline-none" 
@@ -96,26 +105,26 @@ const Navbar = () => {
               <div className="flex flex-col space-y-4">
                 {user ? (
                   <>
-                    <Link 
-                      to="/" 
-                      className="text-lg font-medium py-2 hover:text-primary/80 transition-colors"
+                    <button 
+                      onClick={() => handleNavigation("/")}
+                      className="text-lg font-medium py-2 hover:text-primary/80 transition-colors text-left"
                     >
                       Home
-                    </Link>
-                    <Link 
-                      to="/my-items" 
-                      className="text-lg font-medium py-2 hover:text-primary/80 transition-colors"
+                    </button>
+                    <button
+                      onClick={() => handleNavigation("/my-items")}
+                      className="text-lg font-medium py-2 hover:text-primary/80 transition-colors text-left"
                     >
                       My Items
-                    </Link>
+                    </button>
                   </>
                 ) : (
-                  <Link 
-                    to="/auth" 
-                    className="text-lg font-medium py-2 hover:text-primary/80 transition-colors"
+                  <button
+                    onClick={() => handleNavigation("/auth")}
+                    className="text-lg font-medium py-2 hover:text-primary/80 transition-colors text-left"
                   >
                     Login
-                  </Link>
+                  </button>
                 )}
                 <div className="flex items-center space-x-4 pt-2">
                   <button className="p-2 rounded-full hover:bg-muted transition-colors" aria-label="Search">

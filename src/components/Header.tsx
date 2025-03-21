@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { User, LogIn, LogOut, Home, Package, Info, Menu, X } from "lucide-react";
@@ -26,10 +26,16 @@ const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useIsMobile();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [open, setOpen] = React.useState(false);
   
   // Helper function to check if a path is active
   const isActive = (path: string) => location.pathname === path;
+
+  // Function to handle navigation and close drawer
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    setOpen(false);
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md">
@@ -152,7 +158,7 @@ const Header = () => {
 
         {/* Mobile Menu Trigger */}
         {isMobile && (
-          <Drawer>
+          <Drawer open={open} onOpenChange={setOpen}>
             <DrawerTrigger asChild>
               <Button variant="ghost" size="icon" className="md:hidden">
                 <Menu className="h-6 w-6" />
@@ -171,46 +177,46 @@ const Header = () => {
                 
                 {user ? (
                   <>
-                    <Link 
-                      to="/" 
+                    <button 
+                      onClick={() => handleNavigation("/")}
                       className={cn(
-                        "text-base font-medium py-2 flex items-center gap-2",
+                        "text-base font-medium py-2 flex items-center gap-2 text-left",
                         isActive("/") ? "text-primary" : ""
                       )}
                     >
                       <Home className="h-5 w-5" />
                       <span>Home</span>
-                    </Link>
-                    <Link 
-                      to="/my-items" 
+                    </button>
+                    <button 
+                      onClick={() => handleNavigation("/my-items")}
                       className={cn(
-                        "text-base font-medium py-2 flex items-center gap-2",
+                        "text-base font-medium py-2 flex items-center gap-2 text-left",
                         isActive("/my-items") ? "text-primary" : ""
                       )}
                     >
                       <Package className="h-5 w-5" />
                       <span>My Items</span>
-                    </Link>
-                    <Link 
-                      to="/profile" 
+                    </button>
+                    <button 
+                      onClick={() => handleNavigation("/profile")}
                       className={cn(
-                        "text-base font-medium py-2 flex items-center gap-2",
+                        "text-base font-medium py-2 flex items-center gap-2 text-left",
                         isActive("/profile") ? "text-primary" : ""
                       )}
                     >
                       <User className="h-5 w-5" />
                       <span>Profile</span>
-                    </Link>
+                    </button>
                     {isAdmin && (
-                      <Link 
-                        to="/admin" 
+                      <button 
+                        onClick={() => handleNavigation("/admin")}
                         className={cn(
-                          "text-base font-medium py-2",
+                          "text-base font-medium py-2 text-left",
                           isActive("/admin") ? "text-primary" : ""
                         )}
                       >
                         Admin Dashboard
-                      </Link>
+                      </button>
                     )}
                     <div className="pt-2 border-t">
                       <LogoutButton size="sm" className="w-full justify-center" />
@@ -218,22 +224,22 @@ const Header = () => {
                   </>
                 ) : (
                   <>
-                    <Link 
-                      to="/how-it-works" 
+                    <button
+                      onClick={() => handleNavigation("/how-it-works")}
                       className={cn(
-                        "text-base font-medium py-2 flex items-center gap-2",
+                        "text-base font-medium py-2 flex items-center gap-2 text-left",
                         isActive("/how-it-works") ? "text-primary" : ""
                       )}
                     >
                       <Info className="h-5 w-5" />
                       <span>How It Works</span>
-                    </Link>
+                    </button>
                     <div className="grid grid-cols-2 gap-2 pt-2">
-                      <Button asChild variant="outline" size="sm">
-                        <Link to="/auth">User Login</Link>
+                      <Button onClick={() => handleNavigation("/auth")} variant="outline" size="sm">
+                        User Login
                       </Button>
-                      <Button asChild variant="outline" size="sm">
-                        <Link to="/admin/auth">Admin Login</Link>
+                      <Button onClick={() => handleNavigation("/admin/auth")} variant="outline" size="sm">
+                        Admin Login
                       </Button>
                     </div>
                   </>
