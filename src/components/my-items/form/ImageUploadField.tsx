@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { FormLabel } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { Upload, X } from "lucide-react";
+import { Upload, X, AlertCircle } from "lucide-react";
 
 interface ImageUploadFieldProps {
   initialImageUrl: string | null;
@@ -11,10 +11,17 @@ interface ImageUploadFieldProps {
 
 const ImageUploadField = ({ initialImageUrl, onImageChange }: ImageUploadFieldProps) => {
   const [imagePreview, setImagePreview] = useState<string | null>(initialImageUrl || null);
+  const [fileSize, setFileSize] = useState<number | null>(null);
+  const [oversized, setOversized] = useState<boolean>(false);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Check file size - just for user feedback (will still be compressed)
+      const sizeInKB = file.size / 1024;
+      setFileSize(sizeInKB);
+      setOversized(sizeInKB > 100);
+      
       onImageChange(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -26,6 +33,8 @@ const ImageUploadField = ({ initialImageUrl, onImageChange }: ImageUploadFieldPr
 
   const removeImage = () => {
     setImagePreview(null);
+    setFileSize(null);
+    setOversized(false);
     onImageChange(null);
   };
 
@@ -49,6 +58,23 @@ const ImageUploadField = ({ initialImageUrl, onImageChange }: ImageUploadFieldPr
           >
             <X className="h-4 w-4" />
           </Button>
+          
+          {fileSize && (
+            <div className={`absolute bottom-0 left-0 right-0 px-3 py-1 text-xs ${
+              oversized ? 'bg-amber-100 text-amber-800' : 'bg-green-100 text-green-800'
+            }`}>
+              {oversized ? (
+                <div className="flex items-center">
+                  <AlertCircle className="h-3 w-3 mr-1" />
+                  <span>
+                    {fileSize.toFixed(1)}KB - Will be compressed before upload
+                  </span>
+                </div>
+              ) : (
+                <span>{fileSize.toFixed(1)}KB</span>
+              )}
+            </div>
+          )}
         </div>
       ) : (
         <div className="flex items-center justify-center w-full">
@@ -61,7 +87,7 @@ const ImageUploadField = ({ initialImageUrl, onImageChange }: ImageUploadFieldPr
               <p className="text-sm text-gray-500">
                 <span className="font-medium">Click to upload</span> or drag and drop
               </p>
-              <p className="text-xs text-gray-500">PNG, JPG, WEBP (max 5MB)</p>
+              <p className="text-xs text-gray-500">PNG, JPG, WEBP (max 5MB, will be optimized to ~100KB)</p>
             </div>
             <input 
               id="image-upload" 
