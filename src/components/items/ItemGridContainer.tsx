@@ -15,6 +15,7 @@ const ItemGridContainer = () => {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const { profile } = useAuth();
   const { locationData } = useLocationData();
+  // Important: No userId passed here, so we get items from all users
   const { items, isLoaded, isLoading } = useItems(locationData);
 
   // Filter items based on search query and active category
