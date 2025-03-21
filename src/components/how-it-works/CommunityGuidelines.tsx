@@ -12,7 +12,7 @@ interface CommunityGuidelinesProps {
 
 const CommunityGuidelines = ({ guidelines }: CommunityGuidelinesProps) => {
   return (
-    <div className="bg-gray-50 rounded-xl p-8 mb-16">
+    <div className="bg-gray-50 rounded-xl p-8">
       <h2 className="text-2xl font-bold mb-4">6. Community Guidelines</h2>
       <p className="mb-4 text-muted-foreground">To keep Community Share running smoothly, here are a few friendly rules:</p>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

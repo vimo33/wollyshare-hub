@@ -14,7 +14,7 @@ interface FAQProps {
 
 const FAQ = ({ faqs }: FAQProps) => {
   return (
-    <div className="mb-12">
+    <div>
       <h2 className="text-2xl font-bold mb-6">Frequently Asked Questions (FAQ)</h2>
       <Accordion type="single" collapsible className="w-full space-y-4">
         {faqs.map((faq) => (

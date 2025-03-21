@@ -1,3 +1,4 @@
+
 import { Users, Calendar, Package, RefreshCw } from "lucide-react";
 import StepCard from "@/components/how-it-works/StepCard";
 import FAQ from "@/components/how-it-works/FAQ";
@@ -114,7 +115,8 @@ const HowItWorks = () => {
         appliances, and household goods with your neighbors."
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
+      {/* First Step Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
         {stepCards.map((card, index) => (
           <StepCard
             key={index}
@@ -129,7 +131,8 @@ const HowItWorks = () => {
         ))}
       </div>
 
-      <div className="mb-16">
+      {/* Return Step */}
+      <div className="mb-12">
         <StepCard
           title={returnStep.title}
           icon={returnStep.icon}
@@ -141,10 +144,17 @@ const HowItWorks = () => {
         />
       </div>
 
-      <CommunityGuidelines guidelines={communityGuidelines} />
+      {/* Community Guidelines */}
+      <div className="mb-12">
+        <CommunityGuidelines guidelines={communityGuidelines} />
+      </div>
 
-      <FAQ faqs={faqs} />
+      {/* FAQ Section */}
+      <div className="mb-12">
+        <FAQ faqs={faqs} />
+      </div>
 
+      {/* Conclusion */}
       <div className="text-center mb-12">
         <p className="text-lg text-muted-foreground">
           That's it! With Community Share, you're all set to start borrowing, lending, and connecting with your neighbors. 
