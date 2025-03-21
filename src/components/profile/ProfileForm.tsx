@@ -33,11 +33,12 @@ const profileFormSchema = z.object({
 export type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 interface ProfileFormProps {
-  profile: Profile;
+  profile: Profile | null;
   userEmail?: string;
+  onProfileUpdate?: () => void;
 }
 
-const ProfileForm = ({ profile, userEmail }: ProfileFormProps) => {
+const ProfileForm = ({ profile, userEmail, onProfileUpdate }: ProfileFormProps) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -82,6 +83,11 @@ const ProfileForm = ({ profile, userEmail }: ProfileFormProps) => {
           title: "Profile updated",
           description: "Your profile information has been updated successfully.",
         });
+        
+        // Call the onProfileUpdate callback to refresh profile data
+        if (onProfileUpdate) {
+          onProfileUpdate();
+        }
       } else {
         toast({
           title: "Error",

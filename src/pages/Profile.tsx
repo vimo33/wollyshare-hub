@@ -1,24 +1,45 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import ProfileForm from "@/components/profile/ProfileForm";
+import { getProfile } from "@/services/profileService";
+import { Profile } from "@/types/supabase";
 
 const ProfilePage: React.FC = () => {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Redirect if not logged in
-  useEffect(() => {
-    if (!user && !profile) {
-      navigate("/auth");
+  // Fetch the latest profile data
+  const fetchLatestProfile = async () => {
+    if (user) {
+      setLoading(true);
+      const latestProfile = await getProfile();
+      setProfile(latestProfile);
+      setLoading(false);
     }
-  }, [user, profile, navigate]);
+  };
 
-  if (!user || !profile) {
+  // Redirect if not logged in and fetch profile data
+  useEffect(() => {
+    if (!user) {
+      navigate("/auth");
+    } else {
+      fetchLatestProfile();
+    }
+  }, [user, navigate]);
+
+  // Function to handle profile updates
+  const handleProfileUpdate = async () => {
+    await fetchLatestProfile();
+  };
+
+  if (!user || loading) {
     return (
       <div className="container mx-auto py-10">
         <Card className="max-w-2xl mx-auto">
@@ -40,6 +61,7 @@ const ProfilePage: React.FC = () => {
         <ProfileForm 
           profile={profile} 
           userEmail={user.email}
+          onProfileUpdate={handleProfileUpdate}
         />
       </Card>
     </div>
