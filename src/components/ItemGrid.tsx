@@ -23,7 +23,7 @@ const ItemGrid = () => {
   const fetchItems = async () => {
     setIsLoading(true);
     try {
-      // Fetch items from Supabase
+      // Fetch all items from Supabase - no filtering by current user
       const { data: itemsData, error: itemsError } = await supabase
         .from('items')
         .select('*');

@@ -24,7 +24,7 @@ const Hero = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        // Fetch items count
+        // Fetch total items count - no user filtering
         const { count: itemsCount, error: itemsError } = await supabase
           .from('items')
           .select('id', { count: 'exact', head: true });
@@ -35,7 +35,7 @@ const Hero = () => {
           .select('id')
           .eq('is_member', true);
 
-        // Fetch unique categories count
+        // Fetch unique categories count from all items
         const { data: categoriesData, error: categoriesError } = await supabase
           .from('items')
           .select('category')
@@ -99,16 +99,6 @@ const Hero = () => {
             Connect with your community and share resources, from tools to kitchen appliances, 
             all in one simple platform.
           </p>
-          
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-            <button className="px-8 py-3 rounded-full bg-primary text-white hover:bg-primary/90 transition-colors shadow-sm w-full sm:w-auto">
-              Discover Items
-            </button>
-            <Link to="/how-it-works" className="px-8 py-3 rounded-full bg-secondary hover:bg-secondary/80 transition-colors flex items-center justify-center gap-1 w-full sm:w-auto">
-              <span>How it works</span>
-              <ChevronRight className="h-4 w-4" />
-            </Link>
-          </div>
         </div>
         
         {/* Statistics - updated to use dynamic data */}
