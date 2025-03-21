@@ -1,12 +1,15 @@
 
 import { memo, useMemo } from 'react';
 import ItemCard from "../ItemCard";
-import { Item } from "../../types/item";
+import { Item } from "@/types/item";
 
-type ItemsGridProps = {
+interface ItemsGridProps {
   items: Item[];
-};
+}
 
+/**
+ * Displays a responsive grid of item cards
+ */
 const ItemsGrid = memo(({ items }: ItemsGridProps) => {
   // Create empty state message only when needed
   const emptyStateMessage = useMemo(() => {

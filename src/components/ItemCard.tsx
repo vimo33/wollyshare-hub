@@ -64,11 +64,11 @@ const ItemCard = memo(({
     // Could add additional logic here after a successful request
   }, []);
 
-  // Create an item object for the dialog
+  // Create the item object for the dialog without useMemo
   const itemForDialog: Item = {
     id,
     name,
-    category: category,
+    category,
     user_id,
     image_url: imageUrl,
     description: null,

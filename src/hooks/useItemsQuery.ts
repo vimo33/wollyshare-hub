@@ -2,8 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Item } from "@/types/item";
-import { useState, useEffect } from "react";
-import { extractLocationFromDescription } from "@/utils/itemUtils";
+import { transformItemData } from "@/utils/itemTransformUtils";
 
 // Define query keys for better cache management
 export const itemsQueryKeys = {
@@ -112,33 +111,10 @@ export const useItemsQuery = ({ userId, enabled = true }: UseItemsQueryOptions =
         });
       });
 
-      // Combine items with owner names and locations
+      // Combine items with owner names and locations using our utility function
       return itemsData.map(item => {
         const userInfo = userMap.get(item.user_id) || { name: 'Unknown User', location: null };
-        
-        // Use location name from the map if available
-        let locationName = "Location not specified";
-        let locationAddress = undefined;
-        
-        if (userInfo.location && locationData.get(userInfo.location)) {
-          const locationInfo = locationData.get(userInfo.location);
-          locationName = locationInfo?.name || "Location not specified";
-          locationAddress = locationInfo?.address;
-        } else if (item.description) {
-          const extractedLocation = extractLocationFromDescription(item.description);
-          locationName = extractedLocation !== "Location not specified" ? extractedLocation : "Location not specified";
-        }
-        
-        // Validate the category or fallback to "other"
-        const safeCategory = isValidCategory(item.category) ? item.category : "other";
-        
-        return {
-          ...item,
-          ownerName: userInfo.name,
-          location: locationName,
-          locationAddress: locationAddress,
-          category: safeCategory
-        } as Item;
+        return transformItemData(item, userInfo, locationData);
       });
     },
     enabled: enabled && !isLocationLoading,

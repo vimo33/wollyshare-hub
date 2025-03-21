@@ -4,15 +4,11 @@ import { useToast } from "@/hooks/use-toast";
 import Hero from "@/components/Hero";
 import Footer from "@/components/Footer";
 import ItemsSection from "@/components/items/ItemsSection";
-import { useItemsQuery } from "@/hooks/useItemsQuery";
+import { useItems } from "@/hooks/useItems";
 
 const Index = () => {
   const { toast } = useToast();
-  const { 
-    data: items = [], 
-    isLoading, 
-    error 
-  } = useItemsQuery();
+  const { items = [], isLoading, error } = useItems();
   
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -45,8 +41,8 @@ const Index = () => {
   const filteredItems = useMemo(() => {
     return items.filter(item => {
       const matchesSearch = searchQuery === "" || 
-                           item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           (item.ownerName && item.ownerName.toLowerCase().includes(searchQuery.toLowerCase()));
+                          item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          (item.ownerName && item.ownerName.toLowerCase().includes(searchQuery.toLowerCase()));
       const matchesCategory = activeCategory === null || item.category === activeCategory;
       
       return matchesSearch && matchesCategory;
