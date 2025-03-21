@@ -12,6 +12,7 @@ export type Profile = {
   email: string | null;
   created_at: string | null;
   updated_at: string | null;
+  location: string | null;  // Added location property
 };
 
 export type AdminProfile = {
