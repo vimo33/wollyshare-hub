@@ -88,6 +88,16 @@ const MobileMenu = ({ open, setOpen }: MobileMenuProps) => {
                 <span>My Items</span>
               </button>
               <button 
+                onClick={() => handleNavigation("/how-it-works")}
+                className={cn(
+                  "text-base font-medium py-2 flex items-center gap-2 text-left",
+                  isActive("/how-it-works") ? "text-primary" : ""
+                )}
+              >
+                <Info className="h-5 w-5" />
+                <span>How It Works</span>
+              </button>
+              <button 
                 onClick={() => handleNavigation("/profile")}
                 className={cn(
                   "text-base font-medium py-2 flex items-center gap-2 text-left",
