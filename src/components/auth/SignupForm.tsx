@@ -1,35 +1,19 @@
-import React, { useState, useEffect } from "react";
+
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { registerUser } from "@/services/authService";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-const signupSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email address" }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
-  username: z.string().min(3, { message: "Username must be at least 3 characters" }),
-  fullName: z.string().min(2, { message: "Full name is required" }),
-  location: z.string().optional(),
-});
-
-type SignupFormValues = z.infer<typeof signupSchema>;
+import LocationSelect from "./LocationSelect";
+import { signupSchema, type SignupFormValues } from "./signupSchema";
 
 interface SignupFormProps {
   invitationToken?: string;
-}
-
-interface Location {
-  id: string;
-  name: string;
-  address: string;
 }
 
 const SignupForm = ({ invitationToken }: SignupFormProps) => {
@@ -37,8 +21,6 @@ const SignupForm = ({ invitationToken }: SignupFormProps) => {
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [locations, setLocations] = useState<Location[]>([]);
-  const [isLoadingLocations, setIsLoadingLocations] = useState(true);
 
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
@@ -50,46 +32,6 @@ const SignupForm = ({ invitationToken }: SignupFormProps) => {
       location: "",
     },
   });
-
-  // Fetch locations from the database
-  useEffect(() => {
-    const fetchLocations = async () => {
-      setIsLoadingLocations(true);
-      try {
-        const { data, error } = await supabase
-          .from('community_locations')
-          .select('id, name, address');
-
-        if (error) {
-          console.error('Error fetching locations:', error);
-          // Fall back to mock data if there's an error
-          setLocations([
-            { id: '1', name: 'Main Building', address: '123 Community Ave, City' },
-            { id: '2', name: 'East Wing', address: '125 Community Ave, City' },
-          ]);
-        } else if (data && data.length > 0) {
-          setLocations(data as Location[]);
-        } else {
-          // Fall back to mock data if no locations are found
-          setLocations([
-            { id: '1', name: 'Main Building', address: '123 Community Ave, City' },
-            { id: '2', name: 'East Wing', address: '125 Community Ave, City' },
-          ]);
-        }
-      } catch (err) {
-        console.error('Error in fetchLocations:', err);
-        // Fall back to mock data if there's an error
-        setLocations([
-          { id: '1', name: 'Main Building', address: '123 Community Ave, City' },
-          { id: '2', name: 'East Wing', address: '125 Community Ave, City' },
-        ]);
-      } finally {
-        setIsLoadingLocations(false);
-      }
-    };
-
-    fetchLocations();
-  }, []);
 
   const onSubmit = async (data: SignupFormValues) => {
     setIsLoading(true);
@@ -188,37 +130,7 @@ const SignupForm = ({ invitationToken }: SignupFormProps) => {
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="location"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Your Location</FormLabel>
-              <Select 
-                onValueChange={field.onChange} 
-                defaultValue={field.value}
-                disabled={isLoadingLocations || locations.length === 0}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select your location" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {locations.map((location) => (
-                    <SelectItem key={location.id} value={location.id}>
-                      {location.name} - {location.address}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {locations.length === 0 && !isLoadingLocations && (
-                <p className="text-sm text-muted-foreground">No locations available. Please contact an administrator.</p>
-              )}
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <LocationSelect control={form.control} />
 
         <FormField
           control={form.control}
