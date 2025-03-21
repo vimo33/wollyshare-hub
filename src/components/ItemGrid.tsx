@@ -16,33 +16,36 @@ const ItemGrid = () => {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [locationNames, setLocationNames] = useState<Map<string, string>>(new Map());
+  const [locationData, setLocationData] = useState<Map<string, {name: string, address: string}>>(new Map());
   const { profile } = useAuth();
 
   useEffect(() => {
     fetchItems();
-    fetchLocationNames();
+    fetchLocationData();
   }, []);
 
-  const fetchLocationNames = async () => {
+  const fetchLocationData = async () => {
     try {
       const { data, error } = await supabase
         .from('community_locations')
-        .select('id, name');
+        .select('id, name, address');
       
       if (error) {
-        console.error('Error fetching location names:', error);
+        console.error('Error fetching location data:', error);
         return;
       }
 
       const locationMap = new Map();
       data.forEach(location => {
-        locationMap.set(location.id, location.name);
+        locationMap.set(location.id, {
+          name: location.name,
+          address: location.address
+        });
       });
       
-      setLocationNames(locationMap);
+      setLocationData(locationMap);
     } catch (error) {
-      console.error('Error in fetchLocationNames:', error);
+      console.error('Error in fetchLocationData:', error);
     }
   };
 
@@ -88,9 +91,12 @@ const ItemGrid = () => {
         const userInfo = userMap.get(item.user_id) || { name: 'Unknown User', location: null };
         // Use location name from the map if available, or extract from description as fallback
         let locationName = "Location not specified";
+        let locationAddress = undefined;
         
-        if (userInfo.location && locationNames.get(userInfo.location)) {
-          locationName = locationNames.get(userInfo.location) || "Location not specified";
+        if (userInfo.location && locationData.get(userInfo.location)) {
+          const locationInfo = locationData.get(userInfo.location);
+          locationName = locationInfo?.name || "Location not specified";
+          locationAddress = locationInfo?.address;
         } else if (item.description) {
           const extractedLocation = extractLocationFromDescription(item.description);
           locationName = extractedLocation !== "Location not specified" ? extractedLocation : "Location not specified";
@@ -99,7 +105,8 @@ const ItemGrid = () => {
         return {
           ...item,
           ownerName: userInfo.name,
-          location: locationName
+          location: locationName,
+          locationAddress: locationAddress
         };
       });
 
@@ -130,6 +137,20 @@ const ItemGrid = () => {
     setActiveCategory(category === activeCategory ? null : category);
   };
 
+  // Get the user's location info
+  const getUserLocationInfo = () => {
+    if (profile?.location && locationData.get(profile.location)) {
+      const locationInfo = locationData.get(profile.location);
+      return {
+        name: locationInfo?.name || "",
+        address: locationInfo?.address || ""
+      };
+    }
+    return null;
+  };
+
+  const userLocationInfo = getUserLocationInfo();
+
   return (
     <section className="py-16 px-6 bg-gradient-to-b from-white to-gray-50">
       <div className="max-w-7xl mx-auto">
@@ -138,9 +159,12 @@ const ItemGrid = () => {
           <p className="text-muted-foreground max-w-2xl mx-auto">
             Browse through items shared by community members that you can borrow.
           </p>
-          {profile?.location && locationNames.get(profile.location) && (
+          {userLocationInfo && (
             <p className="text-sm mt-2 text-secondary-foreground">
-              Your location: <span className="font-medium">{locationNames.get(profile.location)}</span>
+              Your location: <span className="font-medium">{userLocationInfo.name}</span>
+              {userLocationInfo.address && (
+                <span className="text-gray-500"> ({userLocationInfo.address})</span>
+              )}
             </p>
           )}
         </div>

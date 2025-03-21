@@ -5,6 +5,7 @@ interface ItemDetailsProps {
   name: string;
   ownerName: string;
   location: string;
+  locationAddress?: string;
   weekdayAvailability: string;
   weekendAvailability: string;
   formatAvailability: (availability: string) => string;
@@ -14,6 +15,7 @@ const ItemDetails = ({
   name, 
   ownerName, 
   location, 
+  locationAddress,
   weekdayAvailability, 
   weekendAvailability,
   formatAvailability
@@ -23,6 +25,12 @@ const ItemDetails = ({
     if (!location || location === "Unknown Location") {
       return "Location not specified";
     }
+    
+    // If we have both location name and address, display them both
+    if (locationAddress) {
+      return `${location} (${locationAddress})`;
+    }
+    
     return location;
   };
 

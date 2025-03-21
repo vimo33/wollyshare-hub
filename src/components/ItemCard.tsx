@@ -15,6 +15,7 @@ type ItemCardProps = {
   name: string;
   ownerName: string;
   location: string;
+  locationAddress?: string;
   weekdayAvailability: string;
   weekendAvailability: string;
   category: "tools" | "kitchen" | "electronics" | "sports" | "other";
@@ -28,6 +29,7 @@ const ItemCard = ({
   name,
   ownerName,
   location,
+  locationAddress,
   weekdayAvailability,
   weekendAvailability,
   category,
@@ -75,7 +77,8 @@ const ItemCard = ({
     weekday_availability: weekdayAvailability,
     weekend_availability: weekendAvailability,
     ownerName,
-    location
+    location,
+    locationAddress
   };
 
   return (
@@ -97,6 +100,7 @@ const ItemCard = ({
           name={name}
           ownerName={ownerName}
           location={location}
+          locationAddress={locationAddress}
           weekdayAvailability={weekdayAvailability}
           weekendAvailability={weekendAvailability}
           formatAvailability={formatAvailability}

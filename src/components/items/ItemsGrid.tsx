@@ -20,6 +20,7 @@ const ItemsGrid = ({ items }: ItemsGridProps) => {
             name={item.name}
             ownerName={item.ownerName || "Unknown"}
             location={item.location || "Location not specified"}
+            locationAddress={item.locationAddress}
             weekdayAvailability={item.weekday_availability}
             weekendAvailability={item.weekend_availability}
             category={item.category as any}
