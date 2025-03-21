@@ -1,13 +1,9 @@
 
 import { useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
 import Hero from "@/components/Hero";
 import ItemGrid from "@/components/ItemGrid";
-import HowItWorksPreview from "@/components/how-it-works/HowItWorksPreview";
 
 const Index = () => {
-  const { user } = useAuth();
-
   useEffect(() => {
     // Scroll to top when component mounts
     window.scrollTo(0, 0);
@@ -17,7 +13,6 @@ const Index = () => {
     <div className="min-h-screen bg-white">
       <main>
         <Hero />
-        {!user && <HowItWorksPreview />}
         <ItemGrid />
       </main>
       
