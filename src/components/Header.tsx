@@ -2,7 +2,7 @@
 import React from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { User, LogIn, LogOut, Home, Package } from "lucide-react";
+import { User, LogIn, LogOut, Home, Package, Info } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import {
@@ -64,6 +64,19 @@ const Header = () => {
               </Link>
             </>
           )}
+          
+          <Link 
+            to="/how-it-works" 
+            className={cn(
+              "text-sm font-medium transition-colors flex items-center gap-1",
+              isActive("/how-it-works") 
+                ? "text-primary" 
+                : "hover:text-primary/80"
+            )}
+          >
+            <Info className="h-4 w-4" />
+            <span>How It Works</span>
+          </Link>
         </nav>
 
         {/* Auth buttons */}
