@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -57,21 +56,19 @@ const SignupForm = ({ invitationToken }: SignupFormProps) => {
     const fetchLocations = async () => {
       setIsLoadingLocations(true);
       try {
-        // In a real implementation, this would fetch from a community_locations table
-        // For now we're using a mock implementation that matches AdminCommunitySettings
         const { data, error } = await supabase
           .from('community_locations')
-          .select('*');
+          .select('id, name, address');
 
         if (error) {
           console.error('Error fetching locations:', error);
-          // Fall back to mock data if the table doesn't exist yet
+          // Fall back to mock data if there's an error
           setLocations([
             { id: '1', name: 'Main Building', address: '123 Community Ave, City' },
             { id: '2', name: 'East Wing', address: '125 Community Ave, City' },
           ]);
         } else if (data && data.length > 0) {
-          setLocations(data);
+          setLocations(data as Location[]);
         } else {
           // Fall back to mock data if no locations are found
           setLocations([

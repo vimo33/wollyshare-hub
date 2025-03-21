@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 // Regular user registration
@@ -7,7 +6,8 @@ export const registerUser = async (
   password: string, 
   username: string, 
   fullName: string,
-  invitationToken?: string
+  invitationToken?: string,
+  metadata?: Record<string, any>
 ): Promise<{ user: any; error: any }> => {
   // First verify the invitation if token is provided
   if (invitationToken) {
@@ -30,6 +30,7 @@ export const registerUser = async (
       data: {
         username,
         full_name: fullName,
+        ...metadata
       }
     }
   });
