@@ -1,8 +1,8 @@
-
 import { Users, Calendar, Package, RefreshCw } from "lucide-react";
 import StepCard from "@/components/how-it-works/StepCard";
 import FAQ from "@/components/how-it-works/FAQ";
 import CommunityGuidelines from "@/components/how-it-works/CommunityGuidelines";
+import PageHeader from "@/components/ui/page-header";
 
 const HowItWorks = () => {
   const stepCards = [
@@ -108,13 +108,11 @@ const HowItWorks = () => {
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-5xl">
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold mb-4">How It Works</h1>
-        <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-          Welcome to Community Share, your neighborhood sharing hub! This app lets you lend and borrow items like tools, 
-          appliances, and household goods with your neighbors.
-        </p>
-      </div>
+      <PageHeader
+        title="How It Works"
+        description="Welcome to Community Share, your neighborhood sharing hub! This app lets you lend and borrow items like tools, 
+        appliances, and household goods with your neighbors."
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
         {stepCards.map((card, index) => (
