@@ -41,7 +41,7 @@ export const extractLocationInfo = (
   return { locationName, locationAddress };
 };
 
-// Standard function to transform raw item data from Supabase to our Item type
+// Transform raw item data from Supabase to our Item type
 export const transformItemData = (
   rawItem: any, 
   userInfo: { name: string, location: string | null } | undefined,

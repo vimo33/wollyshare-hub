@@ -1,19 +1,14 @@
 
+import { memo } from 'react';
 import ItemCard from "../ItemCard";
 import { Item } from "../../types/item";
-import { memo } from 'react';
 
 type ItemsGridProps = {
   items: Item[];
 };
 
-// Using memo to prevent unnecessary re-renders when parent components change
 const ItemsGrid = memo(({ items }: ItemsGridProps) => {
-  // Add detailed debugging to verify we're getting items
-  console.log(`ItemsGrid rendering ${items.length} items`);
-  
   if (items.length === 0) {
-    console.log("ItemsGrid: No items to display!");
     return <p className="text-center text-gray-500">No items available.</p>;
   }
   
