@@ -1,5 +1,4 @@
 
-import { useState } from "react";
 import { Item } from "@/types/item";
 import ItemsGrid from "./ItemsGrid";
 import LoadingState from "./LoadingState";
@@ -10,25 +9,22 @@ import CategoryFilter from "./CategoryFilter";
 interface ItemsSectionProps {
   items: Item[];
   isLoading: boolean;
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
+  activeCategory: string | null;
+  setActiveCategory: (category: string | null) => void;
 }
 
-const ItemsSection = ({ items, isLoading }: ItemsSectionProps) => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
-
-  // Log for debugging
-  console.log(`ItemsSection: Received ${items.length} items, isLoading=${isLoading}`);
-
-  // Filter items based on search query and active category
-  const filteredItems = items.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         (item.ownerName && item.ownerName.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesCategory = activeCategory === null || item.category === activeCategory;
-    
-    return matchesSearch && matchesCategory;
-  });
-
-  console.log(`ItemsSection: After filtering, displaying ${filteredItems.length} items`);
+const ItemsSection = ({ 
+  items, 
+  isLoading, 
+  searchQuery, 
+  setSearchQuery, 
+  activeCategory, 
+  setActiveCategory 
+}: ItemsSectionProps) => {
+  
+  console.log(`ItemsSection: Displaying ${items.length} items, isLoading=${isLoading}`);
 
   const handleCategoryClick = (category: string | null) => {
     setActiveCategory(category === activeCategory ? null : category);
@@ -53,8 +49,8 @@ const ItemsSection = ({ items, isLoading }: ItemsSectionProps) => {
         {/* Items Grid */}
         {isLoading ? (
           <LoadingState />
-        ) : filteredItems.length > 0 ? (
-          <ItemsGrid items={filteredItems} />
+        ) : items.length > 0 ? (
+          <ItemsGrid items={items} />
         ) : (
           <EmptyState />
         )}

@@ -1,8 +1,7 @@
 
-import { useState, forwardRef, useImperativeHandle, useEffect } from "react";
+import { forwardRef, useImperativeHandle } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
-import { useLocationData } from "@/hooks/useLocationData";
 import ItemFormDialog from "./ItemFormDialog";
 import ItemCard from "./ItemCard";
 import DeleteConfirmDialog from "./DeleteConfirmDialog";
@@ -10,6 +9,9 @@ import EmptyItemsState from "./EmptyItemsState";
 import LoadingItemsState from "./LoadingItemsState";
 import { supabase } from "@/integrations/supabase/client";
 import { Item } from "@/types/item";
+import { useState } from "react";
+import { useItemsQuery, itemsQueryKeys } from "@/hooks/useItemsQuery";
+import { useQueryClient } from "@tanstack/react-query";
 
 export interface MyItemsListRef {
   fetchItems: () => Promise<void>;
@@ -18,92 +20,25 @@ export interface MyItemsListRef {
 const MyItemsList = forwardRef<MyItemsListRef>((props, ref) => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { locationData } = useLocationData();
-  const [items, setItems] = useState<Item[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
+  
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [itemToEdit, setItemToEdit] = useState<Item | null>(null);
   
-  // Explicitly log that we're in the MyItemsList component
-  console.log(`MyItemsList: Explicitly showing only current user's items. User ID: ${user?.id || 'Not logged in'}`);
+  // Only fetch items if user is logged in
+  const { data: items = [], isLoading, refetch } = useItemsQuery({
+    userId: user?.id,
+    enabled: !!user
+  });
   
-  useEffect(() => {
-    if (user) {
-      fetchUserItems();
-    } else {
-      setItems([]);
-      setIsLoading(false);
-    }
-  }, [user, locationData]);
-
-  // Function to fetch only the current user's items
-  const fetchUserItems = async () => {
-    if (!user) return;
-    
-    setIsLoading(true);
-    try {
-      console.log(`MyItemsList: Fetching items for user ID: ${user.id}`);
-      
-      const { data: itemsData, error: itemsError } = await supabase
-        .from('items')
-        .select('*')
-        .eq('user_id', user.id);
-
-      if (itemsError) {
-        console.error('Error fetching user items:', itemsError);
-        setIsLoading(false);
-        return;
-      }
-
-      console.log(`MyItemsList: Retrieved ${itemsData?.length || 0} items for current user`);
-      
-      if (itemsData.length === 0) {
-        setItems([]);
-        setIsLoading(false);
-        return;
-      }
-
-      // Get user profile for display name
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('id, full_name, username, location')
-        .eq('id', user.id)
-        .single();
-
-      const userName = profileData?.username || profileData?.full_name || 'You';
-      let locationName = "Location not specified";
-      let locationAddress = undefined;
-      
-      if (profileData?.location && locationData.get(profileData.location)) {
-        const locationInfo = locationData.get(profileData.location);
-        locationName = locationInfo?.name || "Location not specified";
-        locationAddress = locationInfo?.address;
-      }
-
-      // Process items with user info
-      const processedItems = itemsData.map(item => ({
-        ...item,
-        ownerName: userName,
-        location: locationName,
-        locationAddress: locationAddress,
-        category: item.category as any
-      } as Item));
-
-      console.log(`MyItemsList: Processed ${processedItems.length} items with user data`);
-      setItems(processedItems);
-      setIsLoading(false);
-    } catch (error) {
-      console.error('Error in fetchUserItems:', error);
-      setIsLoading(false);
-    }
-  };
-
+  console.log(`MyItemsList: Displaying ${items.length} items for user: ${user?.id || 'Not logged in'}`);
+  
   // Expose fetchItems method via ref
   useImperativeHandle(ref, () => ({
     fetchItems: async () => {
-      await fetchUserItems();
+      await refetch();
     }
   }));
 
@@ -113,7 +48,7 @@ const MyItemsList = forwardRef<MyItemsListRef>((props, ref) => {
   };
 
   const confirmDelete = async () => {
-    if (!itemToDelete) return;
+    if (!itemToDelete || !user) return;
 
     try {
       const { error } = await supabase
@@ -123,8 +58,10 @@ const MyItemsList = forwardRef<MyItemsListRef>((props, ref) => {
 
       if (error) throw error;
 
-      // Refetch items after delete
-      await fetchUserItems();
+      // Invalidate queries to refetch data
+      queryClient.invalidateQueries({
+        queryKey: itemsQueryKeys.byUser(user.id)
+      });
       
       toast({
         title: "Item Deleted",
@@ -146,6 +83,14 @@ const MyItemsList = forwardRef<MyItemsListRef>((props, ref) => {
   const handleEdit = (item: Item) => {
     setItemToEdit(item);
     setEditDialogOpen(true);
+  };
+
+  const handleItemSaved = () => {
+    if (user) {
+      queryClient.invalidateQueries({
+        queryKey: itemsQueryKeys.byUser(user.id)
+      });
+    }
   };
 
   if (!user) {
@@ -206,7 +151,7 @@ const MyItemsList = forwardRef<MyItemsListRef>((props, ref) => {
             weekendAvailability: itemToEdit.weekend_availability,
             imageUrl: itemToEdit.image_url,
           }}
-          onSuccess={() => fetchUserItems()}
+          onSuccess={handleItemSaved}
         />
       )}
     </div>
