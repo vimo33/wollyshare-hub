@@ -1,5 +1,5 @@
 
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import ItemCard from "../ItemCard";
 import { Item } from "../../types/item";
 
@@ -8,8 +8,16 @@ type ItemsGridProps = {
 };
 
 const ItemsGrid = memo(({ items }: ItemsGridProps) => {
-  if (items.length === 0) {
-    return <p className="text-center text-gray-500">No items available.</p>;
+  // Create empty state message only when needed
+  const emptyStateMessage = useMemo(() => {
+    if (items.length === 0) {
+      return <p className="text-center text-gray-500">No items available.</p>;
+    }
+    return null;
+  }, [items.length]);
+  
+  if (emptyStateMessage) {
+    return emptyStateMessage;
   }
   
   return (

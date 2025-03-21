@@ -1,4 +1,5 @@
 
+import { memo, useCallback } from "react";
 import { Item } from "@/types/item";
 import ItemsGrid from "./ItemsGrid";
 import LoadingState from "./LoadingState";
@@ -15,7 +16,7 @@ interface ItemsSectionProps {
   setActiveCategory: (category: string | null) => void;
 }
 
-const ItemsSection = ({ 
+const ItemsSection = memo(({ 
   items, 
   isLoading, 
   searchQuery, 
@@ -24,12 +25,13 @@ const ItemsSection = ({
   setActiveCategory 
 }: ItemsSectionProps) => {
   
-  // Log for debugging
-  console.log(`ItemsSection: Displaying ${items.length} items, isLoading=${isLoading}`);
-
-  const handleCategoryClick = (category: string | null) => {
+  const handleCategoryClick = useCallback((category: string | null) => {
     setActiveCategory(category === activeCategory ? null : category);
-  };
+  }, [activeCategory, setActiveCategory]);
+
+  const handleSearchChange = useCallback((query: string) => {
+    setSearchQuery(query);
+  }, [setSearchQuery]);
 
   return (
     <section className="py-16 px-6 bg-gradient-to-b from-white to-gray-50">
@@ -43,7 +45,7 @@ const ItemsSection = ({
 
         {/* Search and Filter */}
         <div className="mb-10">
-          <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+          <SearchBar searchQuery={searchQuery} setSearchQuery={handleSearchChange} />
           <CategoryFilter activeCategory={activeCategory} handleCategoryClick={handleCategoryClick} />
         </div>
 
@@ -58,6 +60,8 @@ const ItemsSection = ({
       </div>
     </section>
   );
-};
+});
+
+ItemsSection.displayName = 'ItemsSection';
 
 export default ItemsSection;

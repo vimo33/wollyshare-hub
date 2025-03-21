@@ -1,11 +1,10 @@
 
-import { useState } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import Hero from "@/components/Hero";
 import Footer from "@/components/Footer";
 import ItemsSection from "@/components/items/ItemsSection";
 import { useItemsQuery } from "@/hooks/useItemsQuery";
-import { useEffect } from "react";
 
 const Index = () => {
   const { toast } = useToast();
@@ -25,15 +24,29 @@ const Index = () => {
     }
   }, [error, toast]);
 
-  // Filter items based on search query and active category
-  const filteredItems = items.filter(item => {
-    const matchesSearch = searchQuery === "" || 
-                         item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         (item.ownerName && item.ownerName.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesCategory = activeCategory === null || item.category === activeCategory;
-    
-    return matchesSearch && matchesCategory;
-  });
+  // Use memoized callback for search updates
+  const handleSearchChange = useCallback((query: string) => {
+    setSearchQuery(query);
+  }, []);
+
+  // Use memoized callback for category updates
+  const handleCategoryChange = useCallback((category: string | null) => {
+    setActiveCategory(prevCategory => 
+      category === prevCategory ? null : category
+    );
+  }, []);
+
+  // Filter items based on search query and active category - memoized
+  const filteredItems = useMemo(() => {
+    return items.filter(item => {
+      const matchesSearch = searchQuery === "" || 
+                           item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           (item.ownerName && item.ownerName.toLowerCase().includes(searchQuery.toLowerCase()));
+      const matchesCategory = activeCategory === null || item.category === activeCategory;
+      
+      return matchesSearch && matchesCategory;
+    });
+  }, [items, searchQuery, activeCategory]);
 
   return (
     <div className="min-h-screen bg-white">
@@ -43,9 +56,9 @@ const Index = () => {
           items={filteredItems} 
           isLoading={isLoading} 
           searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
+          setSearchQuery={handleSearchChange}
           activeCategory={activeCategory}
-          setActiveCategory={setActiveCategory}
+          setActiveCategory={handleCategoryChange}
         />
       </main>
       <Footer />

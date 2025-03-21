@@ -3,6 +3,7 @@ import { formatAvailability } from './availability-utils';
 import { categoryColors } from './category-utils';
 import { extractLocationFromDescription } from '@/utils/itemUtils';
 import { Item } from '@/types/item';
+import { useMemo } from 'react';
 
 // Format the location display text
 export const formatLocationDisplay = (location?: string, locationAddress?: string): string => {
@@ -18,7 +19,7 @@ export const formatLocationDisplay = (location?: string, locationAddress?: strin
   return location;
 };
 
-// Extract location information from item data and location map
+// Extract location information from item data and location map with memoization
 export const extractLocationInfo = (
   item: any, 
   locationData?: Map<string, {name: string, address: string}>
@@ -47,6 +48,11 @@ export const transformItemData = (
   userInfo: { name: string, location: string | null } | undefined,
   locationData?: Map<string, {name: string, address: string}>
 ): Item => {
+  // Validate input data
+  if (!rawItem) {
+    throw new Error('Cannot transform undefined or null item data');
+  }
+  
   // Extract location information
   const { locationName, locationAddress } = extractLocationInfo({ 
     ...rawItem, 
@@ -64,4 +70,16 @@ export const transformItemData = (
     locationAddress: locationAddress,
     category: safeCategory
   } as Item;
+};
+
+// Custom hook for using item transformation with memoization
+export const useTransformItemData = (
+  rawItem: any,
+  userInfo: { name: string, location: string | null } | undefined,
+  locationData?: Map<string, {name: string, address: string}>
+) => {
+  return useMemo(() => 
+    transformItemData(rawItem, userInfo, locationData),
+    [rawItem, userInfo, locationData]
+  );
 };

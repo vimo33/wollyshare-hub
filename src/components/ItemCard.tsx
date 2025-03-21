@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useCallback, memo } from "react";
 import { Item } from "@/types/item";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,7 +22,7 @@ type ItemCardProps = {
   onClick?: () => void;
 };
 
-const ItemCard = ({
+const ItemCard = memo(({
   id,
   name,
   ownerName,
@@ -40,12 +40,12 @@ const ItemCard = ({
   const { toast } = useToast();
   const { user } = useAuth();
 
-  const handleLike = (e: React.MouseEvent) => {
+  const handleLike = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsLiked(!isLiked);
-  };
+    setIsLiked(prev => !prev);
+  }, []);
 
-  const handleRequestClick = (e: React.MouseEvent) => {
+  const handleRequestClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     
     if (!user) {
@@ -58,14 +58,14 @@ const ItemCard = ({
     }
     
     setIsDialogOpen(true);
-  };
+  }, [user, toast]);
 
-  const handleRequestSuccess = () => {
+  const handleRequestSuccess = useCallback(() => {
     // Could add additional logic here after a successful request
-  };
+  }, []);
 
-  // Create an item object for the dialog
-  const itemForDialog: Item = {
+  // Create an item object for the dialog - memoized to prevent recreating on every render
+  const itemForDialog: Item = useMemo(() => ({
     id,
     name,
     category: category,
@@ -77,7 +77,7 @@ const ItemCard = ({
     ownerName,
     location,
     locationAddress
-  };
+  }), [id, name, category, user_id, imageUrl, weekdayAvailability, weekendAvailability, ownerName, location, locationAddress]);
 
   return (
     <>
@@ -123,6 +123,8 @@ const ItemCard = ({
       />
     </>
   );
-};
+});
+
+ItemCard.displayName = 'ItemCard';
 
 export default ItemCard;
