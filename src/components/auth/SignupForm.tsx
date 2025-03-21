@@ -45,14 +45,14 @@ const SignupForm = ({ invitationToken }: SignupFormProps) => {
         location: data.location || undefined
       };
 
-      const { user, error } = await registerUser(
-        data.email, 
-        data.password, 
-        data.username, 
-        data.fullName,
+      const { user, error } = await registerUser({
+        email: data.email,
+        password: data.password,
+        username: data.username,
+        fullName: data.fullName,
         invitationToken,
         metadata
-      );
+      });
       
       if (error) {
         setError(error.message);
