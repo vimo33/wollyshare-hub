@@ -1,9 +1,10 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { User, LogIn, LogOut, Home, Package, Info } from "lucide-react";
+import { User, LogIn, LogOut, Home, Package, Info, Menu, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsMobile } from "@/hooks/use-mobile"; 
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -12,12 +13,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerTrigger,
+  DrawerClose
+} from "@/components/ui/drawer";
 import LogoutButton from "@/components/auth/LogoutButton";
 
 const Header = () => {
   const { user, profile, isAdmin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const isMobile = useIsMobile();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   // Helper function to check if a path is active
   const isActive = (path: string) => location.pathname === path;
@@ -33,7 +42,7 @@ const Header = () => {
           <span className="font-semibold text-lg hidden sm:inline-block">WollyShare</span>
         </Link>
 
-        {/* Navigation Links */}
+        {/* Navigation Links - Desktop */}
         <nav className="hidden md:flex items-center space-x-6">
           {/* Only show these links if user is logged in */}
           {user && (
@@ -79,8 +88,8 @@ const Header = () => {
           </Link>
         </nav>
 
-        {/* Auth buttons */}
-        <div className="flex items-center gap-2">
+        {/* Auth buttons - Desktop */}
+        <div className="hidden md:flex items-center gap-2">
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -140,6 +149,99 @@ const Header = () => {
             </DropdownMenu>
           )}
         </div>
+
+        {/* Mobile Menu Trigger */}
+        {isMobile && (
+          <Drawer>
+            <DrawerTrigger asChild>
+              <Button variant="ghost" size="icon" className="md:hidden">
+                <Menu className="h-6 w-6" />
+              </Button>
+            </DrawerTrigger>
+            <DrawerContent className="p-4">
+              <div className="flex flex-col space-y-4">
+                <div className="flex justify-between items-center pb-2 border-b">
+                  <h3 className="text-lg font-semibold">Menu</h3>
+                  <DrawerClose asChild>
+                    <Button variant="ghost" size="icon">
+                      <X className="h-5 w-5" />
+                    </Button>
+                  </DrawerClose>
+                </div>
+                
+                {user ? (
+                  <>
+                    <Link 
+                      to="/" 
+                      className={cn(
+                        "text-base font-medium py-2 flex items-center gap-2",
+                        isActive("/") ? "text-primary" : ""
+                      )}
+                    >
+                      <Home className="h-5 w-5" />
+                      <span>Home</span>
+                    </Link>
+                    <Link 
+                      to="/my-items" 
+                      className={cn(
+                        "text-base font-medium py-2 flex items-center gap-2",
+                        isActive("/my-items") ? "text-primary" : ""
+                      )}
+                    >
+                      <Package className="h-5 w-5" />
+                      <span>My Items</span>
+                    </Link>
+                    <Link 
+                      to="/profile" 
+                      className={cn(
+                        "text-base font-medium py-2 flex items-center gap-2",
+                        isActive("/profile") ? "text-primary" : ""
+                      )}
+                    >
+                      <User className="h-5 w-5" />
+                      <span>Profile</span>
+                    </Link>
+                    {isAdmin && (
+                      <Link 
+                        to="/admin" 
+                        className={cn(
+                          "text-base font-medium py-2",
+                          isActive("/admin") ? "text-primary" : ""
+                        )}
+                      >
+                        Admin Dashboard
+                      </Link>
+                    )}
+                    <div className="pt-2 border-t">
+                      <LogoutButton size="sm" className="w-full justify-center" />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <Link 
+                      to="/how-it-works" 
+                      className={cn(
+                        "text-base font-medium py-2 flex items-center gap-2",
+                        isActive("/how-it-works") ? "text-primary" : ""
+                      )}
+                    >
+                      <Info className="h-5 w-5" />
+                      <span>How It Works</span>
+                    </Link>
+                    <div className="grid grid-cols-2 gap-2 pt-2">
+                      <Button asChild variant="outline" size="sm">
+                        <Link to="/auth">User Login</Link>
+                      </Button>
+                      <Button asChild variant="outline" size="sm">
+                        <Link to="/admin/auth">Admin Login</Link>
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </DrawerContent>
+          </Drawer>
+        )}
       </div>
     </header>
   );

@@ -4,11 +4,18 @@ import { Bell, Search, Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerTrigger,
+  DrawerClose
+} from "@/components/ui/drawer";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user } = useAuth();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -17,8 +24,6 @@ const Navbar = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
-  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
   return (
     <nav
@@ -66,58 +71,65 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* Mobile Menu Button */}
-        <button 
-          className="md:hidden p-2 focus:outline-none" 
-          onClick={toggleMenu}
-          aria-label="Toggle menu"
-        >
-          {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
-      </div>
-
-      {/* Mobile Menu */}
-      {isMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 right-0 bg-white shadow-md animate-fade-in">
-          <div className="flex flex-col py-4 px-6 space-y-4">
-            {/* Only show navigation items when user is logged in */}
-            {user ? (
-              <>
-                <Link 
-                  to="/" 
-                  className="text-sm font-medium py-2 hover:text-primary/80 transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Home
-                </Link>
-                <Link 
-                  to="/my-items" 
-                  className="text-sm font-medium py-2 hover:text-primary/80 transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  My Items
-                </Link>
-              </>
-            ) : (
-              <Link 
-                to="/auth" 
-                className="text-sm font-medium py-2 hover:text-primary/80 transition-colors"
-                onClick={() => setIsMenuOpen(false)}
+        {/* Mobile Menu */}
+        {isMobile && (
+          <Drawer>
+            <DrawerTrigger asChild>
+              <button 
+                className="md:hidden p-2 focus:outline-none" 
+                aria-label="Toggle menu"
               >
-                Login
-              </Link>
-            )}
-            <div className="flex items-center space-x-4 pt-2">
-              <button className="p-2 rounded-full hover:bg-muted transition-colors" aria-label="Search">
-                <Search className="h-5 w-5" />
+                <Menu className="h-6 w-6" />
               </button>
-              <button className="p-2 rounded-full hover:bg-muted transition-colors" aria-label="Notifications">
-                <Bell className="h-5 w-5" />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+            </DrawerTrigger>
+            <DrawerContent className="px-4 py-6">
+              <div className="flex justify-end mb-4">
+                <DrawerClose asChild>
+                  <button 
+                    className="p-2 focus:outline-none" 
+                    aria-label="Close menu"
+                  >
+                    <X className="h-6 w-6" />
+                  </button>
+                </DrawerClose>
+              </div>
+              <div className="flex flex-col space-y-4">
+                {user ? (
+                  <>
+                    <Link 
+                      to="/" 
+                      className="text-lg font-medium py-2 hover:text-primary/80 transition-colors"
+                    >
+                      Home
+                    </Link>
+                    <Link 
+                      to="/my-items" 
+                      className="text-lg font-medium py-2 hover:text-primary/80 transition-colors"
+                    >
+                      My Items
+                    </Link>
+                  </>
+                ) : (
+                  <Link 
+                    to="/auth" 
+                    className="text-lg font-medium py-2 hover:text-primary/80 transition-colors"
+                  >
+                    Login
+                  </Link>
+                )}
+                <div className="flex items-center space-x-4 pt-2">
+                  <button className="p-2 rounded-full hover:bg-muted transition-colors" aria-label="Search">
+                    <Search className="h-5 w-5" />
+                  </button>
+                  <button className="p-2 rounded-full hover:bg-muted transition-colors" aria-label="Notifications">
+                    <Bell className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+            </DrawerContent>
+          </Drawer>
+        )}
+      </div>
     </nav>
   );
 };
