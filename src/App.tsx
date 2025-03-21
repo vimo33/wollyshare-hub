@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Header from "@/components/Header";
 import Index from "./pages/Index";
@@ -30,6 +30,8 @@ const App = () => (
             <Route path="/admin/auth" element={<AdminAuth />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/admin/members" element={<AdminMembers />} />
+            {/* Add a redirect from the old invitations route to the new members route */}
+            <Route path="/admin/invitations" element={<Navigate to="/admin/members" replace />} />
             <Route path="/admin/community-settings" element={<AdminCommunitySettings />} />
             <Route path="/browse" element={<Index />} /> {/* Temporary routing to Index */}
             <Route path="/my-items" element={<Index />} /> {/* Temporary routing to Index */}

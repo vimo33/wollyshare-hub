@@ -67,16 +67,16 @@ const Admin = () => {
         <TabsContent value="invitations">
           <Card>
             <CardHeader>
-              <CardTitle>Manage Invitations</CardTitle>
+              <CardTitle>Manage Members</CardTitle>
             </CardHeader>
             <CardContent>
               <Button 
-                onClick={() => navigate("/admin/invitations")}
+                onClick={() => navigate("/admin/members")}
               >
-                Manage Member Invitations
+                Manage Members
               </Button>
               <p className="text-muted-foreground text-sm mt-2">
-                Send invitations to new members and track pending invitations.
+                Invite new members and manage existing member accounts.
               </p>
             </CardContent>
           </Card>
