@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { UserPlus } from "lucide-react";
+import { UserPlus, Info } from "lucide-react";
 import * as z from "zod";
 import { addMemberDirectly } from "@/services/memberService";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // Form validation schema
 const addMemberFormSchema = z.object({
@@ -83,6 +84,16 @@ const AddMemberForm: React.FC = () => {
             Add a member directly to your community without sending an invitation.
           </DialogDescription>
         </DialogHeader>
+        
+        <Alert className="mb-4">
+          <Info className="h-4 w-4" />
+          <AlertTitle>Important</AlertTitle>
+          <AlertDescription>
+            You can only add users who already have accounts in the system. If the user doesn't exist, 
+            please use the invitation feature instead.
+          </AlertDescription>
+        </Alert>
+        
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
