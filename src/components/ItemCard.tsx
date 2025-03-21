@@ -1,5 +1,5 @@
 
-import { useState, useCallback, memo, useMemo } from "react";
+import { useState, useCallback, memo } from "react";
 import { Item } from "@/types/item";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -64,8 +64,8 @@ const ItemCard = memo(({
     // Could add additional logic here after a successful request
   }, []);
 
-  // Create an item object for the dialog - memoized to prevent recreating on every render
-  const itemForDialog: Item = useMemo(() => ({
+  // Create an item object for the dialog
+  const itemForDialog: Item = {
     id,
     name,
     category: category,
@@ -77,7 +77,7 @@ const ItemCard = memo(({
     ownerName,
     location,
     locationAddress
-  }), [id, name, category, user_id, imageUrl, weekdayAvailability, weekendAvailability, ownerName, location, locationAddress]);
+  };
 
   return (
     <>
