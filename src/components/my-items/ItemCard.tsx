@@ -1,4 +1,5 @@
 
+import React from "react";
 import { Edit, Trash2, Image } from "lucide-react";
 import { 
   Card, 
