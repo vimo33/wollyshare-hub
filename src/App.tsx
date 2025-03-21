@@ -15,6 +15,7 @@ import AdminMembers from "./pages/AdminMembers";
 import AdminCommunitySettings from "./pages/AdminCommunitySettings";
 import HowItWorks from "./pages/HowItWorks";
 import MyItems from "./pages/MyItems";
+import Profile from "./pages/Profile";
 import { useAuth } from "@/contexts/AuthContext";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,7 @@ const AppRoutes = () => {
       <Route path="/admin/auth" element={<AdminAuth />} />
       <Route path="/how-it-works" element={<HowItWorks />} />
       <Route path="/my-items" element={<MyItems />} />
+      <Route path="/profile" element={<Profile />} />
       
       {/* Protected Admin Routes */}
       <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
