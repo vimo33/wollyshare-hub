@@ -23,7 +23,6 @@ import {
 // Form validation schema
 const addMemberFormSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
-  username: z.string().min(3, { message: "Username must be at least 3 characters." }),
   fullName: z.string().min(2, { message: "Full name is required." }),
 });
 
@@ -35,8 +34,9 @@ const AddMemberForm: React.FC = () => {
 
   // Add member mutation
   const addMemberMutation = useMutation({
-    mutationFn: ({ email, username, fullName }: AddMemberFormValues) => 
-      addMemberDirectly(email, username, fullName),
+    mutationFn: ({ email, fullName }: AddMemberFormValues) => 
+      // We still need to pass a username value, so we'll generate one from the email
+      addMemberDirectly(email, email.split('@')[0], fullName),
     onSuccess: () => {
       toast.success("Member added successfully");
       queryClient.invalidateQueries({ queryKey: ['members'] });
@@ -60,7 +60,6 @@ const AddMemberForm: React.FC = () => {
     resolver: zodResolver(addMemberFormSchema),
     defaultValues: {
       email: "",
-      username: "",
       fullName: "",
     },
   });
@@ -94,19 +93,6 @@ const AddMemberForm: React.FC = () => {
                   <FormLabel>Email Address</FormLabel>
                   <FormControl>
                     <Input placeholder="member@example.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="username"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Username</FormLabel>
-                  <FormControl>
-                    <Input placeholder="johnsmith" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
