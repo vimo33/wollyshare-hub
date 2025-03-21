@@ -86,7 +86,15 @@ const ItemGrid = () => {
       // Combine items with owner names and locations
       const itemsWithOwners = itemsData.map(item => {
         const userInfo = userMap.get(item.user_id) || { name: 'Unknown User', location: null };
-        const locationName = userInfo.location ? locationNames.get(userInfo.location) || 'Unknown Location' : extractLocationFromDescription(item.description);
+        // Use location name from the map if available, or extract from description as fallback
+        let locationName = "Location not specified";
+        
+        if (userInfo.location && locationNames.get(userInfo.location)) {
+          locationName = locationNames.get(userInfo.location) || "Location not specified";
+        } else if (item.description) {
+          const extractedLocation = extractLocationFromDescription(item.description);
+          locationName = extractedLocation !== "Location not specified" ? extractedLocation : "Location not specified";
+        }
         
         return {
           ...item,

@@ -18,6 +18,14 @@ const ItemDetails = ({
   weekendAvailability,
   formatAvailability
 }: ItemDetailsProps) => {
+  // Format the location display text
+  const displayLocation = () => {
+    if (!location || location === "Unknown Location") {
+      return "Location not specified";
+    }
+    return location;
+  };
+
   return (
     <div className="p-4">
       <h3 className="font-semibold text-lg mb-1 truncate">{name}</h3>
@@ -27,7 +35,7 @@ const ItemDetails = ({
       <div className="flex flex-col space-y-2">
         <div className="flex items-center text-sm text-gray-600">
           <MapPin className="h-4 w-4 mr-2 text-gray-400" />
-          <span>{location || "Location not specified"}</span>
+          <span>{displayLocation()}</span>
         </div>
         <div className="flex flex-col space-y-1 text-sm text-gray-600">
           <div className="flex items-center">
