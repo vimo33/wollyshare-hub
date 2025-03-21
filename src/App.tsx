@@ -11,7 +11,7 @@ import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import AdminAuth from "./pages/AdminAuth";
 import Admin from "./pages/Admin";
-import AdminMembers from "./pages/AdminInvitations";
+import AdminMembers from "./pages/AdminMembers";
 import AdminCommunitySettings from "./pages/AdminCommunitySettings";
 
 const queryClient = new QueryClient();
