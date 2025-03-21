@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Item } from "../../types/item";
 import { useLocationData } from "@/hooks/useLocationData";
@@ -10,16 +10,25 @@ import EmptyState from "./EmptyState";
 import LoadingState from "./LoadingState";
 import ItemsGrid from "./ItemsGrid";
 
-const ItemGridContainer = () => {
+interface ItemGridContainerProps {
+  showAllItems?: boolean;
+  userId?: string;
+}
+
+const ItemGridContainer = ({ showAllItems = false, userId }: ItemGridContainerProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const { profile } = useAuth();
   const { locationData } = useLocationData();
   
-  // Important: No userId passed here, so we get items from all users
-  // We explicitly log this to debug and ensure it's working
-  console.log("ItemGridContainer: Fetching items from all users");
-  const { items, isLoaded, isLoading } = useItems(locationData);
+  // If showAllItems is true, we don't pass userId even if it's available
+  // This ensures we get items from all users on the homepage
+  const itemsUserId = showAllItems ? undefined : userId;
+  
+  // Explicit logging to debug the container's behavior
+  console.log(`ItemGridContainer: ${showAllItems ? 'Explicitly showing ALL items' : 'Showing filtered items'}, userID filter: ${itemsUserId || 'None'}`);
+  
+  const { items, isLoaded, isLoading } = useItems(locationData, itemsUserId);
 
   // Filter items based on search query and active category
   const filteredItems = items.filter(item => {
@@ -50,6 +59,13 @@ const ItemGridContainer = () => {
 
   // Add debug logging to understand what items we're showing
   console.log(`ItemGridContainer: Showing ${filteredItems.length} filtered items from ${items.length} total items`);
+
+  // Log the actual item data for debugging
+  useEffect(() => {
+    if (items.length > 0) {
+      console.log("ItemGridContainer items data sample:", items[0]);
+    }
+  }, [items]);
 
   return (
     <section className="py-16 px-6 bg-gradient-to-b from-white to-gray-50">

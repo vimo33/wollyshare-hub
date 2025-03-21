@@ -7,8 +7,13 @@ type ItemsGridProps = {
 };
 
 const ItemsGrid = ({ items }: ItemsGridProps) => {
-  // Add extra debugging to verify we're getting items
-  console.log(`ItemsGrid rendering ${items.length} items:`, items);
+  // Add detailed debugging to verify we're getting items
+  console.log(`ItemsGrid rendering ${items.length} items with IDs:`, items.map(item => item.id));
+  
+  if (items.length === 0) {
+    console.log("ItemsGrid: No items to display!");
+    return <p className="text-center text-gray-500">No items available.</p>;
+  }
   
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

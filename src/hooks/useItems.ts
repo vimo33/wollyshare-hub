@@ -18,23 +18,30 @@ export const useItems = (locationData: Map<string, {name: string, address: strin
   const [isLoaded, setIsLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Log which type of items we're fetching (all or user-specific)
   useEffect(() => {
+    console.log(`useItems hook initialized - ${userId ? `Filtering by user: ${userId}` : 'Fetching ALL items'}`);
     fetchItems();
   }, [locationData, userId]);
 
   const fetchItems = async () => {
     setIsLoading(true);
     try {
-      console.log(`useItems hook - Fetching items. Filter by userId: ${userId ? userId : 'No - getting all items'}`);
+      // Explicitly log whether we're filtering by user ID
+      const logMsg = userId ? 
+        `useItems hook - Fetching items filtered by user ID: ${userId}` : 
+        `useItems hook - Fetching ALL items from ALL users`;
+      
+      console.log(logMsg);
       
       let query = supabase.from('items').select('*');
       
       // If userId is provided, filter by that user's items only
       if (userId) {
         query = query.eq('user_id', userId);
-        console.log(`useItems hook - Filtering by user_id: ${userId}`);
+        console.log(`useItems hook - Applied filter for user_id: ${userId}`);
       } else {
-        console.log("useItems hook - No userId filter, getting ALL items");
+        console.log("useItems hook - No user ID filter applied - getting ALL items");
       }
       
       const { data: itemsData, error: itemsError } = await query;
@@ -45,9 +52,18 @@ export const useItems = (locationData: Map<string, {name: string, address: strin
       }
 
       console.log(`useItems hook - Retrieved ${itemsData?.length || 0} items from database`);
+      
+      if (itemsData.length === 0) {
+        console.log("useItems hook - No items found, returning empty array");
+        setItems([]);
+        setIsLoaded(true);
+        setIsLoading(false);
+        return;
+      }
 
       // Get unique user IDs from the items
       const userIds = [...new Set(itemsData.map(item => item.user_id))];
+      console.log(`useItems hook - Found items from ${userIds.length} unique users`);
       
       // Fetch user profiles for those IDs
       const { data: profilesData, error: profilesError } = await supabase
@@ -58,6 +74,8 @@ export const useItems = (locationData: Map<string, {name: string, address: strin
       if (profilesError) {
         console.error('Error fetching profiles:', profilesError);
       }
+
+      console.log(`useItems hook - Retrieved ${profilesData?.length || 0} user profiles`);
 
       // Create a map of user IDs to names and locations
       const userMap = new Map();

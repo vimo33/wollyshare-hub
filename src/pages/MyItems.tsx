@@ -1,5 +1,5 @@
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Plus } from "lucide-react";
 import PageHeader from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,10 @@ const MyItems = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const itemsListRef = useRef<{ fetchItems: () => Promise<void> } | null>(null);
+
+  useEffect(() => {
+    console.log("MyItems page mounted - should show ONLY current user's items");
+  }, []);
 
   const onOpenAddItem = () => {
     if (!user) {
@@ -50,7 +54,7 @@ const MyItems = () => {
         </div>
       </PageHeader>
 
-      {/* Items list */}
+      {/* Items list - explicitly showing only the current user's items */}
       <MyItemsList ref={itemsListRef} />
 
       {/* Add item dialog */}

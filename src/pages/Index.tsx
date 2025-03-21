@@ -19,6 +19,7 @@ const Index = () => {
     <div className="min-h-screen bg-white">
       <main>
         <Hero />
+        {/* Explicitly pass props to ensure we show all items */}
         <ItemGrid />
       </main>
       

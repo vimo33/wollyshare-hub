@@ -1,5 +1,5 @@
 
-import { useState, forwardRef, useImperativeHandle } from "react";
+import { useState, forwardRef, useImperativeHandle, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
 import ItemFormDialog from "./ItemFormDialog";
@@ -24,10 +24,16 @@ const MyItemsList = forwardRef<MyItemsListRef>((props, ref) => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [itemToEdit, setItemToEdit] = useState<Item | null>(null);
   
+  // Explicitly set the user ID and log that we're in the MyItemsList component
+  console.log(`MyItemsList: Explicitly showing only current user's items. User ID: ${user?.id || 'Not logged in'}`);
+  
   // Use the useItems hook with the current user's ID to filter
-  // We explicitly log this to debug
-  console.log(user ? `MyItemsList: Fetching items for user ${user.id}` : "MyItemsList: No user ID available");
   const { items, isLoading, fetchItems: refetchItems } = useItems(locationData, user?.id);
+
+  // Log items for debugging
+  useEffect(() => {
+    console.log(`MyItemsList: Found ${items.length} items for current user`);
+  }, [items]);
 
   // Expose fetchItems method via ref
   useImperativeHandle(ref, () => ({

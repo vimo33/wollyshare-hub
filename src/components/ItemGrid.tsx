@@ -1,9 +1,15 @@
 
+import { useEffect } from "react";
 import ItemGridContainer from "./items/ItemGridContainer";
 
-// This is now just a simple wrapper component to maintain backward compatibility
+// This component should ensure we're showing ALL users' items on the homepage
 const ItemGrid = () => {
-  return <ItemGridContainer />;
+  useEffect(() => {
+    // Add explicit debugging for the ItemGrid component
+    console.log("ItemGrid component rendered - this should display ALL items");
+  }, []);
+  
+  return <ItemGridContainer showAllItems={true} />;
 };
 
 export default ItemGrid;
