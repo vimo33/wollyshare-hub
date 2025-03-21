@@ -7,31 +7,42 @@ export const createInvitation = async (email: string): Promise<Invitation | null
   
   if (!user.user) return null;
   
-  // Call our custom function to create an invitation
-  const { data, error } = await supabase
-    .rpc('create_invitation', {
-      admin_id: user.user.id,
-      email: email
-    });
+  try {
+    // Call our custom function to create an invitation
+    const { data, error } = await supabase
+      .rpc('create_invitation', {
+        admin_id: user.user.id,
+        email: email
+      });
+      
+    if (error) {
+      console.error('Error creating invitation:', error);
+      throw error; // Throw the error so it can be caught by the mutation
+    }
     
-  if (error) {
-    console.error('Error creating invitation:', error);
-    throw error; // Throw the error so it can be caught by the mutation
-  }
-  
-  // Fetch the created invitation
-  const { data: invitation, error: fetchError } = await supabase
-    .from('invitations')
-    .select('*')
-    .eq('id', data)
-    .single();
+    // Fetch the created invitation
+    const { data: invitation, error: fetchError } = await supabase
+      .from('invitations')
+      .select('*')
+      .eq('id', data)
+      .single();
+      
+    if (fetchError) {
+      console.error('Error fetching invitation:', fetchError);
+      throw fetchError; // Throw the error so it can be caught by the mutation
+    }
     
-  if (fetchError) {
-    console.error('Error fetching invitation:', fetchError);
-    throw fetchError; // Throw the error so it can be caught by the mutation
+    return invitation as unknown as Invitation;
+  } catch (error) {
+    // Check if it's a specific database error
+    if (error instanceof Error && 
+        (error.message.includes('duplicate key') || 
+         error.message.includes('unique constraint'))) {
+      throw new Error('An invitation has already been sent to this email address');
+    }
+    // Re-throw the original error
+    throw error;
   }
-  
-  return invitation as unknown as Invitation;
 };
 
 export const listInvitations = async (): Promise<Invitation[]> => {

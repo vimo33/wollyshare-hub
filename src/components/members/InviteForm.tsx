@@ -42,9 +42,9 @@ const InviteForm: React.FC = () => {
     onError: (error: any) => {
       console.error("Invitation error:", error);
       
-      // Check if it's a duplicate email error
-      if (error.message?.includes("duplicate key") || error.message?.includes("unique constraint")) {
-        toast.error("An invitation has already been sent to this email address");
+      // Display the error message to the user
+      if (error instanceof Error) {
+        toast.error(error.message);
       } else {
         toast.error("Failed to send invitation. Please try again.");
       }
