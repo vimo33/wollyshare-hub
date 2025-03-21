@@ -55,6 +55,7 @@ const ProfileForm = ({ profile, userEmail }: ProfileFormProps) => {
     // Update form values when profile data loads
     if (profile) {
       console.log("Setting form values with profile:", profile);
+      console.log("Profile location value:", profile.location);
       form.reset({
         username: profile.username || "",
         fullName: profile.full_name || "",
@@ -155,12 +156,9 @@ const ProfileForm = ({ profile, userEmail }: ProfileFormProps) => {
             )}
           />
 
-          <FormField
-            control={form.control}
-            name="location"
-            render={({ field }) => (
-              <LocationSelect control={form.control} defaultValue={field.value} />
-            )}
+          <LocationSelect 
+            control={form.control} 
+            defaultValue={profile.location || ""}
           />
         </CardContent>
         <CardFooter>

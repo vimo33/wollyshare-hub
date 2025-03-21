@@ -28,6 +28,11 @@ export const updateProfile = async (profile: Partial<Profile>): Promise<Profile 
   
   console.log('Updating profile with data:', profile);
   
+  // Make sure the location field is included in the update
+  if (profile.location === undefined) {
+    console.warn('Location field is undefined in profile update');
+  }
+  
   const { data, error } = await supabase
     .from('profiles')
     .update(profile)
