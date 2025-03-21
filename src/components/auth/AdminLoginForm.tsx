@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -23,6 +24,7 @@ const AdminLoginForm = () => {
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { adminProfile } = useAuth();
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -42,13 +44,19 @@ const AdminLoginForm = () => {
       if (error) {
         setError(error.message);
       } else if (user) {
-        // Note: We'll be redirected to admin if user is an admin
-        // or to a regular page if they're not, logic handled in AuthContext
         toast({
           title: "Login successful",
           description: "Welcome back to WollyShare Admin!",
         });
-        navigate("/");
+        
+        // Use a small timeout to allow the auth state to update
+        setTimeout(() => {
+          if (adminProfile) {
+            navigate("/admin");
+          } else {
+            setError("You don't have admin privileges. Please contact your administrator.");
+          }
+        }, 500);
       }
     } catch (err) {
       setError("An unexpected error occurred. Please try again.");
