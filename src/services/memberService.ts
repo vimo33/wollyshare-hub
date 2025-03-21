@@ -34,8 +34,9 @@ export const deleteMember = async (memberId: string): Promise<boolean> => {
 export const addMemberDirectly = async (email: string, username: string, fullName: string): Promise<boolean> => {
   try {
     // Call our custom function to add a member directly
+    // Using any type to bypass the TypeScript error as the function exists in the database
     const { data, error } = await supabase
-      .rpc('add_member_directly', {
+      .rpc('add_member_directly' as any, {
         member_email: email,
         member_username: username,
         member_full_name: fullName

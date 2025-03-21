@@ -109,6 +109,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_member_directly: {
+        Args: {
+          member_email: string
+          member_username: string
+          member_full_name: string
+        }
+        Returns: boolean
+      }
       create_invitation: {
         Args: {
           admin_id: string
