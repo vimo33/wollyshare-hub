@@ -1,12 +1,28 @@
 
 import { Item } from "@/types/item";
 import { extractLocationFromDescription } from "./itemUtils";
+import { LocationMap } from "@/hooks/useItemsQuery";
 
-// Helper function to transform raw item data from Supabase to our Item type
+/**
+ * User profile information needed for item transformation
+ */
+interface UserInfo {
+  name: string;
+  location: string | null;
+}
+
+/**
+ * Transforms raw item data from Supabase to our Item type
+ * 
+ * @param rawItem Raw item data from Supabase
+ * @param userInfo Optional user information with name and location
+ * @param locationData Map of location IDs to location information
+ * @returns Transformed Item object
+ */
 export const transformItemData = (
   rawItem: any, 
-  userInfo: { name: string, location: string | null } | undefined,
-  locationData?: Map<string, {name: string, address: string}>
+  userInfo: UserInfo | undefined,
+  locationData?: LocationMap
 ): Item => {
   if (!rawItem) {
     throw new Error('Cannot transform undefined or null item data');
@@ -41,7 +57,13 @@ export const transformItemData = (
   } as Item;
 };
 
-// Format the location display text
+/**
+ * Format the location display text
+ * 
+ * @param location Location name
+ * @param locationAddress Optional location address
+ * @returns Formatted location string
+ */
 export const formatLocationDisplay = (location?: string, locationAddress?: string): string => {
   if (!location || location === "Unknown Location" || location === "Location not specified") {
     return "Location not specified";

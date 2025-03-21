@@ -24,12 +24,20 @@ const ItemsGrid = memo(({ items }: ItemsGridProps) => {
   }
   
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div 
+      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+      aria-label="Items grid"
+      role="region"
+    >
       {items.map((item, index) => (
         <div
           key={item.id}
           className="opacity-0 animate-fade-up"
-          style={{ animationDelay: `${index * 100}ms`, animationFillMode: 'forwards' }}
+          style={{ 
+            animationDelay: `${index * 100}ms`, 
+            animationFillMode: 'forwards' 
+          }}
+          data-testid={`item-card-${item.id}`}
         >
           <ItemCard
             id={item.id}

@@ -1,5 +1,5 @@
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, UseQueryResult } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Item } from "@/types/item";
 import { transformItemData } from "@/utils/itemTransformUtils";
@@ -13,10 +13,10 @@ export const itemsQueryKeys = {
 
 // Valid category types for type-checking
 const validCategories = ["tools", "kitchen", "electronics", "sports", "other"] as const;
-type ValidCategory = typeof validCategories[number];
+export type ValidCategory = typeof validCategories[number];
 
 // Helper to validate if a category is one of the allowed values
-const isValidCategory = (category: string): category is ValidCategory => {
+export const isValidCategory = (category: string): category is ValidCategory => {
   return validCategories.includes(category as ValidCategory);
 };
 
@@ -28,6 +28,14 @@ export interface UseItemsQueryOptions {
 export interface LocationInfo {
   name: string;
   address: string;
+}
+
+export type LocationMap = Map<string, LocationInfo>;
+
+export interface ItemsQueryResult extends Omit<UseQueryResult<Item[], Error>, 'data'> {
+  data?: Item[];
+  locationData: LocationMap;
+  locationError?: Error;
 }
 
 export const useLocationsQuery = () => {
@@ -57,7 +65,7 @@ export const useLocationsQuery = () => {
   });
 };
 
-export const useItemsQuery = ({ userId, enabled = true }: UseItemsQueryOptions = {}) => {
+export const useItemsQuery = ({ userId, enabled = true }: UseItemsQueryOptions = {}): ItemsQueryResult => {
   // Use the locations query
   const { 
     data: locationData = new Map(), 

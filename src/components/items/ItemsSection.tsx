@@ -1,11 +1,14 @@
 
-import { memo, useCallback } from "react";
+import { memo, useCallback, lazy, Suspense } from "react";
 import { Item } from "@/types/item";
-import ItemsGrid from "./ItemsGrid";
 import LoadingState from "./LoadingState";
 import EmptyState from "./EmptyState";
 import SearchBar from "./SearchBar";
 import CategoryFilter from "./CategoryFilter";
+import ItemsSkeletonGrid from "./ItemsSkeletonGrid";
+
+// Code-split the ItemsGrid component
+const ItemsGrid = lazy(() => import("./ItemsGrid"));
 
 interface ItemsSectionProps {
   items: Item[];
@@ -49,11 +52,13 @@ const ItemsSection = memo(({
           <CategoryFilter activeCategory={activeCategory} handleCategoryClick={handleCategoryClick} />
         </div>
 
-        {/* Items Grid */}
+        {/* Items Grid with improved loading states */}
         {isLoading ? (
-          <LoadingState />
+          <ItemsSkeletonGrid />
         ) : items.length > 0 ? (
-          <ItemsGrid items={items} />
+          <Suspense fallback={<ItemsSkeletonGrid />}>
+            <ItemsGrid items={items} />
+          </Suspense>
         ) : (
           <EmptyState />
         )}

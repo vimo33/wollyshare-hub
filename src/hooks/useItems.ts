@@ -1,13 +1,26 @@
 
 import { useState, useEffect, useMemo } from "react";
-import { useItemsQuery } from "./useItemsQuery";
+import { useItemsQuery, ItemsQueryResult } from "./useItemsQuery";
+import { Item } from "@/types/item";
+
+/**
+ * Interface for the return value of the useItems hook
+ */
+export interface UseItemsResult {
+  items: Item[];
+  isLoaded: boolean;
+  isLoading: boolean;
+  error: Error | null;
+  locationData: Map<string, { name: string; address: string; }>;
+  fetchItems: () => Promise<void>;
+}
 
 /**
  * Custom hook to fetch and manage items with loading state
  * @param userId Optional user ID to filter items by owner
  * @returns Items data and loading states
  */
-export const useItems = (userId?: string) => {
+export const useItems = (userId?: string): UseItemsResult => {
   const [isLoaded, setIsLoaded] = useState(false);
   
   const { 
@@ -30,7 +43,7 @@ export const useItems = (userId?: string) => {
     items, 
     isLoaded, 
     isLoading,
-    error,
+    error: error || null,
     locationData,
     fetchItems: refetch 
   }), [items, isLoaded, isLoading, error, locationData, refetch]);
