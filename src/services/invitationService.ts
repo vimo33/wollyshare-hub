@@ -16,7 +16,7 @@ export const createInvitation = async (email: string): Promise<Invitation | null
     
   if (error) {
     console.error('Error creating invitation:', error);
-    return null;
+    throw error; // Throw the error so it can be caught by the mutation
   }
   
   // Fetch the created invitation
@@ -28,7 +28,7 @@ export const createInvitation = async (email: string): Promise<Invitation | null
     
   if (fetchError) {
     console.error('Error fetching invitation:', fetchError);
-    return null;
+    throw fetchError; // Throw the error so it can be caught by the mutation
   }
   
   return invitation as unknown as Invitation;
@@ -42,7 +42,7 @@ export const listInvitations = async (): Promise<Invitation[]> => {
     
   if (error) {
     console.error('Error listing invitations:', error);
-    return [];
+    throw error; // Throw the error so it can be caught by the query
   }
   
   return data as unknown as Invitation[];
@@ -56,7 +56,7 @@ export const verifyInvitation = async (token: string): Promise<boolean> => {
     
   if (error) {
     console.error('Error verifying invitation:', error);
-    return false;
+    throw error; // Throw the error so it can be caught
   }
   
   return !!data;

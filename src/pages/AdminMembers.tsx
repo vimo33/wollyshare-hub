@@ -31,11 +31,20 @@ const AdminMembers = () => {
   }, [user, adminProfile, authLoading, navigate]);
 
   // Fetch invitations
-  const { data: invitations, isLoading: invitationsLoading } = useQuery({
+  const { data: invitations, isLoading: invitationsLoading, error: invitationsError } = useQuery({
     queryKey: ['invitations'],
     queryFn: listInvitations,
     enabled: !!user && !!adminProfile,
+    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchOnWindowFocus: true,
   });
+
+  // Log errors for debugging
+  useEffect(() => {
+    if (invitationsError) {
+      console.error("Error fetching invitations:", invitationsError);
+    }
+  }, [invitationsError]);
 
   // Fetch members
   const { data: members, isLoading: membersLoading } = useQuery({

@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -27,6 +27,7 @@ const inviteFormSchema = z.object({
 type InviteFormValues = z.infer<typeof inviteFormSchema>;
 
 const InviteForm: React.FC = () => {
+  const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
 
   // Create invitation mutation
@@ -36,9 +37,17 @@ const InviteForm: React.FC = () => {
       toast.success("Invitation sent successfully");
       queryClient.invalidateQueries({ queryKey: ['invitations'] });
       form.reset();
+      setOpen(false);
     },
-    onError: (error) => {
-      toast.error("Failed to send invitation: " + error);
+    onError: (error: any) => {
+      console.error("Invitation error:", error);
+      
+      // Check if it's a duplicate email error
+      if (error.message?.includes("duplicate key") || error.message?.includes("unique constraint")) {
+        toast.error("An invitation has already been sent to this email address");
+      } else {
+        toast.error("Failed to send invitation. Please try again.");
+      }
     },
   });
 
@@ -55,7 +64,7 @@ const InviteForm: React.FC = () => {
   };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button className="flex items-center gap-2">
           <Plus className="h-4 w-4" />
