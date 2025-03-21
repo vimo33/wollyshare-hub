@@ -1,8 +1,9 @@
 
+import { ChevronRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Check } from 'lucide-react';
 
 const Hero = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -70,14 +71,6 @@ const Hero = () => {
     fetchStats();
   }, []);
 
-  const howItWorksSteps = [
-    "Join the App with an invitation from your community administrator",
-    "Set up your profile with your details and convenient pickup times",
-    "Share items you own by listing them in the app",
-    "Search or browse to find items you need to borrow",
-    "Return items to their owners during convenient times"
-  ];
-
   return (
     <section className="pt-28 pb-20 px-6 md:pt-40 md:pb-32 relative overflow-hidden">
       {/* Background Decorative Elements */}
@@ -107,21 +100,14 @@ const Hero = () => {
             all in one simple platform.
           </p>
           
-          {/* How It Works Section - replacing buttons */}
-          <div className="mb-16 max-w-2xl mx-auto">
-            <h2 className="text-2xl font-semibold mb-6">How It Works</h2>
-            <div className="glass rounded-2xl p-8 text-left">
-              <ul className="space-y-3">
-                {howItWorksSteps.map((step, index) => (
-                  <li key={index} className="flex items-start gap-3">
-                    <div className="bg-wolly-green/20 p-1 rounded-full mt-0.5">
-                      <Check className="h-4 w-4 text-green-600" />
-                    </div>
-                    <span>{step}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+            <button className="px-8 py-3 rounded-full bg-primary text-white hover:bg-primary/90 transition-colors shadow-sm w-full sm:w-auto">
+              Discover Items
+            </button>
+            <Link to="/how-it-works" className="px-8 py-3 rounded-full bg-secondary hover:bg-secondary/80 transition-colors flex items-center justify-center gap-1 w-full sm:w-auto">
+              <span>How it works</span>
+              <ChevronRight className="h-4 w-4" />
+            </Link>
           </div>
         </div>
         
