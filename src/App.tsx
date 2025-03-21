@@ -14,6 +14,7 @@ import Admin from "./pages/Admin";
 import AdminMembers from "./pages/AdminMembers";
 import AdminCommunitySettings from "./pages/AdminCommunitySettings";
 import HowItWorks from "./pages/HowItWorks";
+import MyItems from "./pages/MyItems";
 import { useAuth } from "@/contexts/AuthContext";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,7 @@ const AppRoutes = () => {
       <Route path="/auth" element={<Auth />} />
       <Route path="/admin/auth" element={<AdminAuth />} />
       <Route path="/how-it-works" element={<HowItWorks />} />
+      <Route path="/my-items" element={<MyItems />} />
       
       {/* Protected Admin Routes */}
       <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
@@ -48,7 +50,6 @@ const AppRoutes = () => {
       <Route path="/admin/community-settings" element={<AdminRoute><AdminCommunitySettings /></AdminRoute>} />
       
       <Route path="/browse" element={<Index />} /> {/* Temporary routing to Index */}
-      <Route path="/my-items" element={<Index />} /> {/* Temporary routing to Index */}
       <Route path="/requests" element={<Index />} /> {/* Temporary routing to Index */}
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />
