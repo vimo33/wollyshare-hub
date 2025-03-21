@@ -10,6 +10,15 @@ import { Item } from "../types/item";
 import { extractLocationFromDescription } from "../utils/itemUtils";
 import { useAuth } from "@/contexts/AuthContext";
 
+// Valid category types for type-checking
+const validCategories = ["tools", "kitchen", "electronics", "sports", "other"] as const;
+type ValidCategory = typeof validCategories[number];
+
+// Helper to validate if a category is one of the allowed values
+const isValidCategory = (category: string): category is ValidCategory => {
+  return validCategories.includes(category as ValidCategory);
+};
+
 const ItemGrid = () => {
   const [items, setItems] = useState<Item[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -102,12 +111,16 @@ const ItemGrid = () => {
           locationName = extractedLocation !== "Location not specified" ? extractedLocation : "Location not specified";
         }
         
+        // Validate the category or fallback to "other"
+        const safeCategory = isValidCategory(item.category) ? item.category : "other";
+        
         return {
           ...item,
           ownerName: userInfo.name,
           location: locationName,
-          locationAddress: locationAddress
-        };
+          locationAddress: locationAddress,
+          category: safeCategory
+        } as Item; // Cast to Item after validation
       });
 
       console.log(`Found ${itemsWithOwners.length} items from all users`);
