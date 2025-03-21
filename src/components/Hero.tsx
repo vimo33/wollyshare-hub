@@ -1,11 +1,16 @@
-
 import { ChevronRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 const Hero = () => {
   const [isVisible, setIsVisible] = useState(false);
+  const [stats, setStats] = useState({
+    itemsCount: '0',
+    membersCount: '0',
+    sharesCount: '120' // Static for now
+  });
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -13,6 +18,41 @@ const Hero = () => {
     }, 100);
     
     return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        // Fetch items count
+        const { count: itemsCount, error: itemsError } = await supabase
+          .from('items')
+          .select('id', { count: 'exact', head: true });
+
+        // Fetch members count
+        const { count: membersCount, error: membersError } = await supabase
+          .from('profiles')
+          .select('id', { count: 'exact', head: true })
+          .eq('is_member', true);
+
+        if (itemsError) {
+          console.error('Error fetching items count:', itemsError);
+        }
+
+        if (membersError) {
+          console.error('Error fetching members count:', membersError);
+        }
+
+        setStats({
+          itemsCount: itemsCount?.toString() || '0',
+          membersCount: membersCount?.toString() || '0',
+          sharesCount: '120' // Keep this static as we don't have this data
+        });
+      } catch (error) {
+        console.error('Error fetching statistics:', error);
+      }
+    };
+
+    fetchStats();
   }, []);
 
   return (
@@ -55,21 +95,21 @@ const Hero = () => {
           </div>
         </div>
         
-        {/* Statistics */}
+        {/* Statistics - updated to use dynamic data */}
         <div className={cn(
           "grid grid-cols-1 md:grid-cols-3 gap-8 transition-all duration-1000 delay-300",
           isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
         )}>
           <div className="glass rounded-2xl p-6 text-center hover-lift">
-            <div className="text-3xl font-bold mb-2">200+</div>
+            <div className="text-3xl font-bold mb-2">{stats.itemsCount}+</div>
             <p className="text-muted-foreground">Items Available</p>
           </div>
           <div className="glass rounded-2xl p-6 text-center hover-lift">
-            <div className="text-3xl font-bold mb-2">45</div>
+            <div className="text-3xl font-bold mb-2">{stats.membersCount}</div>
             <p className="text-muted-foreground">Active Members</p>
           </div>
           <div className="glass rounded-2xl p-6 text-center hover-lift">
-            <div className="text-3xl font-bold mb-2">120</div>
+            <div className="text-3xl font-bold mb-2">{stats.sharesCount}</div>
             <p className="text-muted-foreground">Successful Shares</p>
           </div>
         </div>
