@@ -4,11 +4,9 @@ import Hero from "@/components/Hero";
 import { supabase } from "@/integrations/supabase/client";
 import { Item } from "@/types/item";
 import { useLocationData } from "@/hooks/useLocationData";
-import SearchBar from "@/components/items/SearchBar";
-import CategoryFilter from "@/components/items/CategoryFilter";
-import ItemsGrid from "@/components/items/ItemsGrid";
-import LoadingState from "@/components/items/LoadingState";
-import EmptyState from "@/components/items/EmptyState";
+import { Search } from "lucide-react";
+import CategoryPill from "@/components/CategoryPill";
+import ItemCard from "@/components/ItemCard";
 
 const Index = () => {
   const [items, setItems] = useState<Item[]>([]);
@@ -117,6 +115,123 @@ const Index = () => {
     setActiveCategory(category === activeCategory ? null : category);
   };
 
+  // Custom SearchBar component defined inline to avoid dependencies
+  const SearchBar = () => {
+    return (
+      <div className="relative max-w-md mx-auto mb-8">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+        <input
+          type="text"
+          className="w-full pl-10 pr-4 py-3 rounded-full border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+          placeholder="Search items or owners..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+    );
+  };
+
+  // Custom CategoryFilter component defined inline to avoid dependencies
+  const CategoryFilter = () => {
+    return (
+      <div className="flex flex-wrap justify-center gap-3">
+        <CategoryPill 
+          label="All Items" 
+          color="blue"
+          active={activeCategory === null}
+          onClick={() => handleCategoryClick(null)}
+        />
+        <CategoryPill 
+          label="Tools" 
+          color="blue"
+          active={activeCategory === "tools"}
+          onClick={() => handleCategoryClick("tools")}
+        />
+        <CategoryPill 
+          label="Kitchen" 
+          color="pink"
+          active={activeCategory === "kitchen"}
+          onClick={() => handleCategoryClick("kitchen")}
+        />
+        <CategoryPill 
+          label="Electronics" 
+          color="purple"
+          active={activeCategory === "electronics"}
+          onClick={() => handleCategoryClick("electronics")}
+        />
+        <CategoryPill 
+          label="Sports" 
+          color="green"
+          active={activeCategory === "sports"}
+          onClick={() => handleCategoryClick("sports")}
+        />
+        <CategoryPill 
+          label="Other" 
+          color="yellow"
+          active={activeCategory === "other"}
+          onClick={() => handleCategoryClick("other")}
+        />
+      </div>
+    );
+  };
+
+  // Custom LoadingState component defined inline to avoid dependencies
+  const LoadingState = () => {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[1, 2, 3, 4, 5, 6].map((item) => (
+          <div key={item} className="h-80 rounded-2xl bg-gray-100 animate-pulse"></div>
+        ))}
+      </div>
+    );
+  };
+
+  // Custom EmptyState component defined inline to avoid dependencies
+  const EmptyState = () => {
+    return (
+      <div className="text-center py-16">
+        <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-muted flex items-center justify-center">
+          <Search className="h-8 w-8 text-muted-foreground" />
+        </div>
+        <h3 className="text-xl font-medium mb-2">No items found</h3>
+        <p className="text-muted-foreground">
+          Try adjusting your search or filter criteria
+        </p>
+      </div>
+    );
+  };
+
+  // Custom ItemsGrid component defined inline to avoid dependencies
+  const ItemsGrid = () => {
+    console.log(`ItemsGrid rendering ${filteredItems.length} items with IDs:`, filteredItems.map(item => item.id));
+    
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredItems.map((item, index) => (
+          <div
+            key={item.id}
+            className="opacity-0 animate-fade-up"
+            style={{ animationDelay: `${index * 100}ms`, animationFillMode: 'forwards' }}
+          >
+            <ItemCard
+              id={item.id}
+              name={item.name}
+              ownerName={item.ownerName || "Unknown"}
+              location={item.location || "Location not specified"}
+              locationAddress={item.locationAddress}
+              weekdayAvailability={item.weekday_availability}
+              weekendAvailability={item.weekend_availability}
+              category={item.category as any}
+              imageUrl={item.image_url}
+              user_id={item.user_id}
+              onClick={() => console.log(`Clicked on item: ${item.id}`)}
+            />
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-white">
       <main>
@@ -134,15 +249,15 @@ const Index = () => {
 
             {/* Search and Filter */}
             <div className="mb-10">
-              <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
-              <CategoryFilter activeCategory={activeCategory} handleCategoryClick={handleCategoryClick} />
+              <SearchBar />
+              <CategoryFilter />
             </div>
 
             {/* Items Grid */}
             {isLoading ? (
               <LoadingState />
             ) : filteredItems.length > 0 ? (
-              <ItemsGrid items={filteredItems} />
+              <ItemsGrid />
             ) : (
               <EmptyState />
             )}
