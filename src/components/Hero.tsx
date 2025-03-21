@@ -29,23 +29,11 @@ const Hero = () => {
           .from('items')
           .select('id', { count: 'exact', head: true });
 
-        // Log all profiles first to debug
-        const { data: allProfiles, error: allProfilesError } = await supabase
-          .from('profiles')
-          .select('*');
-        
-        console.log('All profiles:', allProfiles);
-        
-        if (allProfilesError) {
-          console.error('Error fetching all profiles:', allProfilesError);
-        }
-
-        // Fetch members count - we'll count all profiles for now since we're debugging
+        // Fetch members count - correctly filtering by is_member flag
         const { data: membersData, error: membersError } = await supabase
           .from('profiles')
-          .select('id');
-        
-        console.log('Members data:', membersData);
+          .select('id')
+          .eq('is_member', true);
 
         // Fetch unique categories count
         const { data: categoriesData, error: categoriesError } = await supabase
@@ -70,12 +58,9 @@ const Hero = () => {
           ? [...new Set(categoriesData.map(item => item.category))]
           : [];
 
-        // For now, let's count all profiles as members
-        const memberCount = membersData ? membersData.length : 0;
-
         setStats({
           itemsCount: itemsCount?.toString() || '0',
-          membersCount: memberCount.toString(),
+          membersCount: membersData?.length.toString() || '0',
           categoriesCount: uniqueCategories.length.toString() || '0'
         });
       } catch (error) {
