@@ -29,8 +29,11 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
-import { Image, X, Upload } from "lucide-react";
+import { Image, X, Upload, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { v4 as uuidv4 } from "uuid";
 
 // Define form schema
 const formSchema = z.object({
@@ -47,12 +50,15 @@ interface ItemFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   itemData?: ItemFormValues & { id?: string; imageUrl?: string };
+  onSuccess?: () => void;
 }
 
-const ItemFormDialog = ({ open, onOpenChange, itemData }: ItemFormDialogProps) => {
+const ItemFormDialog = ({ open, onOpenChange, itemData, onSuccess }: ItemFormDialogProps) => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [imagePreview, setImagePreview] = useState<string | null>(itemData?.imageUrl || null);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Set up form with default values
   const form = useForm<ItemFormValues>({
@@ -66,21 +72,103 @@ const ItemFormDialog = ({ open, onOpenChange, itemData }: ItemFormDialogProps) =
     },
   });
 
-  const onSubmit = async (data: ItemFormValues) => {
+  const uploadImage = async (file: File): Promise<string | null> => {
     try {
-      // Here we would handle form submission, including image upload
-      // and saving to the database via Supabase
-      
-      // Simulate successful submission for now
+      // Create a unique filename
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${uuidv4()}.${fileExt}`;
+      const filePath = `${user?.id}/${fileName}`;
+
+      // Upload the file to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('items')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        console.error('Error uploading file:', uploadError);
+        return null;
+      }
+
+      // Get public URL
+      const { data } = supabase.storage
+        .from('items')
+        .getPublicUrl(filePath);
+
+      return data.publicUrl;
+    } catch (error) {
+      console.error('Error in upload process:', error);
+      return null;
+    }
+  };
+
+  const onSubmit = async (data: ItemFormValues) => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to add items.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      let imageUrl = itemData?.imageUrl || null;
+
+      // If there's a new image file, upload it
+      if (imageFile) {
+        imageUrl = await uploadImage(imageFile);
+      }
+
+      if (itemData?.id) {
+        // Update existing item
+        const { error } = await supabase
+          .from('items')
+          .update({
+            name: data.name,
+            category: data.category,
+            description: data.description || null,
+            image_url: imageUrl,
+            weekday_availability: data.weekdayAvailability,
+            weekend_availability: data.weekendAvailability,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', itemData.id);
+
+        if (error) throw error;
+      } else {
+        // Insert new item
+        const { error } = await supabase
+          .from('items')
+          .insert({
+            user_id: user.id,
+            name: data.name,
+            category: data.category,
+            description: data.description || null,
+            image_url: imageUrl,
+            weekday_availability: data.weekdayAvailability,
+            weekend_availability: data.weekendAvailability,
+          });
+
+        if (error) throw error;
+      }
+
       toast({
         title: itemData ? "Item Updated" : "Item Added",
         description: `${data.name} has been ${itemData ? "updated" : "added"} successfully.`,
       });
       
+      // Reset form and state
       onOpenChange(false);
       form.reset();
       setImagePreview(null);
       setImageFile(null);
+      
+      // Call success callback if provided
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (error) {
       console.error("Error submitting form:", error);
       toast({
@@ -88,6 +176,8 @@ const ItemFormDialog = ({ open, onOpenChange, itemData }: ItemFormDialogProps) =
         description: "There was a problem saving your item. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -279,7 +369,8 @@ const ItemFormDialog = ({ open, onOpenChange, itemData }: ItemFormDialogProps) =
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button type="submit">
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {itemData ? "Save Changes" : "Add Item"}
               </Button>
             </DialogFooter>

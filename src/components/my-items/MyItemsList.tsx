@@ -1,6 +1,6 @@
 
-import { useState } from "react";
-import { Edit, Trash2, AlertTriangle, Image } from "lucide-react";
+import { useState, useEffect, forwardRef, useImperativeHandle } from "react";
+import { Edit, Trash2, AlertTriangle, Image, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,37 +23,18 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/components/ui/use-toast";
 import ItemFormDialog from "./ItemFormDialog";
+import { supabase } from "@/integrations/supabase/client";
 
-// Temporary mock data until we connect to Supabase
-const mockItems = [
-  {
-    id: "1",
-    name: "Power Drill",
-    category: "tools",
-    description: "Cordless power drill, works great for home projects",
-    imageUrl: "https://images.unsplash.com/photo-1580402427914-a6cc60da4ebc?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3",
-    weekdayAvailability: "evening",
-    weekendAvailability: "anytime",
-  },
-  {
-    id: "2",
-    name: "Stand Mixer",
-    category: "kitchen",
-    description: "Professional grade stand mixer, perfect for baking",
-    imageUrl: "https://images.unsplash.com/photo-1594224457860-23f321e0d814?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3",
-    weekdayAvailability: "unavailable",
-    weekendAvailability: "morning",
-  },
-  {
-    id: "3",
-    name: "Camping Tent",
-    category: "sports",
-    description: "4-person camping tent, easy to set up",
-    imageUrl: null,
-    weekdayAvailability: "anytime",
-    weekendAvailability: "anytime",
-  },
-];
+// Item type
+type Item = {
+  id: string;
+  name: string;
+  category: string;
+  description: string | null;
+  image_url: string | null;
+  weekday_availability: string;
+  weekend_availability: string;
+};
 
 // Helper function to get readable availability text
 const getAvailabilityText = (value: string) => {
@@ -79,38 +60,109 @@ const getCategoryColor = (category: string) => {
   return colors[category] || "bg-gray-200 text-gray-800";
 };
 
-const MyItemsList = () => {
+export interface MyItemsListRef {
+  fetchItems: () => Promise<void>;
+}
+
+const MyItemsList = forwardRef<MyItemsListRef>((props, ref) => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [items, setItems] = useState(mockItems);
+  const [items, setItems] = useState<Item[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [itemToEdit, setItemToEdit] = useState<any | null>(null);
+  const [itemToEdit, setItemToEdit] = useState<Item | null>(null);
 
-  // In a real implementation, we would fetch items from Supabase here
+  // Fetch items from Supabase
+  const fetchItems = async () => {
+    if (!user) {
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('items')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      setItems(data || []);
+    } catch (error) {
+      console.error("Error fetching items:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load your items. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Expose fetchItems method via ref
+  useImperativeHandle(ref, () => ({
+    fetchItems
+  }));
+
+  // Fetch items when component mounts or user changes
+  useEffect(() => {
+    fetchItems();
+  }, [user]);
 
   const handleDelete = (itemId: string) => {
     setItemToDelete(itemId);
     setDeleteDialogOpen(true);
   };
 
-  const confirmDelete = () => {
-    if (itemToDelete) {
-      // In a real implementation, we would delete from Supabase here
-      const updatedItems = items.filter(item => item.id !== itemToDelete);
-      setItems(updatedItems);
+  const confirmDelete = async () => {
+    if (!itemToDelete) return;
+
+    try {
+      const { error } = await supabase
+        .from('items')
+        .delete()
+        .eq('id', itemToDelete);
+
+      if (error) throw error;
+
+      // Remove item from state
+      setItems(items.filter(item => item.id !== itemToDelete));
       
       toast({
         title: "Item Deleted",
         description: "Your item has been removed successfully.",
       });
+    } catch (error) {
+      console.error("Error deleting item:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete item. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeleteDialogOpen(false);
+      setItemToDelete(null);
     }
-    setDeleteDialogOpen(false);
-    setItemToDelete(null);
   };
 
-  const handleEdit = (item: any) => {
+  const handleEdit = (item: Item) => {
+    // Transform item to match form structure
+    const formattedItem = {
+      id: item.id,
+      name: item.name,
+      category: item.category,
+      description: item.description || "",
+      weekdayAvailability: item.weekday_availability,
+      weekendAvailability: item.weekend_availability,
+      imageUrl: item.image_url,
+    };
+    
     setItemToEdit(item);
     setEditDialogOpen(true);
   };
@@ -119,6 +171,15 @@ const MyItemsList = () => {
     return (
       <div className="text-center py-12">
         <p className="text-muted-foreground">Please sign in to view your items.</p>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="text-center py-12 flex flex-col items-center gap-4">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-muted-foreground">Loading your items...</p>
       </div>
     );
   }
@@ -147,9 +208,9 @@ const MyItemsList = () => {
         {items.map((item) => (
           <Card key={item.id} className="overflow-hidden">
             <div className="relative h-48 bg-muted">
-              {item.imageUrl ? (
+              {item.image_url ? (
                 <img
-                  src={item.imageUrl}
+                  src={item.image_url}
                   alt={item.name}
                   className="w-full h-full object-cover"
                 />
@@ -174,11 +235,11 @@ const MyItemsList = () => {
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Weekdays:</span>
-                  <span className="font-medium">{getAvailabilityText(item.weekdayAvailability)}</span>
+                  <span className="font-medium">{getAvailabilityText(item.weekday_availability)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Weekends:</span>
-                  <span className="font-medium">{getAvailabilityText(item.weekendAvailability)}</span>
+                  <span className="font-medium">{getAvailabilityText(item.weekend_availability)}</span>
                 </div>
               </div>
             </CardContent>
@@ -234,11 +295,22 @@ const MyItemsList = () => {
         <ItemFormDialog
           open={editDialogOpen}
           onOpenChange={setEditDialogOpen}
-          itemData={itemToEdit}
+          itemData={{
+            id: itemToEdit.id,
+            name: itemToEdit.name,
+            category: itemToEdit.category,
+            description: itemToEdit.description || "",
+            weekdayAvailability: itemToEdit.weekday_availability,
+            weekendAvailability: itemToEdit.weekend_availability,
+            imageUrl: itemToEdit.image_url,
+          }}
+          onSuccess={fetchItems}
         />
       )}
     </div>
   );
-};
+});
+
+MyItemsList.displayName = "MyItemsList";
 
 export default MyItemsList;

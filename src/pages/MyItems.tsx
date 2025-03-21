@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Plus } from "lucide-react";
 import PageHeader from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ const MyItems = () => {
   const [isAddItemOpen, setIsAddItemOpen] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
+  const itemsListRef = useRef<{ fetchItems: () => Promise<void> } | null>(null);
 
   const onOpenAddItem = () => {
     if (!user) {
@@ -23,6 +24,13 @@ const MyItems = () => {
       return;
     }
     setIsAddItemOpen(true);
+  };
+
+  const handleItemAdded = () => {
+    // Refresh the items list when a new item is added
+    if (itemsListRef.current) {
+      itemsListRef.current.fetchItems();
+    }
   };
 
   return (
@@ -43,12 +51,13 @@ const MyItems = () => {
       </PageHeader>
 
       {/* Items list */}
-      <MyItemsList />
+      <MyItemsList ref={itemsListRef} />
 
       {/* Add item dialog */}
       <ItemFormDialog 
         open={isAddItemOpen} 
-        onOpenChange={setIsAddItemOpen} 
+        onOpenChange={setIsAddItemOpen}
+        onSuccess={handleItemAdded}
       />
     </div>
   );
