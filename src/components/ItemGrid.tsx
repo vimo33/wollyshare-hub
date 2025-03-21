@@ -3,84 +3,121 @@ import { useState, useEffect } from "react";
 import ItemCard from "./ItemCard";
 import CategoryPill from "./CategoryPill";
 import { Search } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
-// Mock data
-const mockItems = [
-  {
-    id: "1",
-    name: "Power Drill",
-    ownerName: "Alex Kim",
-    location: "North Building",
-    availableFor: "Weekends",
-    category: "tools",
-    imageUrl: "https://images.unsplash.com/photo-1504148455328-c376907d081c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-  },
-  {
-    id: "2",
-    name: "Stand Mixer",
-    ownerName: "Jamie Chen",
-    location: "East Wing",
-    availableFor: "Weekdays",
-    category: "kitchen",
-    imageUrl: "https://images.unsplash.com/photo-1577991128076-d09a189172d8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-  },
-  {
-    id: "3",
-    name: "Bluetooth Speaker",
-    ownerName: "Taylor Smith",
-    location: "South Building",
-    availableFor: "Anytime",
-    category: "electronics",
-    imageUrl: "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-  },
-  {
-    id: "4",
-    name: "Yoga Mat",
-    ownerName: "Jordan Lee",
-    location: "West Wing",
-    availableFor: "Mornings",
-    category: "sports",
-    imageUrl: "https://images.unsplash.com/photo-1575052814086-f385e2e2ad1b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-  },
-  {
-    id: "5",
-    name: "Camping Tent",
-    ownerName: "Casey Wong",
-    location: "Storage Room",
-    availableFor: "Weekends",
-    category: "sports",
-    imageUrl: "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-  },
-  {
-    id: "6",
-    name: "Projector",
-    ownerName: "Riley Johnson",
-    location: "Meeting Room",
-    availableFor: "Evenings",
-    category: "electronics",
-    imageUrl: "https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-  }
-] as const;
+// Define the Item type
+type Item = {
+  id: string;
+  name: string;
+  category: string;
+  user_id: string;
+  image_url: string | null;
+  description: string | null;
+  weekday_availability: string;
+  weekend_availability: string;
+  ownerName?: string; // Will be populated after fetching
+  location?: string; // We'll derive this from the description
+};
 
 const ItemGrid = () => {
-  const [items, setItems] = useState(mockItems);
+  const [items, setItems] = useState<Item[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate loading
-    const timer = setTimeout(() => {
-      setIsLoaded(true);
-    }, 500);
-    
-    return () => clearTimeout(timer);
+    fetchItems();
   }, []);
+
+  const fetchItems = async () => {
+    setIsLoading(true);
+    try {
+      // Fetch items from Supabase
+      const { data: itemsData, error: itemsError } = await supabase
+        .from('items')
+        .select('*');
+
+      if (itemsError) {
+        console.error('Error fetching items:', itemsError);
+        return;
+      }
+
+      // Get unique user IDs from the items
+      const userIds = [...new Set(itemsData.map(item => item.user_id))];
+      
+      // Fetch user profiles for those IDs
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', userIds);
+
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+      }
+
+      // Create a map of user IDs to names
+      const userMap = new Map();
+      profilesData?.forEach(profile => {
+        userMap.set(profile.id, profile.full_name || 'Unknown User');
+      });
+
+      // Combine items with owner names
+      const itemsWithOwners = itemsData.map(item => ({
+        ...item,
+        ownerName: userMap.get(item.user_id) || 'Unknown User',
+        // Extract a location from the description or use a default
+        location: extractLocationFromDescription(item.description),
+        // Format availability
+        availableFor: formatAvailability(item.weekday_availability, item.weekend_availability)
+      }));
+
+      setItems(itemsWithOwners);
+      
+      // Simulate some loading time for smoother UI
+      setTimeout(() => {
+        setIsLoaded(true);
+        setIsLoading(false);
+      }, 500);
+    } catch (error) {
+      console.error('Error in fetchItems:', error);
+      setIsLoading(false);
+    }
+  };
+
+  // Helper function to extract location from description
+  const extractLocationFromDescription = (description: string | null): string => {
+    if (!description) return 'Location not specified';
+    
+    // Look for location-related keywords in the description
+    const locationKeywords = ['located', 'location', 'available at', 'found at', 'stored at'];
+    
+    for (const keyword of locationKeywords) {
+      const index = description.toLowerCase().indexOf(keyword);
+      if (index !== -1) {
+        // Extract a substring after the keyword (max 30 chars)
+        const locationInfo = description.substring(index + keyword.length, index + keyword.length + 30);
+        return locationInfo.split('.')[0].trim(); // Stop at the first period
+      }
+    }
+    
+    return 'Location in description';
+  };
+
+  // Helper function to format availability
+  const formatAvailability = (weekday: string, weekend: string): string => {
+    if (weekday === 'anytime' && weekend === 'anytime') return 'Anytime';
+    if (weekday === 'anytime') return 'Weekdays';
+    if (weekend === 'anytime') return 'Weekends';
+    if (weekday === 'morning' && weekend === 'morning') return 'Mornings';
+    if (weekday === 'evening' && weekend === 'evening') return 'Evenings';
+    return `${weekday} & ${weekend}`;
+  };
 
   // Filter items based on search query and active category
   const filteredItems = items.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         item.ownerName.toLowerCase().includes(searchQuery.toLowerCase());
+                         (item.ownerName && item.ownerName.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesCategory = activeCategory === null || item.category === activeCategory;
     
     return matchesSearch && matchesCategory;
@@ -155,7 +192,7 @@ const ItemGrid = () => {
         </div>
 
         {/* Items Grid */}
-        {!isLoaded ? (
+        {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map((item) => (
               <div key={item} className="h-80 rounded-2xl bg-gray-100 animate-pulse"></div>
@@ -172,11 +209,11 @@ const ItemGrid = () => {
                 <ItemCard
                   id={item.id}
                   name={item.name}
-                  ownerName={item.ownerName}
-                  location={item.location}
-                  availableFor={item.availableFor}
-                  category={item.category}
-                  imageUrl={item.imageUrl}
+                  ownerName={item.ownerName || "Unknown"}
+                  location={item.location || "Location not specified"}
+                  availableFor={item.availableFor || "Check with owner"}
+                  category={item.category as any}
+                  imageUrl={item.image_url || "https://images.unsplash.com/photo-1504148455328-c376907d081c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"}
                   onClick={() => console.log(`Clicked on item: ${item.id}`)}
                 />
               </div>
