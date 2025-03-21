@@ -1,5 +1,5 @@
 
-import { memo, useCallback, lazy, Suspense } from "react";
+import { memo, lazy, Suspense } from "react";
 import { Item } from "@/types/item";
 import LoadingState from "./LoadingState";
 import EmptyState from "./EmptyState";
@@ -27,15 +27,6 @@ const ItemsSection = memo(({
   activeCategory, 
   setActiveCategory 
 }: ItemsSectionProps) => {
-  
-  const handleCategoryClick = useCallback((category: string | null) => {
-    setActiveCategory(category === activeCategory ? null : category);
-  }, [activeCategory, setActiveCategory]);
-
-  const handleSearchChange = useCallback((query: string) => {
-    setSearchQuery(query);
-  }, [setSearchQuery]);
-
   return (
     <section className="py-16 px-6 bg-gradient-to-b from-white to-gray-50">
       <div className="max-w-7xl mx-auto">
@@ -48,8 +39,8 @@ const ItemsSection = memo(({
 
         {/* Search and Filter */}
         <div className="mb-10">
-          <SearchBar searchQuery={searchQuery} setSearchQuery={handleSearchChange} />
-          <CategoryFilter activeCategory={activeCategory} handleCategoryClick={handleCategoryClick} />
+          <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+          <CategoryFilter activeCategory={activeCategory} handleCategoryClick={setActiveCategory} />
         </div>
 
         {/* Items Grid with improved loading states */}

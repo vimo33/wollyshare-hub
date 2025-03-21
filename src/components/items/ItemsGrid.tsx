@@ -1,5 +1,5 @@
 
-import { memo, useMemo } from 'react';
+import { memo } from 'react';
 import ItemCard from "../ItemCard";
 import { Item } from "@/types/item";
 
@@ -11,18 +11,6 @@ interface ItemsGridProps {
  * Displays a responsive grid of item cards
  */
 const ItemsGrid = memo(({ items }: ItemsGridProps) => {
-  // Create empty state message only when needed
-  const emptyStateMessage = useMemo(() => {
-    if (items.length === 0) {
-      return <p className="text-center text-gray-500">No items available.</p>;
-    }
-    return null;
-  }, [items.length]);
-  
-  if (emptyStateMessage) {
-    return emptyStateMessage;
-  }
-  
   return (
     <div 
       className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"

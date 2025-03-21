@@ -1,14 +1,34 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
+// Types for better organization
+export interface AuthResponse {
+  user: any;
+  error: any;
+}
+
+export interface UserRegistrationData {
+  email: string;
+  password: string;
+  username: string;
+  fullName: string;
+  invitationToken?: string;
+  metadata?: Record<string, any>;
+}
+
+/**
+ * Authentication service for user management
+ */
+
 // Regular user registration
-export const registerUser = async (
-  email: string, 
-  password: string, 
-  username: string, 
-  fullName: string,
-  invitationToken?: string,
-  metadata?: Record<string, any>
-): Promise<{ user: any; error: any }> => {
+export const registerUser = async ({
+  email,
+  password,
+  username,
+  fullName,
+  invitationToken,
+  metadata = {}
+}: UserRegistrationData): Promise<AuthResponse> => {
   // First verify the invitation if token is provided
   if (invitationToken) {
     const { data: valid, error: verifyError } = await supabase
@@ -47,7 +67,7 @@ export const registerAdmin = async (
   password: string, 
   username: string, 
   fullName: string
-): Promise<{ user: any; error: any }> => {
+): Promise<AuthResponse> => {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -70,7 +90,7 @@ export const registerAdmin = async (
 export const loginUser = async (
   email: string, 
   password: string
-): Promise<{ user: any; error: any }> => {
+): Promise<AuthResponse> => {
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password
@@ -88,12 +108,11 @@ export const logoutUser = async (): Promise<{ error: any }> => {
   return { error };
 };
 
-// Get current session
+// Session management
 export const getCurrentSession = async () => {
   return await supabase.auth.getSession();
 };
 
-// Get current user
 export const getCurrentUser = async () => {
   return await supabase.auth.getUser();
 };
