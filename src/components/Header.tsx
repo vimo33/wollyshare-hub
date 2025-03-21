@@ -28,15 +28,17 @@ const Header = () => {
           <span className="font-semibold text-lg hidden sm:inline-block">WollyShare</span>
         </Link>
 
-        {/* Navigation Links - Only show on larger screens */}
-        <nav className="hidden md:flex items-center space-x-6">
-          <Link to="/" className="text-sm font-medium hover:text-primary/80 transition-colors">
-            Home
-          </Link>
-          <Link to="/my-items" className="text-sm font-medium hover:text-primary/80 transition-colors">
-            My Items
-          </Link>
-        </nav>
+        {/* Navigation Links - Only show if user is logged in */}
+        {user && (
+          <nav className="hidden md:flex items-center space-x-6">
+            <Link to="/" className="text-sm font-medium hover:text-primary/80 transition-colors">
+              Home
+            </Link>
+            <Link to="/my-items" className="text-sm font-medium hover:text-primary/80 transition-colors">
+              My Items
+            </Link>
+          </nav>
+        )}
 
         {/* Auth buttons */}
         <div className="flex items-center gap-2">

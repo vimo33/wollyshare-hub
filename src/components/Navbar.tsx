@@ -3,10 +3,12 @@ import { useState, useEffect } from "react";
 import { Bell, Search, Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -39,15 +41,17 @@ const Navbar = () => {
           <span>WollyShare</span>
         </Link>
 
-        {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center space-x-8">
-          <Link to="/" className="text-sm font-medium hover:text-primary/80 transition-colors">
-            Home
-          </Link>
-          <Link to="/my-items" className="text-sm font-medium hover:text-primary/80 transition-colors">
-            My Items
-          </Link>
-        </div>
+        {/* Desktop Navigation - Only show when user is logged in */}
+        {user && (
+          <div className="hidden md:flex items-center space-x-8">
+            <Link to="/" className="text-sm font-medium hover:text-primary/80 transition-colors">
+              Home
+            </Link>
+            <Link to="/my-items" className="text-sm font-medium hover:text-primary/80 transition-colors">
+              My Items
+            </Link>
+          </div>
+        )}
 
         {/* Actions */}
         <div className="hidden md:flex items-center space-x-4">
@@ -76,20 +80,33 @@ const Navbar = () => {
       {isMenuOpen && (
         <div className="md:hidden absolute top-full left-0 right-0 bg-white shadow-md animate-fade-in">
           <div className="flex flex-col py-4 px-6 space-y-4">
-            <Link 
-              to="/" 
-              className="text-sm font-medium py-2 hover:text-primary/80 transition-colors"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Home
-            </Link>
-            <Link 
-              to="/my-items" 
-              className="text-sm font-medium py-2 hover:text-primary/80 transition-colors"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              My Items
-            </Link>
+            {/* Only show navigation items when user is logged in */}
+            {user ? (
+              <>
+                <Link 
+                  to="/" 
+                  className="text-sm font-medium py-2 hover:text-primary/80 transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Home
+                </Link>
+                <Link 
+                  to="/my-items" 
+                  className="text-sm font-medium py-2 hover:text-primary/80 transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  My Items
+                </Link>
+              </>
+            ) : (
+              <Link 
+                to="/auth" 
+                className="text-sm font-medium py-2 hover:text-primary/80 transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Login
+              </Link>
+            )}
             <div className="flex items-center space-x-4 pt-2">
               <button className="p-2 rounded-full hover:bg-muted transition-colors" aria-label="Search">
                 <Search className="h-5 w-5" />
