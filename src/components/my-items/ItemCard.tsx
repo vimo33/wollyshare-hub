@@ -33,8 +33,16 @@ const ItemCard = ({ item, onEdit, onDelete }: ItemCardProps) => {
   const [imageError, setImageError] = React.useState(false);
 
   const handleImageError = () => {
+    console.error(`Failed to load image for "${item.name}":`, item.image_url);
     setImageError(true);
   };
+
+  // Debug logging for image URLs in development
+  React.useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`ItemCard rendering for ${item.name}:`, { imageUrl: item.image_url });
+    }
+  }, [item.name, item.image_url]);
 
   return (
     <Card className="overflow-hidden">

@@ -26,10 +26,20 @@ const ImageContainer = ({
   // Default image URL to use if the provided URL is null or fails to load
   const defaultImageUrl = "https://images.unsplash.com/photo-1504148455328-c376907d081c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80";
 
-  // Use the provided imageUrl if it exists, otherwise use the default
+  // Use the provided imageUrl if it exists and isn't empty, otherwise use the default
   const displayImageUrl = (!imageUrl || imageError) ? defaultImageUrl : imageUrl;
 
+  // Debug logging for image URLs
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`Rendering image for ${name}:`, { 
+      original: imageUrl, 
+      display: displayImageUrl, 
+      hasError: imageError 
+    });
+  }
+
   const handleImageError = () => {
+    console.error(`Failed to load image for item "${name}":`, imageUrl);
     setImageError(true);
     setImageLoaded(true); // Consider the image "loaded" even if it failed to load the real image
   };
