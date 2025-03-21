@@ -7,6 +7,7 @@ import * as z from "zod";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { updateProfile } from "@/services/profileService";
+import LocationSelect from "@/components/auth/LocationSelect";
 
 import {
   Card,
@@ -34,7 +35,7 @@ const profileFormSchema = z.object({
   username: z.string().min(3, { message: "Username must be at least 3 characters" }),
   fullName: z.string().min(2, { message: "Full name is required" }),
   email: z.string().email({ message: "Please enter a valid email address" }).optional(),
-  avatarUrl: z.string().optional(),
+  location: z.string().optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -58,7 +59,7 @@ const ProfilePage: React.FC = () => {
       username: profile?.username || "",
       fullName: profile?.full_name || "",
       email: profile?.email || user?.email || "",
-      avatarUrl: profile?.avatar_url || "",
+      location: profile?.location || "",
     },
   });
 
@@ -69,7 +70,7 @@ const ProfilePage: React.FC = () => {
         username: profile.username || "",
         fullName: profile.full_name || "",
         email: profile.email || user?.email || "",
-        avatarUrl: profile.avatar_url || "",
+        location: profile.location || "",
       });
     }
   }, [profile, user, form]);
@@ -84,7 +85,7 @@ const ProfilePage: React.FC = () => {
         username: data.username,
         full_name: data.fullName,
         email: data.email,
-        avatar_url: data.avatarUrl,
+        location: data.location,
       });
       
       if (updatedProfile) {
@@ -204,19 +205,7 @@ const ProfilePage: React.FC = () => {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="avatarUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Avatar URL</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter avatar image URL" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <LocationSelect control={form.control} />
             </CardContent>
             <CardFooter>
               <Button
