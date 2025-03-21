@@ -1,14 +1,16 @@
 
 import ItemCard from "../ItemCard";
 import { Item } from "../../types/item";
+import { memo } from 'react';
 
 type ItemsGridProps = {
   items: Item[];
 };
 
-const ItemsGrid = ({ items }: ItemsGridProps) => {
+// Using memo to prevent unnecessary re-renders when parent components change
+const ItemsGrid = memo(({ items }: ItemsGridProps) => {
   // Add detailed debugging to verify we're getting items
-  console.log(`ItemsGrid rendering ${items.length} items with IDs:`, items.map(item => item.id));
+  console.log(`ItemsGrid rendering ${items.length} items`);
   
   if (items.length === 0) {
     console.log("ItemsGrid: No items to display!");
@@ -40,6 +42,8 @@ const ItemsGrid = ({ items }: ItemsGridProps) => {
       ))}
     </div>
   );
-};
+});
+
+ItemsGrid.displayName = 'ItemsGrid';
 
 export default ItemsGrid;

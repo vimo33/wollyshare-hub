@@ -1,5 +1,5 @@
 
-import { forwardRef, useImperativeHandle } from "react";
+import { forwardRef, useImperativeHandle, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
 import ItemFormDialog from "./ItemFormDialog";
@@ -28,12 +28,24 @@ const MyItemsList = forwardRef<MyItemsListRef>((props, ref) => {
   const [itemToEdit, setItemToEdit] = useState<Item | null>(null);
   
   // Only fetch items if user is logged in
-  const { data: items = [], isLoading, refetch } = useItemsQuery({
+  const { data: items = [], isLoading, error, refetch } = useItemsQuery({
     userId: user?.id,
     enabled: !!user
   });
   
   console.log(`MyItemsList: Displaying ${items.length} items for user: ${user?.id || 'Not logged in'}`);
+  
+  // Handle error with toast notification
+  useEffect(() => {
+    if (error) {
+      console.error('Error fetching user items:', error);
+      toast({
+        title: "Error loading your items",
+        description: "There was a problem retrieving your items. Please try again.",
+        variant: "destructive"
+      });
+    }
+  }, [error, toast]);
   
   // Expose fetchItems method via ref
   useImperativeHandle(ref, () => ({

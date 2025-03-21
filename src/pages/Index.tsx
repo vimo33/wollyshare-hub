@@ -5,6 +5,7 @@ import Hero from "@/components/Hero";
 import Footer from "@/components/Footer";
 import ItemsSection from "@/components/items/ItemsSection";
 import { useItemsQuery } from "@/hooks/useItemsQuery";
+import { useEffect } from "react";
 
 const Index = () => {
   const { toast } = useToast();
@@ -12,15 +13,17 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   
-  // Handle any fetching errors with a toast
-  if (error) {
-    console.error('Error fetching items:', error);
-    toast({
-      title: "Error fetching items",
-      description: "Please try again later",
-      variant: "destructive"
-    });
-  }
+  // Handle any fetching errors with a toast - using useEffect to avoid showing multiple toasts
+  useEffect(() => {
+    if (error) {
+      console.error('Error fetching items:', error);
+      toast({
+        title: "Error fetching items",
+        description: "Please try again later",
+        variant: "destructive"
+      });
+    }
+  }, [error, toast]);
 
   // Filter items based on search query and active category
   const filteredItems = items.filter(item => {

@@ -1,22 +1,31 @@
 
-import { useState } from "react";
-import { Item } from "../types/item";
+import { useState, useEffect } from "react";
 import { useItemsQuery } from "./useItemsQuery";
 
-export const useItems = (locationData: Map<string, {name: string, address: string}>, userId?: string) => {
+export const useItems = (userId?: string) => {
   const [isLoaded, setIsLoaded] = useState(false);
   
-  const { data: items = [], isLoading, refetch } = useItemsQuery({ userId });
+  const { 
+    data: items = [], 
+    isLoading, 
+    error,
+    refetch,
+    locationData
+  } = useItemsQuery({ userId });
 
   // Once data is loaded, update the isLoaded state
-  if (items.length > 0 && !isLoaded && !isLoading) {
-    setIsLoaded(true);
-  }
+  useEffect(() => {
+    if (items.length > 0 && !isLoaded && !isLoading) {
+      setIsLoaded(true);
+    }
+  }, [items, isLoading, isLoaded]);
   
   return { 
     items, 
     isLoaded, 
-    isLoading, 
+    isLoading,
+    error,
+    locationData,
     fetchItems: refetch 
   };
 };

@@ -24,6 +24,7 @@ const ItemsSection = ({
   setActiveCategory 
 }: ItemsSectionProps) => {
   
+  // Log for debugging
   console.log(`ItemsSection: Displaying ${items.length} items, isLoading=${isLoading}`);
 
   const handleCategoryClick = (category: string | null) => {

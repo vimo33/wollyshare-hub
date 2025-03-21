@@ -21,7 +21,16 @@ export async function handleItemSubmit({
 
     // If there's a new image file, upload it
     if (imageFile) {
-      imageUrl = await uploadImage(imageFile, userId);
+      try {
+        imageUrl = await uploadImage(imageFile, userId);
+      } catch (uploadError) {
+        console.error("Error uploading image:", uploadError);
+        return { 
+          success: false, 
+          message: "Error uploading image. Item was not saved.",
+          error: uploadError 
+        };
+      }
     }
 
     if (itemId) {
@@ -39,12 +48,15 @@ export async function handleItemSubmit({
         })
         .eq('id', itemId);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error updating item in database:", error);
+        return { success: false, message: "Error updating item", error };
+      }
       
       return { success: true, message: "Item updated successfully" };
     } else {
       // Insert new item
-      const { error } = await supabase
+      const { error, data: insertedData } = await supabase
         .from('items')
         .insert({
           user_id: userId,
@@ -54,14 +66,26 @@ export async function handleItemSubmit({
           image_url: imageUrl,
           weekday_availability: data.weekdayAvailability,
           weekend_availability: data.weekendAvailability,
-        });
+        })
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error inserting item in database:", error);
+        return { success: false, message: "Error saving item", error };
+      }
       
-      return { success: true, message: "Item added successfully" };
+      return { 
+        success: true, 
+        message: "Item added successfully",
+        data: insertedData?.[0] || null
+      };
     }
   } catch (error) {
     console.error("Error submitting form:", error);
-    return { success: false, message: "Error saving item" };
+    return { 
+      success: false, 
+      message: "An unexpected error occurred while saving the item", 
+      error 
+    };
   }
 }

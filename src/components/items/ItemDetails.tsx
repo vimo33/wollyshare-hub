@@ -1,5 +1,7 @@
 
 import { MapPin, Calendar } from "lucide-react";
+import { formatLocationDisplay } from "./utils/item-display-utils";
+import { formatAvailability } from "./utils/availability-utils";
 
 interface ItemDetailsProps {
   name: string;
@@ -8,7 +10,6 @@ interface ItemDetailsProps {
   locationAddress?: string;
   weekdayAvailability: string;
   weekendAvailability: string;
-  formatAvailability: (availability: string) => string;
 }
 
 const ItemDetails = ({ 
@@ -17,22 +18,10 @@ const ItemDetails = ({
   location, 
   locationAddress,
   weekdayAvailability, 
-  weekendAvailability,
-  formatAvailability
+  weekendAvailability
 }: ItemDetailsProps) => {
-  // Format the location display text
-  const displayLocation = () => {
-    if (!location || location === "Unknown Location") {
-      return "Location not specified";
-    }
-    
-    // If we have both location name and address, display them both
-    if (locationAddress) {
-      return `${location} (${locationAddress})`;
-    }
-    
-    return location;
-  };
+  // Use our utility function to format location display
+  const displayLocation = formatLocationDisplay(location, locationAddress);
 
   return (
     <div className="p-4">
@@ -43,7 +32,7 @@ const ItemDetails = ({
       <div className="flex flex-col space-y-2">
         <div className="flex items-center text-sm text-gray-600">
           <MapPin className="h-4 w-4 mr-2 text-gray-400" />
-          <span>{displayLocation()}</span>
+          <span>{displayLocation}</span>
         </div>
         <div className="flex flex-col space-y-1 text-sm text-gray-600">
           <div className="flex items-center">
