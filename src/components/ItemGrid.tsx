@@ -1,24 +1,13 @@
 
 import { useState, useEffect } from "react";
-import ItemCard from "./ItemCard";
-import CategoryPill from "./CategoryPill";
-import { Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-
-// Define the Item type
-type Item = {
-  id: string;
-  name: string;
-  category: string;
-  user_id: string;
-  image_url: string | null;
-  description: string | null;
-  weekday_availability: string;
-  weekend_availability: string;
-  ownerName?: string; // Will be populated after fetching
-  location?: string; // We'll derive this from the description
-  availableFor?: string; // Adding this property to fix the type error
-};
+import SearchBar from "./items/SearchBar";
+import CategoryFilter from "./items/CategoryFilter";
+import EmptyState from "./items/EmptyState";
+import LoadingState from "./items/LoadingState";
+import ItemsGrid from "./items/ItemsGrid";
+import { Item } from "../types/item";
+import { extractLocationFromDescription } from "../utils/itemUtils";
 
 const ItemGrid = () => {
   const [items, setItems] = useState<Item[]>([]);
@@ -66,7 +55,6 @@ const ItemGrid = () => {
 
       // Combine items with owner names
       const itemsWithOwners = itemsData.map(item => {
-        // Don't format availability here, just pass the raw values to the card
         return {
           ...item,
           ownerName: userMap.get(item.user_id) || 'Unknown User',
@@ -86,25 +74,6 @@ const ItemGrid = () => {
       console.error('Error in fetchItems:', error);
       setIsLoading(false);
     }
-  };
-
-  // Helper function to extract location from description
-  const extractLocationFromDescription = (description: string | null): string => {
-    if (!description) return 'Location not specified';
-    
-    // Look for location-related keywords in the description
-    const locationKeywords = ['located', 'location', 'available at', 'found at', 'stored at'];
-    
-    for (const keyword of locationKeywords) {
-      const index = description.toLowerCase().indexOf(keyword);
-      if (index !== -1) {
-        // Extract a substring after the keyword (max 30 chars)
-        const locationInfo = description.substring(index + keyword.length, index + keyword.length + 30);
-        return locationInfo.split('.')[0].trim(); // Stop at the first period
-      }
-    }
-    
-    return 'Location not specified';
   };
 
   // Filter items based on search query and active category
@@ -132,97 +101,17 @@ const ItemGrid = () => {
 
         {/* Search and Filter */}
         <div className="mb-10">
-          <div className="relative max-w-md mx-auto mb-8">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-            <input
-              type="text"
-              className="w-full pl-10 pr-4 py-3 rounded-full border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-              placeholder="Search items or owners..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-
-          {/* Categories */}
-          <div className="flex flex-wrap justify-center gap-3">
-            <CategoryPill 
-              label="All Items" 
-              color="blue"
-              active={activeCategory === null}
-              onClick={() => handleCategoryClick(null)}
-            />
-            <CategoryPill 
-              label="Tools" 
-              color="blue"
-              active={activeCategory === "tools"}
-              onClick={() => handleCategoryClick("tools")}
-            />
-            <CategoryPill 
-              label="Kitchen" 
-              color="pink"
-              active={activeCategory === "kitchen"}
-              onClick={() => handleCategoryClick("kitchen")}
-            />
-            <CategoryPill 
-              label="Electronics" 
-              color="purple"
-              active={activeCategory === "electronics"}
-              onClick={() => handleCategoryClick("electronics")}
-            />
-            <CategoryPill 
-              label="Sports" 
-              color="green"
-              active={activeCategory === "sports"}
-              onClick={() => handleCategoryClick("sports")}
-            />
-            <CategoryPill 
-              label="Other" 
-              color="yellow"
-              active={activeCategory === "other"}
-              onClick={() => handleCategoryClick("other")}
-            />
-          </div>
+          <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+          <CategoryFilter activeCategory={activeCategory} handleCategoryClick={handleCategoryClick} />
         </div>
 
         {/* Items Grid */}
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map((item) => (
-              <div key={item} className="h-80 rounded-2xl bg-gray-100 animate-pulse"></div>
-            ))}
-          </div>
+          <LoadingState />
         ) : filteredItems.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredItems.map((item, index) => (
-              <div
-                key={item.id}
-                className="opacity-0 animate-fade-up"
-                style={{ animationDelay: `${index * 100}ms`, animationFillMode: 'forwards' }}
-              >
-                <ItemCard
-                  id={item.id}
-                  name={item.name}
-                  ownerName={item.ownerName || "Unknown"}
-                  location={item.location || "Location not specified"}
-                  weekdayAvailability={item.weekday_availability}
-                  weekendAvailability={item.weekend_availability}
-                  category={item.category as any}
-                  imageUrl={item.image_url || "https://images.unsplash.com/photo-1504148455328-c376907d081c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"}
-                  onClick={() => console.log(`Clicked on item: ${item.id}`)}
-                />
-              </div>
-            ))}
-          </div>
+          <ItemsGrid items={filteredItems} />
         ) : (
-          <div className="text-center py-16">
-            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-muted flex items-center justify-center">
-              <Search className="h-8 w-8 text-muted-foreground" />
-            </div>
-            <h3 className="text-xl font-medium mb-2">No items found</h3>
-            <p className="text-muted-foreground">
-              Try adjusting your search or filter criteria
-            </p>
-          </div>
+          <EmptyState />
         )}
       </div>
     </section>
