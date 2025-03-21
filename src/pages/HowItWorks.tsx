@@ -78,10 +78,6 @@ const HowItWorks = () => {
                     <CheckCircle2 className="h-5 w-5 min-w-5 text-yellow-600 mt-0.5" />
                     <span>Provide Details: Add the item's name, description, and pick a category.</span>
                   </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 min-w-5 text-yellow-600 mt-0.5" />
-                    <span>Set Availability: Mark the item as "Available" for borrowing.</span>
-                  </li>
                 </ul>
               </div>
             </div>
@@ -129,10 +125,6 @@ const HowItWorks = () => {
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="h-5 w-5 min-w-5 text-pink-600 mt-0.5" />
                     <span>Return the Item: When finished, drop the item back off with the owner during their convenient times.</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 min-w-5 text-pink-600 mt-0.5" />
-                    <span>Update Status: The owner will mark the item as "Available" again once it's back.</span>
                   </li>
                 </ul>
               </div>
