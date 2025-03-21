@@ -33,6 +33,47 @@ export type Database = {
         }
         Relationships: []
       }
+      borrow_requests: {
+        Row: {
+          borrower_id: string
+          created_at: string
+          id: string
+          item_id: string
+          message: string | null
+          owner_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          borrower_id: string
+          created_at?: string
+          id?: string
+          item_id: string
+          message?: string | null
+          owner_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          borrower_id?: string
+          created_at?: string
+          id?: string
+          item_id?: string
+          message?: string | null
+          owner_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "borrow_requests_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invitations: {
         Row: {
           created_at: string | null
