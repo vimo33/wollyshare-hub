@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import Hero from "@/components/Hero";
 import { supabase } from "@/integrations/supabase/client";
 import { Item } from "@/types/item";
-import { useLocationData } from "@/hooks/useLocationData";
 import { Search } from "lucide-react";
 import CategoryPill from "@/components/CategoryPill";
 import ItemCard from "@/components/ItemCard";
@@ -13,15 +12,39 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
-  const { locationData } = useLocationData();
+  const [locationData, setLocationData] = useState<Map<string, {name: string, address: string}>>(new Map());
 
   useEffect(() => {
-    // Scroll to top when component mounts
-    window.scrollTo(0, 0);
-    
-    console.log("Index page mounted - explicitly fetching ALL items");
+    console.log("Index page mounted - fetching locations and items");
+    fetchLocations();
     fetchAllItems();
-  }, [locationData]);
+  }, []);
+
+  const fetchLocations = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('community_locations')
+        .select('*');
+        
+      if (error) {
+        console.error('Error fetching locations:', error);
+        return;
+      }
+      
+      const locMap = new Map();
+      data?.forEach(location => {
+        locMap.set(location.id, {
+          name: location.name,
+          address: location.address
+        });
+      });
+      
+      setLocationData(locMap);
+      console.log(`Index: Fetched ${locMap.size} locations`);
+    } catch (error) {
+      console.error('Error in fetchLocations:', error);
+    }
+  };
 
   const fetchAllItems = async () => {
     setIsLoading(true);
