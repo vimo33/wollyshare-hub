@@ -4,6 +4,7 @@ import StepCard from "@/components/how-it-works/StepCard";
 import FAQ from "@/components/how-it-works/FAQ";
 import CommunityGuidelines from "@/components/how-it-works/CommunityGuidelines";
 import PageHeader from "@/components/ui/page-header";
+import HowItWorksPreview from "@/components/how-it-works/HowItWorksPreview";
 
 const HowItWorks = () => {
   const stepCards = [
@@ -114,6 +115,11 @@ const HowItWorks = () => {
         description="Welcome to Community Share, your neighborhood sharing hub! This app lets you lend and borrow items like tools, 
         appliances, and household goods with your neighbors."
       />
+
+      {/* How It Works Preview */}
+      <div className="mb-12">
+        <HowItWorksPreview />
+      </div>
 
       {/* First Step Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
