@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import ItemCard from "./ItemCard";
 import CategoryPill from "./CategoryPill";
@@ -17,6 +16,7 @@ type Item = {
   weekend_availability: string;
   ownerName?: string; // Will be populated after fetching
   location?: string; // We'll derive this from the description
+  availableFor?: string; // Adding this property to fix the type error
 };
 
 const ItemGrid = () => {
@@ -63,14 +63,17 @@ const ItemGrid = () => {
       });
 
       // Combine items with owner names
-      const itemsWithOwners = itemsData.map(item => ({
-        ...item,
-        ownerName: userMap.get(item.user_id) || 'Unknown User',
-        // Extract a location from the description or use a default
-        location: extractLocationFromDescription(item.description),
-        // Format availability
-        availableFor: formatAvailability(item.weekday_availability, item.weekend_availability)
-      }));
+      const itemsWithOwners = itemsData.map(item => {
+        const formattedAvailability = formatAvailability(item.weekday_availability, item.weekend_availability);
+        return {
+          ...item,
+          ownerName: userMap.get(item.user_id) || 'Unknown User',
+          // Extract a location from the description or use a default
+          location: extractLocationFromDescription(item.description),
+          // Format availability and add it to the item object
+          availableFor: formattedAvailability
+        };
+      });
 
       setItems(itemsWithOwners);
       
