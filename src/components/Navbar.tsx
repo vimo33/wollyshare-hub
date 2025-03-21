@@ -44,14 +44,8 @@ const Navbar = () => {
           <Link to="/" className="text-sm font-medium hover:text-primary/80 transition-colors">
             Home
           </Link>
-          <Link to="/browse" className="text-sm font-medium hover:text-primary/80 transition-colors">
-            Browse
-          </Link>
           <Link to="/my-items" className="text-sm font-medium hover:text-primary/80 transition-colors">
             My Items
-          </Link>
-          <Link to="/requests" className="text-sm font-medium hover:text-primary/80 transition-colors">
-            Requests
           </Link>
         </div>
 
@@ -90,25 +84,11 @@ const Navbar = () => {
               Home
             </Link>
             <Link 
-              to="/browse" 
-              className="text-sm font-medium py-2 hover:text-primary/80 transition-colors"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Browse
-            </Link>
-            <Link 
               to="/my-items" 
               className="text-sm font-medium py-2 hover:text-primary/80 transition-colors"
               onClick={() => setIsMenuOpen(false)}
             >
               My Items
-            </Link>
-            <Link 
-              to="/requests" 
-              className="text-sm font-medium py-2 hover:text-primary/80 transition-colors"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Requests
             </Link>
             <div className="flex items-center space-x-4 pt-2">
               <button className="p-2 rounded-full hover:bg-muted transition-colors" aria-label="Search">
