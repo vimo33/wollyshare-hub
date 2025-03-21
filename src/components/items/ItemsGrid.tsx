@@ -23,7 +23,7 @@ const ItemsGrid = ({ items }: ItemsGridProps) => {
             weekdayAvailability={item.weekday_availability}
             weekendAvailability={item.weekend_availability}
             category={item.category as any}
-            imageUrl={item.image_url || "https://images.unsplash.com/photo-1504148455328-c376907d081c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"}
+            imageUrl={item.image_url}
             user_id={item.user_id}
             onClick={() => console.log(`Clicked on item: ${item.id}`)}
           />

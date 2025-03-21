@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Calendar, MapPin, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -15,7 +14,7 @@ type ItemCardProps = {
   weekdayAvailability: string;
   weekendAvailability: string;
   category: "tools" | "kitchen" | "electronics" | "sports" | "other";
-  imageUrl: string;
+  imageUrl: string | null;
   user_id: string;
   onClick?: () => void;
 };
@@ -34,9 +33,16 @@ const ItemCard = ({
 }: ItemCardProps) => {
   const [isLiked, setIsLiked] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+
+  // Default image URL to use if the provided URL is null or fails to load
+  const defaultImageUrl = "https://images.unsplash.com/photo-1504148455328-c376907d081c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80";
+
+  // Use the provided imageUrl if it exists, otherwise use the default
+  const displayImageUrl = (!imageUrl || imageError) ? defaultImageUrl : imageUrl;
 
   const categoryColors = {
     tools: "bg-wolly-blue",
@@ -77,6 +83,11 @@ const ItemCard = ({
     setIsDialogOpen(true);
   };
 
+  const handleImageError = () => {
+    setImageError(true);
+    setImageLoaded(true); // Consider the image "loaded" even if it failed to load the real image
+  };
+
   const handleRequestSuccess = () => {
     // Could add additional logic here after a successful request
   };
@@ -109,13 +120,14 @@ const ItemCard = ({
             </div>
           )}
           <img
-            src={imageUrl}
+            src={displayImageUrl}
             alt={name}
             className={cn(
               "w-full h-full object-cover transition-opacity duration-300",
               imageLoaded ? "opacity-100" : "opacity-0"
             )}
             onLoad={() => setImageLoaded(true)}
+            onError={handleImageError}
           />
           
           {/* Category Tag */}
