@@ -13,6 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -74,6 +75,9 @@ const InviteForm: React.FC = () => {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Invite a New Member</DialogTitle>
+          <DialogDescription>
+            Send an invitation email to a new member to join your community.
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

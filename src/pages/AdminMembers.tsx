@@ -35,8 +35,10 @@ const AdminMembers = () => {
     queryKey: ['invitations'],
     queryFn: listInvitations,
     enabled: !!user && !!adminProfile,
-    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchInterval: 10000, // Refetch every 10 seconds
     refetchOnWindowFocus: true,
+    retry: 3,
+    retryDelay: 1000,
   });
 
   // Log errors for debugging

@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Invitation } from '@/types/supabase';
 
@@ -17,7 +16,17 @@ export const createInvitation = async (email: string): Promise<Invitation | null
       
     if (error) {
       console.error('Error creating invitation:', error);
-      throw error; // Throw the error so it can be caught by the mutation
+      
+      // Check for specific database errors
+      if (error.code === '23505') {
+        throw new Error('An invitation has already been sent to this email address');
+      }
+      
+      throw new Error('Failed to create invitation. Please try again.');
+    }
+    
+    if (!data) {
+      throw new Error('No invitation ID returned from server');
     }
     
     // Fetch the created invitation
@@ -29,27 +38,25 @@ export const createInvitation = async (email: string): Promise<Invitation | null
       
     if (fetchError) {
       console.error('Error fetching invitation:', fetchError);
-      throw fetchError; // Throw the error so it can be caught by the mutation
+      throw new Error('Failed to retrieve invitation details');
     }
     
     return invitation as unknown as Invitation;
   } catch (error) {
-    // Check if it's a specific database error
-    if (error instanceof Error && 
-        (error.message.includes('duplicate key') || 
-         error.message.includes('unique constraint'))) {
-      throw new Error('An invitation has already been sent to this email address');
+    // Just re-throw if it's already our error
+    if (error instanceof Error) {
+      throw error;
     }
-    // Re-throw the original error
-    throw error;
+    
+    // Otherwise wrap in a generic message
+    throw new Error('Failed to send invitation. Please try again.');
   }
 };
 
 export const listInvitations = async (): Promise<Invitation[]> => {
+  // Use RPC function instead of direct table query to avoid permissions issues
   const { data, error } = await supabase
-    .from('invitations')
-    .select('*')
-    .order('created_at', { ascending: false });
+    .rpc('list_invitations');
     
   if (error) {
     console.error('Error listing invitations:', error);
