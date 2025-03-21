@@ -9,13 +9,119 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      admin_profiles: {
+        Row: {
+          created_at: string | null
+          full_name: string | null
+          id: string
+          updated_at: string | null
+          username: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          full_name?: string | null
+          id: string
+          updated_at?: string | null
+          username?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string | null
+          username?: string | null
+        }
+        Relationships: []
+      }
+      invitations: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          email: string
+          expires_at: string | null
+          id: string
+          is_used: boolean | null
+          token: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          email: string
+          expires_at?: string | null
+          id?: string
+          is_used?: boolean | null
+          token: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          email?: string
+          expires_at?: string | null
+          id?: string
+          is_used?: boolean | null
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invitations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          email: string | null
+          full_name: string | null
+          id: string
+          is_member: boolean | null
+          updated_at: string | null
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id: string
+          is_member?: boolean | null
+          updated_at?: string | null
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          is_member?: boolean | null
+          updated_at?: string | null
+          username?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_invitation: {
+        Args: {
+          admin_id: string
+          email: string
+        }
+        Returns: string
+      }
+      verify_invitation: {
+        Args: {
+          token: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
