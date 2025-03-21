@@ -16,6 +16,9 @@ const ItemsSection = ({ items, isLoading }: ItemsSectionProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
+  // Log for debugging
+  console.log(`ItemsSection: Received ${items.length} items, isLoading=${isLoading}`);
+
   // Filter items based on search query and active category
   const filteredItems = items.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -24,6 +27,8 @@ const ItemsSection = ({ items, isLoading }: ItemsSectionProps) => {
     
     return matchesSearch && matchesCategory;
   });
+
+  console.log(`ItemsSection: After filtering, displaying ${filteredItems.length} items`);
 
   const handleCategoryClick = (category: string | null) => {
     setActiveCategory(category === activeCategory ? null : category);
