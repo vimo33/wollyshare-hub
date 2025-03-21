@@ -30,3 +30,25 @@ export const deleteMember = async (memberId: string): Promise<boolean> => {
   
   return !!data;
 };
+
+export const addMemberDirectly = async (email: string, username: string, fullName: string): Promise<boolean> => {
+  try {
+    // Call our custom function to add a member directly
+    const { data, error } = await supabase
+      .rpc('add_member_directly', {
+        member_email: email,
+        member_username: username,
+        member_full_name: fullName
+      });
+      
+    if (error) {
+      console.error('Error adding member directly:', error);
+      throw new Error(error.message);
+    }
+    
+    return !!data;
+  } catch (error) {
+    console.error('Error adding member directly:', error);
+    throw error;
+  }
+};

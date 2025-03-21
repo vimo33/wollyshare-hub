@@ -16,6 +16,7 @@ import {
 import MemberList from "@/components/members/MemberList";
 import InvitationList from "@/components/members/InvitationList";
 import InviteForm from "@/components/members/InviteForm";
+import AddMemberForm from "@/components/members/AddMemberForm";
 import BulkUploadDialog from "@/components/members/BulkUploadDialog";
 
 const AdminMembers = () => {
@@ -75,6 +76,7 @@ const AdminMembers = () => {
         <h1 className="text-3xl font-bold">Members</h1>
         <div className="flex gap-2">
           <InviteForm />
+          <AddMemberForm />
           <BulkUploadDialog 
             open={bulkUploadOpen} 
             onOpenChange={setBulkUploadOpen} 
