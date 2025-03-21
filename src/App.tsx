@@ -11,7 +11,7 @@ import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import AdminAuth from "./pages/AdminAuth";
 import Admin from "./pages/Admin";
-import AdminInvitations from "./pages/AdminInvitations";
+import AdminMembers from "./pages/AdminInvitations";
 import AdminCommunitySettings from "./pages/AdminCommunitySettings";
 
 const queryClient = new QueryClient();
@@ -29,7 +29,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/admin/auth" element={<AdminAuth />} />
             <Route path="/admin" element={<Admin />} />
-            <Route path="/admin/invitations" element={<AdminInvitations />} />
+            <Route path="/admin/members" element={<AdminMembers />} />
             <Route path="/admin/community-settings" element={<AdminCommunitySettings />} />
             <Route path="/browse" element={<Index />} /> {/* Temporary routing to Index */}
             <Route path="/my-items" element={<Index />} /> {/* Temporary routing to Index */}
