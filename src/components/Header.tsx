@@ -112,9 +112,9 @@ const Header = () => {
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <LogoutButton variant="ghost" size="sm" />
-                </DropdownMenuItem>
+                <div className="px-2 py-1.5">
+                  <LogoutButton variant="ghost" size="sm" className="w-full justify-start" />
+                </div>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (

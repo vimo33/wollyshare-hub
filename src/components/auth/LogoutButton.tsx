@@ -8,9 +8,10 @@ import { useToast } from "@/hooks/use-toast";
 interface LogoutButtonProps {
   variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
   size?: "default" | "sm" | "lg" | "icon";
+  className?: string;
 }
 
-const LogoutButton = ({ variant = "outline", size = "default" }: LogoutButtonProps) => {
+const LogoutButton = ({ variant = "outline", size = "default", className }: LogoutButtonProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
@@ -52,6 +53,7 @@ const LogoutButton = ({ variant = "outline", size = "default" }: LogoutButtonPro
       size={size} 
       onClick={handleLogout}
       disabled={isLoading}
+      className={className}
     >
       {isLoading ? "Logging out..." : "Logout"}
     </Button>
