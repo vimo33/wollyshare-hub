@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useItemsQuery, ItemsQueryResult } from "./useItemsQuery";
 import { Item } from "@/types/item";
+import { RefetchOptions, QueryObserverResult } from "@tanstack/react-query";
 
 /**
  * Interface for the return value of the useItems hook
@@ -12,7 +13,7 @@ export interface UseItemsResult {
   isLoading: boolean;
   error: Error | null;
   locationData: Map<string, { name: string; address: string; }>;
-  fetchItems: () => Promise<void>;
+  fetchItems: (options?: RefetchOptions) => Promise<QueryObserverResult<Item[], Error>>;
 }
 
 /**
