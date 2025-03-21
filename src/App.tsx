@@ -13,8 +13,46 @@ import AdminAuth from "./pages/AdminAuth";
 import Admin from "./pages/Admin";
 import AdminMembers from "./pages/AdminMembers";
 import AdminCommunitySettings from "./pages/AdminCommunitySettings";
+import { useAuth } from "@/contexts/AuthContext";
 
 const queryClient = new QueryClient();
+
+// Admin route guard component
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAdmin, isLoading } = useAuth();
+  
+  if (isLoading) {
+    return <div className="container mx-auto mt-12 p-4">Loading...</div>;
+  }
+  
+  if (!isAdmin) {
+    return <Navigate to="/" replace />;
+  }
+  
+  return <>{children}</>;
+};
+
+const AppRoutes = () => {
+  return (
+    <Routes>
+      <Route path="/" element={<Index />} />
+      <Route path="/auth" element={<Auth />} />
+      <Route path="/admin/auth" element={<AdminAuth />} />
+      
+      {/* Protected Admin Routes */}
+      <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
+      <Route path="/admin/members" element={<AdminRoute><AdminMembers /></AdminRoute>} />
+      <Route path="/admin/invitations" element={<Navigate to="/admin/members" replace />} />
+      <Route path="/admin/community-settings" element={<AdminRoute><AdminCommunitySettings /></AdminRoute>} />
+      
+      <Route path="/browse" element={<Index />} /> {/* Temporary routing to Index */}
+      <Route path="/my-items" element={<Index />} /> {/* Temporary routing to Index */}
+      <Route path="/requests" element={<Index />} /> {/* Temporary routing to Index */}
+      {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -24,21 +62,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Header />
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/admin/auth" element={<AdminAuth />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/admin/members" element={<AdminMembers />} />
-            {/* Add a redirect from the old invitations route to the new members route */}
-            <Route path="/admin/invitations" element={<Navigate to="/admin/members" replace />} />
-            <Route path="/admin/community-settings" element={<AdminCommunitySettings />} />
-            <Route path="/browse" element={<Index />} /> {/* Temporary routing to Index */}
-            <Route path="/my-items" element={<Index />} /> {/* Temporary routing to Index */}
-            <Route path="/requests" element={<Index />} /> {/* Temporary routing to Index */}
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <AppRoutes />
         </BrowserRouter>
       </AuthProvider>
     </TooltipProvider>
