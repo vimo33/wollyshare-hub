@@ -26,6 +26,8 @@ export const updateProfile = async (profile: Partial<Profile>): Promise<Profile 
   
   if (!user.user) return null;
   
+  console.log('Updating profile with data:', profile);
+  
   const { data, error } = await supabase
     .from('profiles')
     .update(profile)
@@ -38,6 +40,7 @@ export const updateProfile = async (profile: Partial<Profile>): Promise<Profile 
     return null;
   }
   
+  console.log('Profile updated successfully:', data);
   return data as unknown as Profile;
 };
 

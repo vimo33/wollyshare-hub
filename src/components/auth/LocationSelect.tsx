@@ -14,9 +14,10 @@ interface Location {
 interface LocationSelectProps {
   control: Control<any>;
   isRequired?: boolean;
+  defaultValue?: string;
 }
 
-const LocationSelect = ({ control, isRequired = false }: LocationSelectProps) => {
+const LocationSelect = ({ control, isRequired = false, defaultValue }: LocationSelectProps) => {
   const [locations, setLocations] = useState<Location[]>([]);
   const [isLoadingLocations, setIsLoadingLocations] = useState(true);
 
@@ -68,7 +69,7 @@ const LocationSelect = ({ control, isRequired = false }: LocationSelectProps) =>
           <FormLabel>Your Location{isRequired && "*"}</FormLabel>
           <Select 
             onValueChange={field.onChange} 
-            defaultValue={field.value}
+            value={field.value || ''} 
             disabled={isLoadingLocations || locations.length === 0}
           >
             <FormControl>

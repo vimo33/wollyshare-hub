@@ -56,16 +56,17 @@ const ProfilePage: React.FC = () => {
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
-      username: profile?.username || "",
-      fullName: profile?.full_name || "",
-      email: profile?.email || user?.email || "",
-      location: profile?.location || "",
+      username: "",
+      fullName: "",
+      email: "",
+      location: "",
     },
   });
 
   useEffect(() => {
     // Update form values when profile data loads
     if (profile) {
+      console.log("Setting form values with profile:", profile);
       form.reset({
         username: profile.username || "",
         fullName: profile.full_name || "",
@@ -81,6 +82,7 @@ const ProfilePage: React.FC = () => {
     setIsSubmitting(true);
     
     try {
+      console.log("Submitting profile data:", data);
       const updatedProfile = await updateProfile({
         username: data.username,
         full_name: data.fullName,
@@ -205,7 +207,13 @@ const ProfilePage: React.FC = () => {
                 )}
               />
 
-              <LocationSelect control={form.control} />
+              <FormField
+                control={form.control}
+                name="location"
+                render={({ field }) => (
+                  <LocationSelect control={form.control} />
+                )}
+              />
             </CardContent>
             <CardFooter>
               <Button
