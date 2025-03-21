@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Settings, Users } from "lucide-react";
+import AdminBreadcrumb from "@/components/AdminBreadcrumb";
 
 const Admin = () => {
   const { user, adminProfile, isLoading } = useAuth();
@@ -28,6 +29,8 @@ const Admin = () => {
 
   return (
     <div className="container mx-auto pt-8 pb-12 px-4">
+      <AdminBreadcrumb items={[]} /> {/* Empty items for the main dashboard */}
+      
       <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
       
       <Tabs defaultValue="community" className="w-full">

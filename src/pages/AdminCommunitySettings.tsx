@@ -14,6 +14,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import AdminBreadcrumb from "@/components/AdminBreadcrumb";
 
 // Form validation schemas
 const locationFormSchema = z.object({
@@ -106,6 +107,12 @@ const AdminCommunitySettings = () => {
 
   return (
     <div className="container mx-auto pt-8 pb-12 px-4">
+      <AdminBreadcrumb 
+        items={[
+          { label: "Community Settings" }
+        ]} 
+      />
+      
       <h1 className="text-3xl font-bold mb-6">Community Settings</h1>
       
       <div className="grid gap-6 md:grid-cols-2">

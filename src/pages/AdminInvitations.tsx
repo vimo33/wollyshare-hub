@@ -17,6 +17,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { toast } from "sonner";
 import { Mail, Plus, Upload } from "lucide-react";
 import { format } from "date-fns";
+import AdminBreadcrumb from "@/components/AdminBreadcrumb";
 
 // Form validation schema
 const inviteFormSchema = z.object({
@@ -91,6 +92,12 @@ const AdminInvitations = () => {
 
   return (
     <div className="container mx-auto pt-8 pb-12 px-4">
+      <AdminBreadcrumb 
+        items={[
+          { label: "Member Invitations" }
+        ]} 
+      />
+      
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">Member Invitations</h1>
         <div className="flex gap-2">
