@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import ItemCard from "./ItemCard";
 import CategoryPill from "./CategoryPill";
@@ -46,10 +47,10 @@ const ItemGrid = () => {
       // Get unique user IDs from the items
       const userIds = [...new Set(itemsData.map(item => item.user_id))];
       
-      // Fetch user profiles for those IDs
+      // Fetch user profiles for those IDs, but also get username field
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, full_name')
+        .select('id, full_name, username')
         .in('id', userIds);
 
       if (profilesError) {
@@ -59,19 +60,18 @@ const ItemGrid = () => {
       // Create a map of user IDs to names
       const userMap = new Map();
       profilesData?.forEach(profile => {
-        userMap.set(profile.id, profile.full_name || 'Unknown User');
+        // Use username if available, otherwise use full_name or fallback
+        userMap.set(profile.id, profile.username || profile.full_name || 'Unknown User');
       });
 
       // Combine items with owner names
       const itemsWithOwners = itemsData.map(item => {
-        const formattedAvailability = formatAvailability(item.weekday_availability, item.weekend_availability);
+        // Don't format availability here, just pass the raw values to the card
         return {
           ...item,
           ownerName: userMap.get(item.user_id) || 'Unknown User',
           // Extract a location from the description or use a default
-          location: extractLocationFromDescription(item.description),
-          // Format availability and add it to the item object
-          availableFor: formattedAvailability
+          location: extractLocationFromDescription(item.description)
         };
       });
 
@@ -104,17 +104,7 @@ const ItemGrid = () => {
       }
     }
     
-    return 'Location in description';
-  };
-
-  // Helper function to format availability
-  const formatAvailability = (weekday: string, weekend: string): string => {
-    if (weekday === 'anytime' && weekend === 'anytime') return 'Anytime';
-    if (weekday === 'anytime') return 'Weekdays';
-    if (weekend === 'anytime') return 'Weekends';
-    if (weekday === 'morning' && weekend === 'morning') return 'Mornings';
-    if (weekday === 'evening' && weekend === 'evening') return 'Evenings';
-    return `${weekday} & ${weekend}`;
+    return 'Location not specified';
   };
 
   // Filter items based on search query and active category
@@ -214,7 +204,8 @@ const ItemGrid = () => {
                   name={item.name}
                   ownerName={item.ownerName || "Unknown"}
                   location={item.location || "Location not specified"}
-                  availableFor={item.availableFor || "Check with owner"}
+                  weekdayAvailability={item.weekday_availability}
+                  weekendAvailability={item.weekend_availability}
                   category={item.category as any}
                   imageUrl={item.image_url || "https://images.unsplash.com/photo-1504148455328-c376907d081c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"}
                   onClick={() => console.log(`Clicked on item: ${item.id}`)}

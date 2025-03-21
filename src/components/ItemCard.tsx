@@ -8,7 +8,8 @@ type ItemCardProps = {
   name: string;
   ownerName: string;
   location: string;
-  availableFor: string;
+  weekdayAvailability: string;
+  weekendAvailability: string;
   category: "tools" | "kitchen" | "electronics" | "sports" | "other";
   imageUrl: string;
   onClick?: () => void;
@@ -19,7 +20,8 @@ const ItemCard = ({
   name,
   ownerName,
   location,
-  availableFor,
+  weekdayAvailability,
+  weekendAvailability,
   category,
   imageUrl,
   onClick,
@@ -33,6 +35,17 @@ const ItemCard = ({
     electronics: "bg-wolly-purple",
     sports: "bg-wolly-green",
     other: "bg-wolly-yellow",
+  };
+
+  const formatAvailability = (availability: string): string => {
+    switch (availability) {
+      case "morning": return "Morning (8AM-12PM)";
+      case "afternoon": return "Afternoon (12PM-5PM)";
+      case "evening": return "Evening (5PM-9PM)";
+      case "anytime": return "Anytime";
+      case "unavailable": return "Unavailable";
+      default: return availability;
+    }
   };
 
   const handleLike = (e: React.MouseEvent) => {
@@ -93,9 +106,18 @@ const ItemCard = ({
             <MapPin className="h-4 w-4 mr-2 text-gray-400" />
             <span>{location}</span>
           </div>
-          <div className="flex items-center text-sm text-gray-600">
-            <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-            <span>Available for {availableFor}</span>
+          <div className="flex flex-col space-y-1 text-sm text-gray-600">
+            <div className="flex items-center">
+              <Calendar className="h-4 w-4 mr-2 text-gray-400" />
+              <span>
+                <strong>Weekdays:</strong> {formatAvailability(weekdayAvailability)}
+              </span>
+            </div>
+            <div className="flex items-center ml-6">
+              <span>
+                <strong>Weekends:</strong> {formatAvailability(weekendAvailability)}
+              </span>
+            </div>
           </div>
         </div>
         
