@@ -1,5 +1,5 @@
 
-import { useState, useEffect, forwardRef, useImperativeHandle } from "react";
+import { useState, forwardRef, useImperativeHandle } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
 import ItemFormDialog from "./ItemFormDialog";
@@ -25,6 +25,8 @@ const MyItemsList = forwardRef<MyItemsListRef>((props, ref) => {
   const [itemToEdit, setItemToEdit] = useState<Item | null>(null);
   
   // Use the useItems hook with the current user's ID to filter
+  // We explicitly log this to debug
+  console.log(user ? `MyItemsList: Fetching items for user ${user.id}` : "MyItemsList: No user ID available");
   const { items, isLoading, fetchItems: refetchItems } = useItems(locationData, user?.id);
 
   // Expose fetchItems method via ref

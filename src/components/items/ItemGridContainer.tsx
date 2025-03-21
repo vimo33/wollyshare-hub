@@ -15,7 +15,10 @@ const ItemGridContainer = () => {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const { profile } = useAuth();
   const { locationData } = useLocationData();
+  
   // Important: No userId passed here, so we get items from all users
+  // We explicitly log this to debug and ensure it's working
+  console.log("ItemGridContainer: Fetching items from all users");
   const { items, isLoaded, isLoading } = useItems(locationData);
 
   // Filter items based on search query and active category
@@ -44,6 +47,9 @@ const ItemGridContainer = () => {
   };
 
   const userLocationInfo = getUserLocationInfo();
+
+  // Add debug logging to understand what items we're showing
+  console.log(`Showing ${filteredItems.length} filtered items from ${items.length} total items`);
 
   return (
     <section className="py-16 px-6 bg-gradient-to-b from-white to-gray-50">

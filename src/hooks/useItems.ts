@@ -25,14 +25,13 @@ export const useItems = (locationData: Map<string, {name: string, address: strin
   const fetchItems = async () => {
     setIsLoading(true);
     try {
+      console.log(userId ? `Fetching items for user: ${userId}` : "Fetching all items from all users");
+      
       let query = supabase.from('items').select('*');
       
       // If userId is provided, filter by that user's items only
       if (userId) {
-        console.log(`Fetching items for user: ${userId}`);
         query = query.eq('user_id', userId);
-      } else {
-        console.log("Fetching all items from all users");
       }
       
       const { data: itemsData, error: itemsError } = await query;
