@@ -1,6 +1,5 @@
 
 import { useEffect } from "react";
-import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import ItemGrid from "@/components/ItemGrid";
 
@@ -12,7 +11,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      <Navbar />
       <main>
         <Hero />
         <ItemGrid />
