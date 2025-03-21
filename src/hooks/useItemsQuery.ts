@@ -9,6 +9,7 @@ import { extractLocationFromDescription } from "@/utils/itemUtils";
 export const itemsQueryKeys = {
   all: ['items'] as const,
   byUser: (userId: string) => [...itemsQueryKeys.all, 'user', userId] as const,
+  locations: ['locations'] as const,
 };
 
 // Valid category types for type-checking
@@ -25,45 +26,48 @@ export interface UseItemsQueryOptions {
   enabled?: boolean;
 }
 
-export const useItemsQuery = ({ userId, enabled = true }: UseItemsQueryOptions = {}) => {
-  const [locationData, setLocationData] = useState<Map<string, {name: string, address: string}>>(new Map());
-  const [isLocationLoading, setIsLocationLoading] = useState(true);
+export interface LocationInfo {
+  name: string;
+  address: string;
+}
 
-  // Fetch location data first
-  useEffect(() => {
-    const fetchLocations = async () => {
-      try {
-        setIsLocationLoading(true);
-        const { data, error } = await supabase
-          .from('community_locations')
-          .select('*');
-          
-        if (error) {
-          console.error('Error fetching locations:', error);
-          return;
-        }
+export const useLocationsQuery = () => {
+  return useQuery({
+    queryKey: itemsQueryKeys.locations,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('community_locations')
+        .select('*');
         
-        const locMap = new Map();
-        data?.forEach(location => {
-          locMap.set(location.id, {
-            name: location.name,
-            address: location.address
-          });
-        });
-        
-        setLocationData(locMap);
-      } catch (error) {
-        console.error('Error in fetchLocations:', error);
-      } finally {
-        setIsLocationLoading(false);
+      if (error) {
+        console.error('Error fetching locations:', error);
+        throw error;
       }
-    };
+      
+      const locMap = new Map<string, LocationInfo>();
+      data?.forEach(location => {
+        locMap.set(location.id, {
+          name: location.name,
+          address: location.address
+        });
+      });
+      
+      return locMap;
+    },
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+  });
+};
 
-    fetchLocations();
-  }, []);
+export const useItemsQuery = ({ userId, enabled = true }: UseItemsQueryOptions = {}) => {
+  // Use the locations query
+  const { 
+    data: locationData = new Map(), 
+    isLoading: isLocationLoading, 
+    error: locationError 
+  } = useLocationsQuery();
 
   // Use React Query to fetch items
-  const query = useQuery({
+  const itemsQuery = useQuery({
     queryKey: userId ? itemsQueryKeys.byUser(userId) : itemsQueryKeys.all,
     queryFn: async () => {
       console.log(`useItemsQuery: ${userId ? `Fetching items for user ${userId}` : 'Fetching all items'}`);
@@ -138,11 +142,13 @@ export const useItemsQuery = ({ userId, enabled = true }: UseItemsQueryOptions =
       });
     },
     enabled: enabled && !isLocationLoading,
+    staleTime: 1000 * 60 * 2, // Cache items for 2 minutes
   });
 
   return {
-    ...query,
-    isLoading: query.isLoading || isLocationLoading,
-    locationData
+    ...itemsQuery,
+    isLoading: itemsQuery.isLoading || isLocationLoading,
+    locationData,
+    locationError
   };
 };

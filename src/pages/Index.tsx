@@ -8,11 +8,16 @@ import { useItemsQuery } from "@/hooks/useItemsQuery";
 
 const Index = () => {
   const { toast } = useToast();
-  const { data: items = [], isLoading, error } = useItemsQuery();
+  const { 
+    data: items = [], 
+    isLoading, 
+    error 
+  } = useItemsQuery();
+  
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   
-  // Handle any fetching errors with a toast - using useEffect to avoid showing multiple toasts
+  // Handle any fetching errors with a toast
   useEffect(() => {
     if (error) {
       console.error('Error fetching items:', error);

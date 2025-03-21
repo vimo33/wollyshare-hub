@@ -1,4 +1,3 @@
-
 import { forwardRef, useImperativeHandle, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
@@ -32,8 +31,6 @@ const MyItemsList = forwardRef<MyItemsListRef>((props, ref) => {
     userId: user?.id,
     enabled: !!user
   });
-  
-  console.log(`MyItemsList: Displaying ${items.length} items for user: ${user?.id || 'Not logged in'}`);
   
   // Handle error with toast notification
   useEffect(() => {

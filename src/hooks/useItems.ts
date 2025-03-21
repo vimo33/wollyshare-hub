@@ -13,7 +13,7 @@ export const useItems = (userId?: string) => {
     locationData
   } = useItemsQuery({ userId });
 
-  // Set isLoaded state once data is available with proper dependencies
+  // Set isLoaded state once data is available
   useEffect(() => {
     if (items.length > 0 && !isLoaded && !isLoading) {
       setIsLoaded(true);
