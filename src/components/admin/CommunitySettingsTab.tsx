@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Building2, Plus, Trash2, Upload } from "lucide-react";
+import { Building2, Plus, Trash2, Upload, Save, Edit } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,6 +44,9 @@ const CommunitySettingsTab: React.FC<CommunitySettingsTabProps> = ({
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [isAddingLocation, setIsAddingLocation] = useState(false);
+  const [editableLocations, setEditableLocations] = useState<Record<string, boolean>>({});
+  const [locationEdits, setLocationEdits] = useState<Record<string, Location>>({});
+  const [locationHasChanges, setLocationHasChanges] = useState(false);
 
   // Location form
   const locationForm = useForm<LocationFormValues>({
@@ -122,6 +125,65 @@ const CommunitySettingsTab: React.FC<CommunitySettingsTabProps> = ({
       console.error("Error deleting location:", error);
       toast.error("An unexpected error occurred");
     }
+  };
+
+  // Make a location editable
+  const handleEditLocation = (location: Location) => {
+    setEditableLocations(prev => ({ ...prev, [location.id]: true }));
+    setLocationEdits(prev => ({ 
+      ...prev, 
+      [location.id]: { ...location }
+    }));
+  };
+
+  // Update location field
+  const handleUpdateLocationField = (id: string, field: 'name' | 'address', value: string) => {
+    setLocationEdits(prev => ({
+      ...prev,
+      [id]: {
+        ...prev[id],
+        [field]: value
+      }
+    }));
+    setLocationHasChanges(true);
+  };
+
+  // Save location changes
+  const handleSaveLocationChanges = async (id: string) => {
+    try {
+      const updatedLocation = locationEdits[id];
+      
+      const { error } = await supabase
+        .from('community_locations')
+        .update({
+          name: updatedLocation.name,
+          address: updatedLocation.address
+        })
+        .eq('id', id);
+      
+      if (error) {
+        toast.error("Failed to update location: " + error.message);
+        return;
+      }
+      
+      // Update locations list with edited values
+      setLocations(locations.map(loc => 
+        loc.id === id ? updatedLocation : loc
+      ));
+      
+      // Exit edit mode
+      setEditableLocations(prev => ({ ...prev, [id]: false }));
+      setLocationHasChanges(false);
+      toast.success("Location updated successfully");
+    } catch (error) {
+      console.error("Error updating location:", error);
+      toast.error("An unexpected error occurred");
+    }
+  };
+
+  // Cancel location editing
+  const handleCancelEdit = (id: string) => {
+    setEditableLocations(prev => ({ ...prev, [id]: false }));
   };
 
   return (
@@ -251,36 +313,95 @@ const CommunitySettingsTab: React.FC<CommunitySettingsTabProps> = ({
               Loading locations...
             </div>
           ) : locations.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Address</TableHead>
-                  <TableHead className="w-[100px]">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {locations.map((location) => (
-                  <TableRow key={location.id}>
-                    <TableCell className="flex items-center gap-2">
-                      <Building2 className="h-4 w-4 text-muted-foreground" />
-                      {location.name}
-                    </TableCell>
-                    <TableCell>{location.address}</TableCell>
-                    <TableCell>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => handleDeleteLocation(location.id)}
-                        className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
+            <div className="space-y-4">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Address</TableHead>
+                    <TableHead className="w-[180px] text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {locations.map((location) => (
+                    <TableRow key={location.id}>
+                      <TableCell className="flex items-center gap-2">
+                        <Building2 className="h-4 w-4 text-muted-foreground" />
+                        {editableLocations[location.id] ? (
+                          <Input 
+                            value={locationEdits[location.id]?.name || location.name} 
+                            onChange={(e) => handleUpdateLocationField(location.id, 'name', e.target.value)}
+                            className="h-8 w-full"
+                          />
+                        ) : (
+                          location.name
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {editableLocations[location.id] ? (
+                          <Input 
+                            value={locationEdits[location.id]?.address || location.address} 
+                            onChange={(e) => handleUpdateLocationField(location.id, 'address', e.target.value)}
+                            className="h-8 w-full"
+                          />
+                        ) : (
+                          location.address
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right space-x-1">
+                        {editableLocations[location.id] ? (
+                          <>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleCancelEdit(location.id)}
+                              className="h-8"
+                            >
+                              Cancel
+                            </Button>
+                            <Button 
+                              variant="default" 
+                              size="sm"
+                              onClick={() => handleSaveLocationChanges(location.id)}
+                              className="h-8"
+                            >
+                              <Save className="h-4 w-4 mr-1" /> Save
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => handleEditLocation(location)}
+                              className="h-8 w-8"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              onClick={() => handleDeleteLocation(location.id)}
+                              className="h-8 w-8 text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              
+              {locationHasChanges && (
+                <div className="flex justify-end">
+                  <p className="text-sm text-muted-foreground italic mr-2 self-center">
+                    Save changes to update locations
+                  </p>
+                </div>
+              )}
+            </div>
           ) : (
             <div className="py-8 text-center text-muted-foreground">
               No locations have been added yet.
