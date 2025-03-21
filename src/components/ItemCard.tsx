@@ -42,6 +42,13 @@ const ItemCard = ({
   const { toast } = useToast();
   const { user } = useAuth();
 
+  // Log item rendering to debug
+  console.log(`Rendering image for ${name}:`, {
+    original: imageUrl,
+    display: imageUrl || "https://images.unsplash.com/photo-1504148455328-c376907d081c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    hasError: false
+  });
+
   const handleLike = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsLiked(!isLiked);

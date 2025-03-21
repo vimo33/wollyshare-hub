@@ -7,6 +7,9 @@ type ItemsGridProps = {
 };
 
 const ItemsGrid = ({ items }: ItemsGridProps) => {
+  // Add extra debugging to verify we're getting items
+  console.log(`ItemsGrid rendering ${items.length} items:`, items);
+  
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {items.map((item, index) => (
