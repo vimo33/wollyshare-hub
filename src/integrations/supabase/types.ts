@@ -135,6 +135,18 @@ export type Database = {
           username: string | null
         }[]
       }
+      list_invitations: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          created_at: string | null
+          created_by: string
+          email: string
+          expires_at: string | null
+          id: string
+          is_used: boolean | null
+          token: string
+        }[]
+      }
       verify_invitation: {
         Args: {
           token: string

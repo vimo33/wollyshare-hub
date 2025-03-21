@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Invitation } from '@/types/supabase';
 
@@ -55,12 +54,9 @@ export const createInvitation = async (email: string): Promise<Invitation | null
 };
 
 export const listInvitations = async (): Promise<Invitation[]> => {
-  // Use direct table query with RLS as a fallback until types are updated
-  // This is a temporary workaround for the TypeScript error with list_invitations
+  // Use our custom function to list invitations
   const { data, error } = await supabase
-    .from('invitations')
-    .select('*')
-    .order('created_at', { ascending: false });
+    .rpc('list_invitations');
     
   if (error) {
     console.error('Error listing invitations:', error);
