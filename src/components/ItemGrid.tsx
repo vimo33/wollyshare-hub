@@ -8,6 +8,7 @@ import LoadingState from "./items/LoadingState";
 import ItemsGrid from "./items/ItemsGrid";
 import { Item } from "../types/item";
 import { extractLocationFromDescription } from "../utils/itemUtils";
+import { useAuth } from "@/contexts/AuthContext";
 
 const ItemGrid = () => {
   const [items, setItems] = useState<Item[]>([]);
@@ -15,10 +16,35 @@ const ItemGrid = () => {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [locationNames, setLocationNames] = useState<Map<string, string>>(new Map());
+  const { profile } = useAuth();
 
   useEffect(() => {
     fetchItems();
+    fetchLocationNames();
   }, []);
+
+  const fetchLocationNames = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('community_locations')
+        .select('id, name');
+      
+      if (error) {
+        console.error('Error fetching location names:', error);
+        return;
+      }
+
+      const locationMap = new Map();
+      data.forEach(location => {
+        locationMap.set(location.id, location.name);
+      });
+      
+      setLocationNames(locationMap);
+    } catch (error) {
+      console.error('Error in fetchLocationNames:', error);
+    }
+  };
 
   const fetchItems = async () => {
     setIsLoading(true);
@@ -41,25 +67,31 @@ const ItemGrid = () => {
       // Fetch user profiles for those IDs
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, full_name, username')
+        .select('id, full_name, username, location')
         .in('id', userIds);
 
       if (profilesError) {
         console.error('Error fetching profiles:', profilesError);
       }
 
-      // Create a map of user IDs to names
+      // Create a map of user IDs to names and locations
       const userMap = new Map();
       profilesData?.forEach(profile => {
-        userMap.set(profile.id, profile.username || profile.full_name || 'Unknown User');
+        userMap.set(profile.id, {
+          name: profile.username || profile.full_name || 'Unknown User',
+          location: profile.location || null
+        });
       });
 
-      // Combine items with owner names
+      // Combine items with owner names and locations
       const itemsWithOwners = itemsData.map(item => {
+        const userInfo = userMap.get(item.user_id) || { name: 'Unknown User', location: null };
+        const locationName = userInfo.location ? locationNames.get(userInfo.location) || 'Unknown Location' : extractLocationFromDescription(item.description);
+        
         return {
           ...item,
-          ownerName: userMap.get(item.user_id) || 'Unknown User',
-          location: extractLocationFromDescription(item.description)
+          ownerName: userInfo.name,
+          location: locationName
         };
       });
 
@@ -98,6 +130,11 @@ const ItemGrid = () => {
           <p className="text-muted-foreground max-w-2xl mx-auto">
             Browse through items shared by community members that you can borrow.
           </p>
+          {profile?.location && locationNames.get(profile.location) && (
+            <p className="text-sm mt-2 text-secondary-foreground">
+              Your location: <span className="font-medium">{locationNames.get(profile.location)}</span>
+            </p>
+          )}
         </div>
 
         {/* Search and Filter */}

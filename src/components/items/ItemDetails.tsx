@@ -27,7 +27,7 @@ const ItemDetails = ({
       <div className="flex flex-col space-y-2">
         <div className="flex items-center text-sm text-gray-600">
           <MapPin className="h-4 w-4 mr-2 text-gray-400" />
-          <span>{location}</span>
+          <span>{location || "Location not specified"}</span>
         </div>
         <div className="flex flex-col space-y-1 text-sm text-gray-600">
           <div className="flex items-center">

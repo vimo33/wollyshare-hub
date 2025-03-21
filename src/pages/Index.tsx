@@ -1,9 +1,12 @@
 
 import { useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import Hero from "@/components/Hero";
 import ItemGrid from "@/components/ItemGrid";
 
 const Index = () => {
+  const { profile } = useAuth();
+
   useEffect(() => {
     // Scroll to top when component mounts
     window.scrollTo(0, 0);
