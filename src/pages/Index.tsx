@@ -1,12 +1,9 @@
 
 import { useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
 import Hero from "@/components/Hero";
 import ItemGrid from "@/components/ItemGrid";
 
 const Index = () => {
-  const { profile } = useAuth();
-
   useEffect(() => {
     // Scroll to top when component mounts
     window.scrollTo(0, 0);
@@ -19,7 +16,6 @@ const Index = () => {
     <div className="min-h-screen bg-white">
       <main>
         <Hero />
-        {/* Explicitly pass props to ensure we show all items */}
         <ItemGrid />
       </main>
       
