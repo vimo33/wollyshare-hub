@@ -8,6 +8,8 @@ import DeleteConfirmDialog from "./DeleteConfirmDialog";
 import EmptyItemsState from "./EmptyItemsState";
 import LoadingItemsState from "./LoadingItemsState";
 import { supabase } from "@/integrations/supabase/client";
+import { useLocationData } from "@/hooks/useLocationData";
+import { useItems } from "@/hooks/useItems";
 
 export interface MyItemsListRef {
   fetchItems: () => Promise<void>;
@@ -16,53 +18,21 @@ export interface MyItemsListRef {
 const MyItemsList = forwardRef<MyItemsListRef>((props, ref) => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [items, setItems] = useState<Item[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { locationData } = useLocationData();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [itemToEdit, setItemToEdit] = useState<Item | null>(null);
-
-  // Fetch items from Supabase
-  const fetchItems = async () => {
-    if (!user) {
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      const { data, error } = await supabase
-        .from('items')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        throw error;
-      }
-
-      setItems(data || []);
-    } catch (error) {
-      console.error("Error fetching items:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load your items. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  
+  // Use the useItems hook with the current user's ID to filter
+  const { items, isLoading, fetchItems: refetchItems } = useItems(locationData, user?.id);
 
   // Expose fetchItems method via ref
   useImperativeHandle(ref, () => ({
-    fetchItems
+    fetchItems: async () => {
+      await refetchItems();
+    }
   }));
-
-  // Fetch items when component mounts or user changes
-  useEffect(() => {
-    fetchItems();
-  }, [user]);
 
   const handleDelete = (itemId: string) => {
     setItemToDelete(itemId);
@@ -80,8 +50,8 @@ const MyItemsList = forwardRef<MyItemsListRef>((props, ref) => {
 
       if (error) throw error;
 
-      // Remove item from state
-      setItems(items.filter(item => item.id !== itemToDelete));
+      // Refetch items after delete
+      await refetchItems();
       
       toast({
         title: "Item Deleted",
@@ -101,17 +71,6 @@ const MyItemsList = forwardRef<MyItemsListRef>((props, ref) => {
   };
 
   const handleEdit = (item: Item) => {
-    // Transform item to match form structure
-    const formattedItem = {
-      id: item.id,
-      name: item.name,
-      category: item.category,
-      description: item.description || "",
-      weekdayAvailability: item.weekday_availability,
-      weekendAvailability: item.weekend_availability,
-      imageUrl: item.image_url,
-    };
-    
     setItemToEdit(item);
     setEditDialogOpen(true);
   };
@@ -166,7 +125,7 @@ const MyItemsList = forwardRef<MyItemsListRef>((props, ref) => {
             weekendAvailability: itemToEdit.weekend_availability,
             imageUrl: itemToEdit.image_url,
           }}
-          onSuccess={fetchItems}
+          onSuccess={() => refetchItems()}
         />
       )}
     </div>

@@ -13,24 +13,29 @@ const isValidCategory = (category: string): category is ValidCategory => {
   return validCategories.includes(category as ValidCategory);
 };
 
-export const useItems = (locationData: Map<string, {name: string, address: string}>) => {
+export const useItems = (locationData: Map<string, {name: string, address: string}>, userId?: string) => {
   const [items, setItems] = useState<Item[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     fetchItems();
-  }, [locationData]);
+  }, [locationData, userId]);
 
   const fetchItems = async () => {
     setIsLoading(true);
     try {
-      console.log("Fetching all items from all users");
+      let query = supabase.from('items').select('*');
       
-      // Fetch all items from Supabase without any user filtering
-      const { data: itemsData, error: itemsError } = await supabase
-        .from('items')
-        .select('*');
+      // If userId is provided, filter by that user's items only
+      if (userId) {
+        console.log(`Fetching items for user: ${userId}`);
+        query = query.eq('user_id', userId);
+      } else {
+        console.log("Fetching all items from all users");
+      }
+      
+      const { data: itemsData, error: itemsError } = await query;
 
       if (itemsError) {
         console.error('Error fetching items:', itemsError);
@@ -87,7 +92,7 @@ export const useItems = (locationData: Map<string, {name: string, address: strin
         } as Item; // Cast to Item after validation
       });
 
-      console.log(`Found ${itemsWithOwners.length} items from all users`);
+      console.log(`Found ${itemsWithOwners.length} items${userId ? ' for this user' : ' from all users'}`);
       setItems(itemsWithOwners);
       
       // Simulate some loading time for smoother UI
