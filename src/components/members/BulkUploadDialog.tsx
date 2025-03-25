@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Upload } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -32,12 +32,6 @@ const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({ open, onOpenChange 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        <Button variant="outline" className="flex items-center gap-2">
-          <Upload className="h-4 w-4" />
-          <span>Bulk Upload</span>
-        </Button>
-      </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Bulk Upload Invitations</DialogTitle>

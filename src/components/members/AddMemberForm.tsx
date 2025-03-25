@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -29,8 +29,30 @@ const addMemberFormSchema = z.object({
 
 type AddMemberFormValues = z.infer<typeof addMemberFormSchema>;
 
-const AddMemberForm: React.FC = () => {
-  const [open, setOpen] = useState(false);
+interface AddMemberFormProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  onSuccess?: () => void;
+}
+
+const AddMemberForm: React.FC<AddMemberFormProps> = ({ 
+  open, 
+  onOpenChange,
+  onSuccess
+}) => {
+  const [internalOpen, setInternalOpen] = React.useState(false);
+  const isControlled = open !== undefined && onOpenChange !== undefined;
+  
+  const handleOpenChange = (newOpen: boolean) => {
+    if (isControlled) {
+      onOpenChange(newOpen);
+    } else {
+      setInternalOpen(newOpen);
+    }
+  };
+
+  const currentOpen = isControlled ? open : internalOpen;
+  
   const queryClient = useQueryClient();
 
   // Add member mutation
@@ -42,7 +64,8 @@ const AddMemberForm: React.FC = () => {
       toast.success("Member added successfully");
       queryClient.invalidateQueries({ queryKey: ['members'] });
       form.reset();
-      setOpen(false);
+      handleOpenChange(false);
+      if (onSuccess) onSuccess();
     },
     onError: (error: any) => {
       console.error("Add member error:", error);
@@ -70,13 +93,15 @@ const AddMemberForm: React.FC = () => {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" className="flex items-center gap-2">
-          <UserPlus className="h-4 w-4" />
-          <span>Add Member Directly</span>
-        </Button>
-      </DialogTrigger>
+    <Dialog open={currentOpen} onOpenChange={handleOpenChange}>
+      {!isControlled && (
+        <DialogTrigger asChild>
+          <Button variant="outline" className="flex items-center gap-2">
+            <UserPlus className="h-4 w-4" />
+            <span>Add Member Directly</span>
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add a Member Directly</DialogTitle>

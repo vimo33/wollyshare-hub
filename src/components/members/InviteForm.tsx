@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -27,8 +27,30 @@ const inviteFormSchema = z.object({
 
 type InviteFormValues = z.infer<typeof inviteFormSchema>;
 
-const InviteForm: React.FC = () => {
-  const [open, setOpen] = useState(false);
+interface InviteFormProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  onSuccess?: () => void;
+}
+
+const InviteForm: React.FC<InviteFormProps> = ({ 
+  open, 
+  onOpenChange,
+  onSuccess 
+}) => {
+  const [internalOpen, setInternalOpen] = React.useState(false);
+  const isControlled = open !== undefined && onOpenChange !== undefined;
+  
+  const handleOpenChange = (newOpen: boolean) => {
+    if (isControlled) {
+      onOpenChange(newOpen);
+    } else {
+      setInternalOpen(newOpen);
+    }
+  };
+
+  const currentOpen = isControlled ? open : internalOpen;
+  
   const queryClient = useQueryClient();
 
   // Create invitation mutation
@@ -38,7 +60,8 @@ const InviteForm: React.FC = () => {
       toast.success("Invitation sent successfully");
       queryClient.invalidateQueries({ queryKey: ['invitations'] });
       form.reset();
-      setOpen(false);
+      handleOpenChange(false);
+      if (onSuccess) onSuccess();
     },
     onError: (error: any) => {
       console.error("Invitation error:", error);
@@ -65,13 +88,15 @@ const InviteForm: React.FC = () => {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          <span>Invite New Member</span>
-        </Button>
-      </DialogTrigger>
+    <Dialog open={currentOpen} onOpenChange={handleOpenChange}>
+      {!isControlled && (
+        <DialogTrigger asChild>
+          <Button className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            <span>Invite New Member</span>
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Invite a New Member</DialogTitle>
