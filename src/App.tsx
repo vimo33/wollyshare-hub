@@ -12,6 +12,7 @@ import Auth from "./pages/Auth";
 import AdminAuth from "./pages/AdminAuth";
 import Admin from "./pages/Admin";
 import AdminMembers from "./pages/AdminMembers";
+import AdminAddExistingUsers from "./pages/AdminAddExistingUsers";
 import AdminCommunitySettings from "./pages/AdminCommunitySettings";
 import HowItWorks from "./pages/HowItWorks";
 import MyItems from "./pages/MyItems";
@@ -48,6 +49,7 @@ const AppRoutes = () => {
       {/* Protected Admin Routes */}
       <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
       <Route path="/admin/members" element={<AdminRoute><AdminMembers /></AdminRoute>} />
+      <Route path="/admin/add-existing-users" element={<AdminRoute><AdminAddExistingUsers /></AdminRoute>} />
       <Route path="/admin/invitations" element={<Navigate to="/admin/members" replace />} />
       <Route path="/admin/community-settings" element={<AdminRoute><AdminCommunitySettings /></AdminRoute>} />
       

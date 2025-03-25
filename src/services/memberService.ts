@@ -15,6 +15,22 @@ export const getMembers = async (): Promise<Profile[]> => {
   return data as unknown as Profile[];
 };
 
+export const getNonMembers = async (): Promise<Profile[]> => {
+  // Get profiles where is_member is false
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('is_member', false)
+    .order('created_at', { ascending: false });
+    
+  if (error) {
+    console.error('Error fetching non-members:', error);
+    return [];
+  }
+  
+  return data as Profile[];
+};
+
 export const deleteMember = async (memberId: string): Promise<boolean> => {
   // Use the delete_member function which checks if the current user is an admin
   // and sets is_member to false for the specified user

@@ -9,19 +9,16 @@ import { getMembers } from "@/services/memberService";
 import AdminBreadcrumb from "@/components/AdminBreadcrumb";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import MemberList from "@/components/members/MemberList";
 import InvitationList from "@/components/members/InvitationList";
 import InviteForm from "@/components/members/InviteForm";
-import AddMemberForm from "@/components/members/AddMemberForm";
 import BulkUploadDialog from "@/components/members/BulkUploadDialog";
 
 const AdminMembers = () => {
   const { user, adminProfile, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [inviteOpen, setInviteOpen] = useState(false);
-  const [addMemberOpen, setAddMemberOpen] = useState(false);
   const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
 
   // Redirect if not admin
@@ -116,11 +113,11 @@ const AdminMembers = () => {
               
               <Button 
                 variant="outline" 
-                onClick={() => setAddMemberOpen(true)} 
+                onClick={() => navigate("/admin/add-existing-users")} 
                 className="flex items-center gap-2"
               >
                 <UserPlus className="h-4 w-4" />
-                <span>Add Existing User</span>
+                <span>Add Existing Users</span>
               </Button>
               
               <Button 
@@ -156,7 +153,6 @@ const AdminMembers = () => {
 
       {/* Dialogs */}
       <InviteForm open={inviteOpen} onOpenChange={setInviteOpen} onSuccess={refetchInvitations} />
-      <AddMemberForm open={addMemberOpen} onOpenChange={setAddMemberOpen} onSuccess={refetchMembers} />
       <BulkUploadDialog open={bulkUploadOpen} onOpenChange={setBulkUploadOpen} />
     </div>
   );

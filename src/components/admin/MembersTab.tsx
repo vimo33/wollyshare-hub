@@ -27,8 +27,17 @@ const MembersTab: React.FC = () => {
                 onClick={() => navigate("/admin/members")}
                 className="flex items-center gap-2"
               >
-                <Mail className="h-4 w-4" />
+                <Users className="h-4 w-4" />
                 <span>Manage Members</span>
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                onClick={() => navigate("/admin/add-existing-users")}
+                className="flex items-center gap-2"
+              >
+                <UserPlus className="h-4 w-4" />
+                <span>Add Existing Users</span>
               </Button>
             </div>
 
