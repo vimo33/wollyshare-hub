@@ -29,7 +29,7 @@ const Hero = () => {
           .from('items')
           .select('id', { count: 'exact', head: true });
 
-        // Fetch total members count (now using the new function)
+        // Fetch total members count (all profiles)
         const totalMembers = await getTotalMembers();
         console.log("Total members count fetched:", totalMembers);
 
@@ -64,7 +64,13 @@ const Hero = () => {
       }
     };
 
+    // Fetch stats immediately when component mounts
     fetchStats();
+    
+    // Also set up a refresh interval to keep the stats updated
+    const refreshInterval = setInterval(fetchStats, 60000); // Refresh every minute
+    
+    return () => clearInterval(refreshInterval);
   }, []);
 
   return (
@@ -97,7 +103,7 @@ const Hero = () => {
           </p>
         </div>
         
-        {/* Statistics - updated to use total members count */}
+        {/* Statistics - Total Users count from all profiles */}
         <div className={cn(
           "grid grid-cols-1 md:grid-cols-3 gap-8 transition-all duration-1000 delay-300",
           isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
@@ -108,7 +114,7 @@ const Hero = () => {
           </div>
           <div className="glass rounded-2xl p-6 text-center hover-lift">
             <div className="text-3xl font-bold mb-2">{stats.membersCount}</div>
-            <p className="text-muted-foreground">Total Users</p> {/* Correctly labeled */}
+            <p className="text-muted-foreground">Total Users</p>
           </div>
           <div className="glass rounded-2xl p-6 text-center hover-lift">
             <div className="text-3xl font-bold mb-2">{stats.categoriesCount}</div>
