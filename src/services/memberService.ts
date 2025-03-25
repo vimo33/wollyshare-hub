@@ -15,6 +15,20 @@ export const getMembers = async (): Promise<Profile[]> => {
   return data as unknown as Profile[];
 };
 
+export const getTotalMembers = async (): Promise<number> => {
+  // Get total count of all profiles (both members and non-members)
+  const { count, error } = await supabase
+    .from('profiles')
+    .select('*', { count: 'exact', head: true });
+    
+  if (error) {
+    console.error('Error fetching total members count:', error);
+    return 0;
+  }
+  
+  return count || 0;
+};
+
 export const getNonMembers = async (): Promise<Profile[]> => {
   // Get profiles where is_member is false
   const { data, error } = await supabase

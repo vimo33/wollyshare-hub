@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import { getTotalMembers } from '@/services/memberService';
 
 const Hero = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -29,11 +30,8 @@ const Hero = () => {
           .from('items')
           .select('id', { count: 'exact', head: true });
 
-        // Fetch members count
-        const { data: membersData, error: membersError } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('is_member', true);
+        // Fetch total members count (now using the new function)
+        const totalMembers = await getTotalMembers();
 
         // Fetch unique categories from all items
         const { data: categoriesData, error: categoriesError } = await supabase
@@ -45,10 +43,6 @@ const Hero = () => {
           console.error('Error fetching items count:', itemsError);
         }
 
-        if (membersError) {
-          console.error('Error fetching members count:', membersError);
-        }
-
         if (categoriesError) {
           console.error('Error fetching categories:', categoriesError);
         }
@@ -58,11 +52,11 @@ const Hero = () => {
           ? [...new Set(categoriesData.map(item => item.category))]
           : [];
 
-        console.log(`Stats: ${itemsCount} items, ${membersData?.length} members, ${uniqueCategories.length} categories`);
+        console.log(`Stats: ${itemsCount} items, ${totalMembers} members, ${uniqueCategories.length} categories`);
         
         setStats({
           itemsCount: itemsCount?.toString() || '0',
-          membersCount: membersData?.length.toString() || '0',
+          membersCount: totalMembers.toString(),
           categoriesCount: uniqueCategories.length.toString() || '0'
         });
       } catch (error) {
@@ -103,7 +97,7 @@ const Hero = () => {
           </p>
         </div>
         
-        {/* Statistics - updated to use dynamic data */}
+        {/* Statistics - updated to use total members count */}
         <div className={cn(
           "grid grid-cols-1 md:grid-cols-3 gap-8 transition-all duration-1000 delay-300",
           isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
@@ -114,7 +108,7 @@ const Hero = () => {
           </div>
           <div className="glass rounded-2xl p-6 text-center hover-lift">
             <div className="text-3xl font-bold mb-2">{stats.membersCount}</div>
-            <p className="text-muted-foreground">Active Members</p>
+            <p className="text-muted-foreground">Total Users</p> {/* Updated label */}
           </div>
           <div className="glass rounded-2xl p-6 text-center hover-lift">
             <div className="text-3xl font-bold mb-2">{stats.categoriesCount}</div>
