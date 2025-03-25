@@ -17,6 +17,7 @@ export const getMembers = async (): Promise<Profile[]> => {
 
 export const getTotalMembers = async (): Promise<number> => {
   // Get total count of all profiles (both members and non-members)
+  // Using a simplified count query without any filters
   const { count, error } = await supabase
     .from('profiles')
     .select('*', { count: 'exact', head: true });
@@ -26,6 +27,7 @@ export const getTotalMembers = async (): Promise<number> => {
     return 0;
   }
   
+  console.log('Total profiles count from Supabase:', count);
   return count || 0;
 };
 

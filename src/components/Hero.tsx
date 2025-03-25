@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -32,6 +31,7 @@ const Hero = () => {
 
         // Fetch total members count (now using the new function)
         const totalMembers = await getTotalMembers();
+        console.log("Total members count fetched:", totalMembers);
 
         // Fetch unique categories from all items
         const { data: categoriesData, error: categoriesError } = await supabase
@@ -108,7 +108,7 @@ const Hero = () => {
           </div>
           <div className="glass rounded-2xl p-6 text-center hover-lift">
             <div className="text-3xl font-bold mb-2">{stats.membersCount}</div>
-            <p className="text-muted-foreground">Total Users</p> {/* Updated label */}
+            <p className="text-muted-foreground">Total Users</p> {/* Correctly labeled */}
           </div>
           <div className="glass rounded-2xl p-6 text-center hover-lift">
             <div className="text-3xl font-bold mb-2">{stats.categoriesCount}</div>
