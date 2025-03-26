@@ -9,6 +9,7 @@ export const itemsQueryKeys = {
   all: ['items'] as const,
   byUser: (userId: string) => [...itemsQueryKeys.all, 'user', userId] as const,
   locations: ['locations'] as const,
+  profiles: ['profiles'] as const,
 };
 
 // Valid category types for type-checking
@@ -65,6 +66,38 @@ export const useLocationsQuery = () => {
   });
 };
 
+// New hook to fetch all user profiles
+export const useProfilesQuery = () => {
+  return useQuery({
+    queryKey: itemsQueryKeys.profiles,
+    queryFn: async () => {
+      console.log('Fetching all user profiles');
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, username, full_name, location');
+        
+      if (error) {
+        console.error('Error fetching user profiles:', error);
+        throw error;
+      }
+      
+      // Create a map of user IDs to profile information
+      const userMap = new Map();
+      data?.forEach(profile => {
+        userMap.set(profile.id, {
+          name: profile.username || profile.full_name || 'Unknown User',
+          location: profile.location || null
+        });
+      });
+      
+      console.log(`Fetched ${userMap.size} user profiles`);
+      return userMap;
+    },
+    staleTime: 1000 * 60 * 5, // Cache profiles for 5 minutes
+  });
+};
+
 export const useItemsQuery = ({ userId, enabled = true }: UseItemsQueryOptions = {}): ItemsQueryResult => {
   // Use the locations query
   const { 
@@ -72,6 +105,13 @@ export const useItemsQuery = ({ userId, enabled = true }: UseItemsQueryOptions =
     isLoading: isLocationLoading, 
     error: locationError 
   } = useLocationsQuery();
+
+  // Use the profiles query to get all user profiles
+  const {
+    data: userMap = new Map(),
+    isLoading: isProfilesLoading,
+    error: profilesError
+  } = useProfilesQuery();
 
   // Use React Query to fetch items
   const itemsQuery = useQuery({
@@ -97,43 +137,20 @@ export const useItemsQuery = ({ userId, enabled = true }: UseItemsQueryOptions =
         return [];
       }
 
-      // Get unique user IDs from the items
-      const userIds = [...new Set(itemsData.map(item => item.user_id))];
-      
-      // Fetch user profiles for those IDs
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, full_name, username, location')
-        .in('id', userIds);
-
-      if (profilesError) {
-        console.error('Error fetching profiles:', profilesError);
-        throw profilesError;
-      }
-
-      // Create a map of user IDs to names and locations
-      const userMap = new Map();
-      profilesData?.forEach(profile => {
-        userMap.set(profile.id, {
-          name: profile.username || profile.full_name || 'Unknown User',
-          location: profile.location || null
-        });
-      });
-
-      // Combine items with owner names and locations using our utility function
+      // Combine items with owner names and locations directly from userMap
       return itemsData.map(item => {
         const userInfo = userMap.get(item.user_id) || { name: 'Unknown User', location: null };
         return transformItemData(item, userInfo, locationData);
       });
     },
-    enabled: enabled && !isLocationLoading,
+    enabled: enabled && !isLocationLoading && !isProfilesLoading,
     staleTime: 1000 * 60 * 2, // Cache items for 2 minutes
   });
 
   return {
     ...itemsQuery,
-    isLoading: itemsQuery.isLoading || isLocationLoading,
+    isLoading: itemsQuery.isLoading || isLocationLoading || isProfilesLoading,
     locationData,
-    locationError
+    locationError: locationError || profilesError
   };
 };

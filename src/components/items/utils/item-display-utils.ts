@@ -59,8 +59,8 @@ export const transformItemData = (
     userInfo 
   }, locationData);
   
-  // Validate category
-  const validCategories = ["tools", "kitchen", "electronics", "sports", "other"];
+  // Validate category to include all available categories
+  const validCategories = ["tools", "kitchen", "electronics", "sports", "books", "games", "diy-craft", "other"];
   const safeCategory = validCategories.includes(rawItem.category) ? rawItem.category : "other";
   
   return {

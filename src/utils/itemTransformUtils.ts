@@ -44,8 +44,8 @@ export const transformItemData = (
     locationName = extractedLocation !== "Location not specified" ? extractedLocation : "Location not specified";
   }
   
-  // Validate category
-  const validCategories = ["tools", "kitchen", "electronics", "sports", "other"];
+  // Validate category to include the new categories
+  const validCategories = ["tools", "kitchen", "electronics", "sports", "books", "games", "diy-craft", "other"];
   const safeCategory = validCategories.includes(rawItem.category) ? rawItem.category : "other";
   
   return {
