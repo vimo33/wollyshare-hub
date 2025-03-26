@@ -45,36 +45,53 @@ const IncomingRequestsSection = ({ onStatusChange }: IncomingRequestsSectionProp
         throw new Error('Could not get current user');
       }
       
+      // Fetch pending borrow requests where the current user is the owner
       const { data, error } = await supabase
         .from('borrow_requests')
-        .select(`
-          id,
-          item_id,
-          borrower_id,
-          message,
-          created_at,
-          items(name),
-          profiles!borrow_requests_borrower_id_fkey(username, full_name)
-        `)
+        .select('id, item_id, borrower_id, message, created_at')
         .eq('owner_id', userData.user.id)
         .eq('status', 'pending');
 
       if (error) throw error;
+      
+      // If we have requests, fetch related item and borrower data
+      if (data && data.length > 0) {
+        // Transform the data with detailed item and borrower information
+        const formattedRequests: IncomingRequest[] = await Promise.all(
+          data.map(async (request) => {
+            // Get item name
+            const { data: itemData } = await supabase
+              .from('items')
+              .select('name')
+              .eq('id', request.item_id)
+              .single();
+              
+            // Get borrower information
+            const { data: borrowerData } = await supabase
+              .from('profiles')
+              .select('username, full_name')
+              .eq('id', request.borrower_id)
+              .single();
+              
+            return {
+              id: request.id,
+              item_id: request.item_id,
+              item_name: itemData?.name || 'Unknown Item',
+              borrower_id: request.borrower_id,
+              borrower_name: 
+                borrowerData?.username || 
+                borrowerData?.full_name || 
+                'Unknown User',
+              message: request.message || '',
+              created_at: request.created_at,
+            };
+          })
+        );
 
-      const formattedRequests: IncomingRequest[] = data.map(request => ({
-        id: request.id,
-        item_id: request.item_id,
-        item_name: request.items?.name || 'Unknown Item',
-        borrower_id: request.borrower_id,
-        borrower_name: 
-          request.profiles?.username || 
-          request.profiles?.full_name || 
-          'Unknown User',
-        message: request.message || '',
-        created_at: request.created_at,
-      }));
-
-      setIncomingRequests(formattedRequests);
+        setIncomingRequests(formattedRequests);
+      } else {
+        setIncomingRequests([]);
+      }
     } catch (error) {
       console.error('Error fetching incoming requests:', error);
       toast({

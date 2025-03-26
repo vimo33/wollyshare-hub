@@ -41,40 +41,54 @@ const BorrowRequestHistory = () => {
         throw new Error('Could not get current user');
       }
       
-      // Fetch borrow requests with joined data
+      // Fetch borrow requests with joined data - using separate queries for better type safety
       const { data, error } = await supabase
         .from('borrow_requests')
-        .select(`
-          id,
-          item_id,
-          owner_id,
-          status,
-          message,
-          created_at,
-          items(name),
-          profiles!borrow_requests_owner_id_fkey(username, full_name)
-        `)
+        .select('id, item_id, owner_id, status, message, created_at')
         .eq('borrower_id', userData.user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      
+      // If we have requests, fetch the related data
+      if (data && data.length > 0) {
+        // Create a formatted request array
+        const formattedRequests: BorrowRequest[] = await Promise.all(
+          data.map(async (request) => {
+            // Get item name
+            const { data: itemData } = await supabase
+              .from('items')
+              .select('name')
+              .eq('id', request.item_id)
+              .single();
+              
+            // Get owner information
+            const { data: ownerData } = await supabase
+              .from('profiles')
+              .select('username, full_name')
+              .eq('id', request.owner_id)
+              .single();
+              
+            return {
+              id: request.id,
+              item_id: request.item_id,
+              item_name: itemData?.name || 'Unknown Item',
+              owner_id: request.owner_id,
+              owner_name: 
+                ownerData?.username || 
+                ownerData?.full_name || 
+                'Unknown User',
+              status: request.status as 'pending' | 'approved' | 'rejected' | 'cancelled',
+              message: request.message || '',
+              created_at: request.created_at,
+            };
+          })
+        );
 
-      // Transform the data to match our interface
-      const formattedRequests: BorrowRequest[] = data.map(request => ({
-        id: request.id,
-        item_id: request.item_id,
-        item_name: request.items?.name || 'Unknown Item',
-        owner_id: request.owner_id,
-        owner_name: 
-          request.profiles?.username || 
-          request.profiles?.full_name || 
-          'Unknown User',
-        status: request.status as 'pending' | 'approved' | 'rejected' | 'cancelled',
-        message: request.message || '',
-        created_at: request.created_at,
-      }));
-
-      setRequestHistory(formattedRequests);
+        setRequestHistory(formattedRequests);
+      } else {
+        setRequestHistory([]);
+      }
     } catch (error) {
       console.error('Error fetching request history:', error);
       toast({
