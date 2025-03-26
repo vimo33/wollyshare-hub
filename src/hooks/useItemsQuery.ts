@@ -12,7 +12,7 @@ export const itemsQueryKeys = {
 };
 
 // Valid category types for type-checking
-const validCategories = ["tools", "kitchen", "electronics", "sports", "other"] as const;
+const validCategories = ["tools", "kitchen", "electronics", "sports", "books", "games", "diy-craft", "other"] as const;
 export type ValidCategory = typeof validCategories[number];
 
 // Helper to validate if a category is one of the allowed values

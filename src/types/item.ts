@@ -6,7 +6,7 @@ export interface Item {
   id: string;
   name: string;
   description: string | null;
-  category: "tools" | "kitchen" | "electronics" | "sports" | "other";
+  category: "tools" | "kitchen" | "electronics" | "sports" | "books" | "games" | "diy-craft" | "other";
   image_url: string | null;
   user_id: string;
   weekday_availability: string;
