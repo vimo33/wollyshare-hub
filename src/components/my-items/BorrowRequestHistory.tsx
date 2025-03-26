@@ -14,6 +14,7 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 
+// Updated interface to match the expected types
 interface BorrowRequest {
   id: string;
   item_id: string;
@@ -34,6 +35,13 @@ const BorrowRequestHistory = () => {
   const fetchRequestHistory = async () => {
     setIsLoading(true);
     try {
+      // Get the current user ID
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError || !userData.user) {
+        throw new Error('Could not get current user');
+      }
+      
+      // Fetch borrow requests with joined data
       const { data, error } = await supabase
         .from('borrow_requests')
         .select(`
@@ -43,21 +51,25 @@ const BorrowRequestHistory = () => {
           status,
           message,
           created_at,
-          items:item_id(name),
-          profiles:owner_id(username, full_name)
+          items(name),
+          profiles!borrow_requests_owner_id_fkey(username, full_name)
         `)
-        .eq('borrower_id', (await supabase.auth.getUser()).data.user?.id)
+        .eq('borrower_id', userData.user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
+      // Transform the data to match our interface
       const formattedRequests: BorrowRequest[] = data.map(request => ({
         id: request.id,
         item_id: request.item_id,
         item_name: request.items?.name || 'Unknown Item',
         owner_id: request.owner_id,
-        owner_name: request.profiles?.username || request.profiles?.full_name || 'Unknown User',
-        status: request.status,
+        owner_name: 
+          request.profiles?.username || 
+          request.profiles?.full_name || 
+          'Unknown User',
+        status: request.status as 'pending' | 'approved' | 'rejected' | 'cancelled',
         message: request.message || '',
         created_at: request.created_at,
       }));
@@ -88,7 +100,7 @@ const BorrowRequestHistory = () => {
     });
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: 'pending' | 'approved' | 'rejected' | 'cancelled') => {
     switch (status) {
       case 'pending':
         return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Pending</Badge>;

@@ -39,6 +39,12 @@ const IncomingRequestsSection = ({ onStatusChange }: IncomingRequestsSectionProp
   const fetchIncomingRequests = async () => {
     setIsLoading(true);
     try {
+      // Get the current user ID
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError || !userData.user) {
+        throw new Error('Could not get current user');
+      }
+      
       const { data, error } = await supabase
         .from('borrow_requests')
         .select(`
@@ -47,10 +53,10 @@ const IncomingRequestsSection = ({ onStatusChange }: IncomingRequestsSectionProp
           borrower_id,
           message,
           created_at,
-          items:item_id(name),
-          profiles:borrower_id(username, full_name)
+          items(name),
+          profiles!borrow_requests_borrower_id_fkey(username, full_name)
         `)
-        .eq('owner_id', (await supabase.auth.getUser()).data.user?.id)
+        .eq('owner_id', userData.user.id)
         .eq('status', 'pending');
 
       if (error) throw error;
@@ -60,7 +66,10 @@ const IncomingRequestsSection = ({ onStatusChange }: IncomingRequestsSectionProp
         item_id: request.item_id,
         item_name: request.items?.name || 'Unknown Item',
         borrower_id: request.borrower_id,
-        borrower_name: request.profiles?.username || request.profiles?.full_name || 'Unknown User',
+        borrower_name: 
+          request.profiles?.username || 
+          request.profiles?.full_name || 
+          'Unknown User',
         message: request.message || '',
         created_at: request.created_at,
       }));
