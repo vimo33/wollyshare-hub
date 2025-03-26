@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -122,14 +121,6 @@ const SignupForm = ({ invitationToken }: SignupFormProps) => {
         {error && (
           <Alert variant="destructive">
             <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
-        {!invitationToken && (
-          <Alert>
-            <AlertDescription>
-              Note: You need an invitation to become a full member. Without an invitation link, you'll sign up with limited access.
-            </AlertDescription>
           </Alert>
         )}
 
