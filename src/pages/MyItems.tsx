@@ -7,6 +7,8 @@ import MyItemsList from "@/components/my-items/MyItemsList";
 import ItemFormDialog from "@/components/my-items/ItemFormDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
+import IncomingRequestsSection from "@/components/my-items/IncomingRequestsSection";
+import BorrowRequestHistory from "@/components/my-items/BorrowRequestHistory";
 
 const MyItems = () => {
   const [isAddItemOpen, setIsAddItemOpen] = useState(false);
@@ -37,6 +39,11 @@ const MyItems = () => {
     }
   };
 
+  const handleRequestStatusChange = () => {
+    // This function is called when a request status changes (approved/rejected)
+    // We could show a toast or refresh some data if needed
+  };
+
   return (
     <div className="container mx-auto px-4 py-12 max-w-5xl">
       <PageHeader
@@ -56,6 +63,12 @@ const MyItems = () => {
 
       {/* Items list - explicitly showing only the current user's items */}
       <MyItemsList ref={itemsListRef} />
+
+      {/* Incoming Borrow Requests Section */}
+      <IncomingRequestsSection onStatusChange={handleRequestStatusChange} />
+
+      {/* My Borrow Request History Section */}
+      <BorrowRequestHistory />
 
       {/* Add item dialog */}
       <ItemFormDialog 
