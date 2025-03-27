@@ -27,11 +27,17 @@ const Header = () => {
           {user ? <UserMenu /> : <AuthMenu />}
         </div>
 
-        {/* Mobile Menu */}
-        {isMobile && (
+        {/* Mobile Menu - Only show if user is not logged in */}
+        {isMobile && !user && (
           <div className="flex items-center">
-            {user && <UserMenu />}
             <MobileMenu open={open} setOpen={setOpen} />
+          </div>
+        )}
+        
+        {/* For logged-in mobile users, show only minimal header with user menu */}
+        {isMobile && user && (
+          <div className="flex items-center">
+            <UserMenu />
           </div>
         )}
       </div>

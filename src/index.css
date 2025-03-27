@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
@@ -177,11 +176,6 @@
   /* Enhanced touch feedback */
   .touch-feedback {
     @apply active:bg-gray-100 active:scale-[0.98] transition-transform duration-150;
-  }
-
-  /* Swipeable items for mobile */
-  .swipeable-item {
-    @apply relative overflow-hidden;
   }
 
   /* Bottom sheet/drawer styling */
