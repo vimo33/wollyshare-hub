@@ -22,7 +22,7 @@ const ItemsGrid = memo(({ items }: ItemsGridProps) => {
           key={item.id}
           className="opacity-0 animate-fade-up"
           style={{ 
-            animationDelay: `${index * 100}ms`, 
+            animationDelay: `${index * 50}ms`, 
             animationFillMode: 'forwards' 
           }}
           data-testid={`item-card-${item.id}`}

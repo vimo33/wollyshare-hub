@@ -1,14 +1,11 @@
 
-import { memo, lazy, Suspense } from "react";
+import { memo, useState, useEffect } from "react";
 import { Item } from "@/types/item";
 import LoadingState from "./LoadingState";
 import EmptyState from "./EmptyState";
 import SearchBar from "./SearchBar";
 import CategoryFilter from "./CategoryFilter";
-import ItemsSkeletonGrid from "./ItemsSkeletonGrid";
-
-// Code-split the ItemsGrid component
-const ItemsGrid = lazy(() => import("./ItemsGrid"));
+import ItemsGrid from "./ItemsGrid"; // Direct import instead of lazy loading
 
 interface ItemsSectionProps {
   items: Item[];
@@ -27,6 +24,13 @@ const ItemsSection = memo(({
   activeCategory, 
   setActiveCategory 
 }: ItemsSectionProps) => {
+  const [isClient, setIsClient] = useState(false);
+  
+  // Use useEffect to ensure we're rendering on the client side
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   return (
     <section className="py-16 px-6 bg-gradient-to-b from-white to-gray-50">
       <div className="max-w-7xl mx-auto">
@@ -43,13 +47,15 @@ const ItemsSection = memo(({
           <CategoryFilter activeCategory={activeCategory} handleCategoryClick={setActiveCategory} />
         </div>
 
-        {/* Items Grid with improved loading states */}
+        {/* Items Grid with improved rendering */}
         {isLoading ? (
-          <ItemsSkeletonGrid />
+          <LoadingState />
+        ) : !isClient ? (
+          <div className="min-h-[400px] flex items-center justify-center">
+            <div className="animate-pulse">Loading items...</div>
+          </div>
         ) : items.length > 0 ? (
-          <Suspense fallback={<ItemsSkeletonGrid />}>
-            <ItemsGrid items={items} />
-          </Suspense>
+          <ItemsGrid items={items} />
         ) : (
           <EmptyState />
         )}
