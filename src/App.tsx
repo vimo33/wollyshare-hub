@@ -18,6 +18,7 @@ import HowItWorks from "./pages/HowItWorks";
 import MyItems from "./pages/MyItems";
 import Profile from "./pages/Profile";
 import { useAuth } from "@/contexts/AuthContext";
+import MobileBottomNav from "@/components/mobile/MobileBottomNav";
 
 const queryClient = new QueryClient();
 
@@ -70,6 +71,7 @@ const App = () => (
         <BrowserRouter>
           <Header />
           <AppRoutes />
+          <MobileBottomNav />
         </BrowserRouter>
       </AuthProvider>
     </TooltipProvider>

@@ -14,8 +14,8 @@ const Header = () => {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md">
-      <div className="container flex h-16 items-center justify-between">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md md:h-16 h-14">
+      <div className="container flex h-full items-center justify-between">
         {/* Logo */}
         <Logo />
 
@@ -28,7 +28,12 @@ const Header = () => {
         </div>
 
         {/* Mobile Menu */}
-        {isMobile && <MobileMenu open={open} setOpen={setOpen} />}
+        {isMobile && (
+          <div className="flex items-center">
+            {user && <UserMenu />}
+            <MobileMenu open={open} setOpen={setOpen} />
+          </div>
+        )}
       </div>
     </header>
   );

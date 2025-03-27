@@ -134,3 +134,83 @@
 .delay-700 {
   animation-delay: 700ms;
 }
+
+/* Mobile App-like styling for small screens */
+@media (max-width: 768px) {
+  /* Add bottom padding to account for the bottom navbar */
+  body {
+    padding-bottom: 4rem;
+    overscroll-behavior: none; /* Prevent bounce effects on iOS */
+    -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+  }
+
+  /* Make all main content containers full width */
+  .container {
+    @apply px-4 max-w-full;
+  }
+
+  /* Increase button sizes for better touch targets */
+  .btn, button, [role="button"], .button, a.button, input[type="submit"] {
+    @apply min-h-[44px] min-w-[44px];
+  }
+
+  /* Increase form elements for better touch interaction */
+  input, select, textarea {
+    @apply text-base min-h-[44px] px-4;
+  }
+
+  /* Make cards full width and more app-like */
+  .card, [class*="card"] {
+    @apply rounded-xl shadow-sm mx-0 w-full;
+  }
+
+  /* Add "pull to refresh" space at the top of scrollable areas */
+  main {
+    @apply pt-4;
+  }
+
+  /* Optimize modals and dialogs for mobile */
+  [role="dialog"] {
+    @apply p-4 rounded-t-2xl rounded-b-none;
+  }
+
+  /* Enhanced touch feedback */
+  .touch-feedback {
+    @apply active:bg-gray-100 active:scale-[0.98] transition-transform duration-150;
+  }
+
+  /* Swipeable items for mobile */
+  .swipeable-item {
+    @apply relative overflow-hidden;
+  }
+
+  /* Bottom sheet/drawer styling */
+  .bottom-sheet {
+    @apply fixed bottom-0 left-0 right-0 max-h-[90vh] bg-background rounded-t-2xl shadow-lg z-50 overflow-hidden;
+  }
+}
+
+/* Add page transition animations for mobile */
+@media (max-width: 768px) {
+  .page-enter {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+
+  .page-enter-active {
+    opacity: 1;
+    transform: translateX(0%);
+    transition: opacity 300ms, transform 300ms;
+  }
+
+  .page-exit {
+    opacity: 1;
+    transform: translateX(0%);
+  }
+
+  .page-exit-active {
+    opacity: 0;
+    transform: translateX(-100%);
+    transition: opacity 300ms, transform 300ms;
+  }
+}
