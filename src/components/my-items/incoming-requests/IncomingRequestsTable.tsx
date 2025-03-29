@@ -1,3 +1,4 @@
+
 import React from "react";
 import {
   Table,
@@ -8,17 +9,57 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import { IncomingRequest } from "@/types/supabase";
+import { updateBorrowRequestStatus } from "@/services/borrowRequestService";
+import { useToast } from "@/components/ui/use-toast";
 
 interface IncomingRequestsTableProps {
   requests: IncomingRequest[];
-  refreshRequests: () => void; // Add refresh function
+  refreshRequests: () => void;
 }
 
 const IncomingRequestsTable = ({ 
   requests,
-  refreshRequests, // Include in props
+  refreshRequests,
 }: IncomingRequestsTableProps) => {
+  const { toast } = useToast();
+  const [processingIds, setProcessingIds] = React.useState<Set<string>>(new Set());
+
+  const handleUpdateStatus = async (requestId: string, status: 'approved' | 'rejected') => {
+    try {
+      setProcessingIds(prev => new Set(prev).add(requestId));
+      
+      await updateBorrowRequestStatus(requestId, status);
+      
+      toast({
+        title: status === 'approved' ? "Request approved!" : "Request declined",
+        description: status === 'approved' 
+          ? "The borrower has been notified." 
+          : "The request has been declined.",
+      });
+      
+      refreshRequests();
+    } catch (error: any) {
+      console.error(`Error ${status} request:`, error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: `Failed to ${status} request: ${error.message}`,
+      });
+    } finally {
+      setProcessingIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(requestId);
+        return newSet;
+      });
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString();
+  };
+
   return (
     <div className="w-full overflow-x-auto">
       <Table>
@@ -37,10 +78,27 @@ const IncomingRequestsTable = ({
             <TableRow key={request.id}>
               <TableCell className="font-medium">{request.requester_username}</TableCell>
               <TableCell>{request.item_name}</TableCell>
-              <TableCell>{new Date(request.start_date).toLocaleDateString()}</TableCell>
-              <TableCell>{new Date(request.end_date).toLocaleDateString()}</TableCell>
+              <TableCell>{formatDate(request.start_date)}</TableCell>
+              <TableCell>{formatDate(request.end_date)}</TableCell>
               <TableCell className="text-right">
-                {/* Add action buttons here */}
+                <div className="flex space-x-2 justify-end">
+                  <Button 
+                    size="sm" 
+                    className="bg-green-600 hover:bg-green-700" 
+                    disabled={processingIds.has(request.id)}
+                    onClick={() => handleUpdateStatus(request.id, 'approved')}
+                  >
+                    Approve
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    disabled={processingIds.has(request.id)}
+                    onClick={() => handleUpdateStatus(request.id, 'rejected')}
+                  >
+                    Decline
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           ))}

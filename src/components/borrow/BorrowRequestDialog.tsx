@@ -1,133 +1,139 @@
-import React from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+
+import React, { useState } from "react";
+import { Item } from "@/types/item";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle
 } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { 
+  Form, 
+  FormControl, 
+  FormField, 
+  FormItem, 
+  FormLabel, 
+  FormMessage
+} from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { CalendarIcon } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
-import * as z from "zod";
-import { createBorrowRequest } from "@/services/borrowService";
-import { useAuth } from "@/contexts/AuthContext";
-import { Item } from "@/types/supabase";
+import { createBorrowRequest } from "@/services/borrowRequestService";
 import { useToast } from "@/components/ui/use-toast";
-import useTelegramChat from "@/hooks/useTelegramChat";
+import { useAuth } from "@/contexts/AuthContext";
+import { useTelegramChat } from "@/hooks/useTelegramChat";
+
+// Schema for form validation
+const formSchema = z.object({
+  message: z.string().min(1, "Message is required"),
+  startDate: z.date({
+    required_error: "Start date is required",
+  }),
+  endDate: z.date({
+    required_error: "End date is required",
+  }),
+}).refine(data => data.startDate <= data.endDate, {
+  message: "End date cannot be before start date",
+  path: ["endDate"],
+});
 
 interface BorrowRequestDialogProps {
   item: Item;
   isOpen: boolean;
   onClose: () => void;
-  onRequestSent?: () => void; // Add callback prop for refreshing requests
+  onRequestSent?: () => void; // Callback to refresh parent component
 }
 
 const BorrowRequestDialog = ({ 
   item, 
   isOpen, 
   onClose,
-  onRequestSent 
+  onRequestSent
 }: BorrowRequestDialogProps) => {
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const borrowRequestSchema = z.object({
-    dateRange: z.object({
-      from: z.date({
-        required_error: "A start date is required.",
-      }),
-      to: z.date({
-        required_error: "An end date is required.",
-      }),
-    }),
-    message: z.string().optional(),
-  });
-  
-  type BorrowRequestFormValues = z.infer<typeof borrowRequestSchema>;
-  
   const { toast } = useToast();
-  const { startTelegramChat } = useTelegramChat();
   const { user } = useAuth();
-
-  const form = useForm<BorrowRequestFormValues>({
-    resolver: zodResolver(borrowRequestSchema),
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { startTelegramChat } = useTelegramChat();
+  
+  // Form setup with react-hook-form
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
-      dateRange: {
-        from: new Date(),
-        to: new Date(),
-      },
       message: "",
-    },
+      startDate: new Date(),
+      endDate: new Date(),
+    }
   });
 
-  const onSubmit = async (data: BorrowRequestFormValues) => {
-    setIsSubmitting(true);
+  const handleClose = () => {
+    form.reset();
+    onClose();
+  };
 
-    try {
-      if (!user) {
-        toast({
-          variant: "destructive",
-          title: "You must be logged in to request an item",
-        });
-        return;
-      }
-
-      const { error, data: requestData } = await createBorrowRequest({
-        item_id: item.id,
-        start_date: data.dateRange.from,
-        end_date: data.dateRange.to,
-        message: data.message,
-      });
-
-      if (error) {
-        toast({
-          variant: "destructive",
-          title: "Error creating borrow request",
-          description: error.message,
-        });
-      } else {
-        // Start Telegram chat
-        if (user) {
-          try {
-            await startTelegramChat(
-              user.id, 
-              item.user_id, 
-              item.name
-            );
-          } catch (chatError) {
-            // Silently log the error but don't impact the user experience
-            console.error("Failed to start Telegram chat:", chatError);
-          }
-        }
-
-        toast({
-          title: "Request sent successfully!",
-          description: "The item owner has been notified of your request.",
-        });
-        
-        // Call the onRequestSent callback if provided
-        if (onRequestSent) {
-          onRequestSent();
-        }
-        
-        onClose();
-      }
-    } catch (err) {
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!user) {
       toast({
         variant: "destructive",
-        title: "Unexpected error",
-        description: "An unexpected error occurred. Please try again.",
+        title: "Not authenticated",
+        description: "Please sign in to borrow items",
+      });
+      return;
+    }
+    
+    try {
+      setIsSubmitting(true);
+      
+      // Format dates for storage
+      const requestData = {
+        item_id: item.id,
+        owner_id: item.user_id,
+        message: values.message,
+        start_date: format(values.startDate, "yyyy-MM-dd"),
+        end_date: format(values.endDate, "yyyy-MM-dd"),
+      };
+      
+      // Create the borrow request
+      const result = await createBorrowRequest(requestData);
+      
+      // Try to start a Telegram chat
+      // This will succeed silently or fail silently
+      try {
+        await startTelegramChat(
+          user.id, 
+          item.user_id, 
+          item.name
+        );
+      } catch (chatError) {
+        // Log but don't show to user since this is a non-critical feature
+        console.error("Failed to start Telegram chat:", chatError);
+      }
+      
+      toast({
+        title: "Request sent!",
+        description: "Your borrow request has been sent to the owner.",
+      });
+      
+      // Trigger refresh of parent component
+      if (onRequestSent) {
+        onRequestSent();
+      }
+      
+      handleClose();
+    } catch (error: any) {
+      console.error("Error sending borrow request:", error);
+      toast({
+        variant: "destructive",
+        title: "Failed to send request",
+        description: error.message || "Please try again later",
       });
     } finally {
       setIsSubmitting(false);
@@ -135,78 +141,129 @@ const BorrowRequestDialog = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Request to Borrow</DialogTitle>
+          <DialogTitle>Borrow Request</DialogTitle>
           <DialogDescription>
-            Submit a request to borrow this item.
+            Send a request to borrow {item.name} from its owner.
           </DialogDescription>
         </DialogHeader>
+        
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="dateRange"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Date range</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-[240px] pl-3 text-left font-normal",
-                            !field.value?.from && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value?.from ? (
-                            field.value?.to ? (
-                              `${format(field.value.from, "MMM dd, yyyy")} - ${format(field.value.to, "MMM dd, yyyy")}`
+            {/* Date range selection */}
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="startDate"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Start Date</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-full pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP")
                             ) : (
-                              format(field.value.from, "MMM dd, yyyy")
-                            )
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="center" side="bottom">
-                      <Calendar
-                        mode="range"
-                        defaultMonth={field.value?.from}
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        disabled={(date) =>
-                          date < new Date()
-                        }
-                        numberOfMonths={2}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                              <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          disabled={(date) => date < new Date()}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="endDate"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>End Date</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-full pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP")
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          disabled={(date) => 
+                            date < new Date() || 
+                            (form.getValues().startDate && date < form.getValues().startDate)
+                          }
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            
+            {/* Message field */}
             <FormField
               control={form.control}
               name="message"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Message (Optional)</FormLabel>
+                  <FormLabel>Message to owner</FormLabel>
                   <FormControl>
-                    <Input placeholder="Write a message to the owner" {...field} />
+                    <Textarea
+                      placeholder="Please let me borrow this item..."
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? "Submitting..." : "Submit Request"}
-            </Button>
+            
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={handleClose}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Sending..." : "Send Request"}
+              </Button>
+            </DialogFooter>
           </form>
         </Form>
       </DialogContent>

@@ -1,61 +1,38 @@
+// Define the IncomingRequest type
+export interface IncomingRequest {
+  id: string;
+  item_id: string;
+  item_name: string;
+  borrower_id: string;
+  requester_username: string;
+  start_date: string;
+  end_date: string;
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+  message: string;
+  created_at: string;
+}
+
+// Borrow request type for the history
+export interface BorrowRequestHistory {
+  id: string;
+  item_id: string;
+  item_name: string;
+  owner_id: string;
+  owner_name: string;
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+  created_at: string;
+  message?: string;
+}
+
+// Profile type
 export interface Profile {
   id: string;
   user_id: string;
   username: string;
   full_name: string;
+  avatar_url?: string;
   location?: string;
-  location_address?: string;
-  is_member: boolean;
+  telegram_id?: string;
   created_at: string;
   updated_at: string;
-  telegram_id?: string; // Add telegram_id property
-}
-
-export interface AdminProfile {
-    id: string;
-    user_id: string;
-    created_at: string;
-    updated_at: string;
-}
-
-export interface Item {
-    id: string;
-    created_at: string;
-    updated_at: string;
-    name: string;
-    description: string;
-    image_urls: string[];
-    user_id: string;
-    category: string;
-    city: string;
-    country: string;
-    lat: number;
-    lng: number;
-}
-
-export interface BorrowRequest {
-    id: string;
-    created_at: string;
-    item_id: string;
-    requester_id: string;
-    owner_id: string;
-    start_date: string;
-    end_date: string;
-    message: string;
-    status: 'pending' | 'accepted' | 'rejected' | 'returned';
-}
-
-export interface IncomingRequest {
-    id: string;
-    created_at: string;
-    item_id: string;
-    requester_id: string;
-    owner_id: string;
-    start_date: string;
-    end_date: string;
-    message: string;
-    status: 'pending' | 'accepted' | 'rejected' | 'returned';
-    item_name: string;
-    requester_username: string;
-    requester_full_name: string;
 }
