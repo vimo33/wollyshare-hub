@@ -1,6 +1,5 @@
-
 import { useState, useCallback, memo } from "react";
-import { Item } from "@/types/item";
+import { Item } from "@/types/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import BorrowRequestDialog from "./borrow/BorrowRequestDialog";
@@ -19,6 +18,7 @@ type ItemCardProps = {
   category: "tools" | "kitchen" | "electronics" | "sports" | "other";
   imageUrl: string | null;
   user_id: string;
+  condition: string;
   onClick?: () => void;
 };
 
@@ -33,6 +33,7 @@ const ItemCard = memo(({
   category,
   imageUrl,
   user_id,
+  condition,
   onClick,
 }: ItemCardProps) => {
   const [isLiked, setIsLiked] = useState(false);
@@ -76,7 +77,8 @@ const ItemCard = memo(({
     weekend_availability: weekendAvailability,
     ownerName,
     location,
-    locationAddress
+    locationAddress,
+    condition,
   };
 
   return (

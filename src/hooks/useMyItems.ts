@@ -47,14 +47,14 @@ export const useMyItems = () => {
 
       setItems(transformedItems);
     } catch (err: any) {
-      setError(err);
       console.error("Error fetching items:", err);
+      setError(err);
     } finally {
       setIsLoading(false);
     }
   }, [user]);
 
-  const deleteItem = async (itemId: string) => {
+  const deleteItem = useCallback(async (itemId: string) => {
     try {
       if (!user) {
         throw new Error("User not authenticated");
@@ -77,7 +77,7 @@ export const useMyItems = () => {
       console.error("Error deleting item:", err);
       throw err;
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     if (user) {
@@ -85,5 +85,11 @@ export const useMyItems = () => {
     }
   }, [user, fetchItems]);
 
-  return { items, isLoading, error, refetchItems: fetchItems, deleteItem };
+  return { 
+    items, 
+    isLoading, 
+    error, 
+    refetchItems: fetchItems, 
+    deleteItem 
+  };
 };

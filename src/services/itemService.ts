@@ -23,6 +23,8 @@ export const getIncomingRequests = async (): Promise<IncomingRequest[]> => {
         profiles:borrower_id (username),
         status,
         message,
+        start_date,
+        end_date,
         created_at
       `)
       .eq("owner_id", user.id)
@@ -38,12 +40,12 @@ export const getIncomingRequests = async (): Promise<IncomingRequest[]> => {
     return (data || []).map((request) => ({
       id: request.id,
       item_id: request.item_id,
-      item_name: request.items.name,
+      item_name: request.items?.name || 'Unknown Item',
       borrower_id: request.borrower_id,
-      requester_username: request.profiles.username,
+      requester_username: request.profiles?.username || 'Unknown User',
       start_date: request.start_date || '',  // Fallback for missing fields
       end_date: request.end_date || '',      // Fallback for missing fields
-      status: request.status,
+      status: (request.status || 'pending') as IncomingRequest['status'],
       message: request.message || '',
       created_at: request.created_at,
     }));

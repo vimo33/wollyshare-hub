@@ -69,7 +69,7 @@ const BorrowRequestHistory = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Item</TableHead>
-                    <TableHead>Borrower</TableHead>
+                    <TableHead>Owner</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Message</TableHead>
@@ -79,7 +79,7 @@ const BorrowRequestHistory = () => {
                   {requests.map((request) => (
                     <TableRow key={request.id}>
                       <TableCell className="font-medium">{request.item_name}</TableCell>
-                      <TableCell>{request.borrower_name}</TableCell>
+                      <TableCell>{request.owner_name}</TableCell>
                       <TableCell>{formatDate(request.created_at)}</TableCell>
                       <TableCell>{getStatusBadge(request.status)}</TableCell>
                       <TableCell className="max-w-xs truncate">{request.message}</TableCell>

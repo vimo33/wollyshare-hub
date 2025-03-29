@@ -44,13 +44,15 @@ export const useBorrowRequestHistory = () => {
       const transformedRequests: BorrowRequestWithDetails[] = (data || []).map((request) => ({
         id: request.id,
         item_id: request.item_id,
-        item_name: request.items.name,
+        item_name: request.items?.name || 'Unknown Item',
         owner_id: request.owner_id,
         borrower_id: request.borrower_id,
-        status: request.status,
+        status: (request.status || 'pending') as BorrowRequestWithDetails['status'],
         message: request.message || '',
         created_at: request.created_at,
-        owner_name: request.profiles.username || request.profiles.full_name || 'Unknown Owner'
+        owner_name: request.profiles?.username || 
+                    request.profiles?.full_name || 
+                    'Unknown Owner'
       }));
 
       setRequests(transformedRequests);

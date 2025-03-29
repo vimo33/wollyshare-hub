@@ -1,129 +1,138 @@
+import React, { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { Profile } from '@/types/supabase';
+import LocationSelect from '../auth/LocationSelect';
 
-import React from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { updateProfileSchema, UpdateProfileFormValues } from "./updateProfileSchema";
-import { updateProfile } from "@/services/profileService";
-import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
-import LocationSelect from "@/components/auth/LocationSelect";
-import { 
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { HelpCircle } from "lucide-react";
+const profileFormSchema = z.object({
+  username: z.string()
+    .min(2, {
+      message: "Username must be at least 2 characters.",
+    })
+    .max(30, {
+      message: "Username must not be longer than 30 characters.",
+    }),
+  fullName: z.string()
+    .min(2, {
+      message: "Full name must be at least 2 characters.",
+    })
+    .max(50, {
+      message: "Full name must not be longer than 50 characters.",
+    }),
+  location: z.string().optional(),
+  website: z.string().url({ message: "Please enter a valid URL." }).optional(),
+  bio: z.string()
+    .max(160, {
+      message: "Bio must not be longer than 160 characters.",
+    })
+    .optional(),
+});
 
-interface ProfileFormProps {
-  profile?: any;
-  userEmail?: string;
-  onProfileUpdate?: () => Promise<void>;
-}
+type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
-const ProfileForm = ({ profile: propProfile, userEmail, onProfileUpdate }: ProfileFormProps = {}) => {
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const { profile: authProfile } = useAuth();
-  const profile = propProfile || authProfile;
-  const navigate = useNavigate();
-  const { toast } = useToast();
+const ProfileForm = () => {
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
 
-  const form = useForm<UpdateProfileFormValues>({
-    resolver: zodResolver(updateProfileSchema),
+  const form = useForm<ProfileFormValues>({
+    resolver: zodResolver(profileFormSchema),
     defaultValues: {
-      username: profile?.username || "",
-      fullName: profile?.full_name || "",
-      location: profile?.location || undefined,
-      telegram_id: profile?.telegram_id || "",
+      username: "",
+      fullName: "",
+      location: "",
+      website: "",
+      bio: "",
     },
+    mode: "onChange",
   });
 
-  React.useEffect(() => {
-    if (profile) {
-      form.reset({
-        username: profile.username,
-        fullName: profile.full_name,
-        location: profile.location || undefined,
-        telegram_id: profile.telegram_id || "",
-      });
-    }
-  }, [profile, form]);
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (user) {
+        setLoading(true);
+        try {
+          const { data: profileData, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
 
-  if (!profile) {
-    return <div>Loading...</div>;
-  }
-
-  const onSubmit = async (data: UpdateProfileFormValues) => {
-    setIsSubmitting(true);
-
-    try {
-      if (!profile) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Could not find user profile.",
-        });
-        return;
+          if (error) {
+            console.error("Error fetching profile:", error);
+            setApiError(error.message);
+          } else if (profileData) {
+            setProfile(profileData);
+            form.setValue("username", profileData.username || "");
+            form.setValue("fullName", profileData.full_name || "");
+            form.setValue("location", profileData.location || "");
+          }
+        } catch (err: any) {
+          setApiError(err.message);
+        } finally {
+          setLoading(false);
+        }
       }
+    };
 
-      const user = await updateProfileSchema.safeParseAsync(data);
+    fetchProfile();
+  }, [user, form]);
 
-      if (!user.success) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Invalid form data.",
-        });
-        return;
+  const handleSubmit = async (values: ProfileFormValues) => {
+    setLoading(true);
+    try {
+      if (!user) {
+        throw new Error("User not authenticated.");
       }
 
       const updates = {
-        username: data.username,
-        full_name: data.fullName,
-        location: data.location,
-        telegram_id: data.telegram_id,
-        updated_at: new Date().toISOString(),
+        id: user.id,
+        updated_at: new Date(),
+        username: values.username,
+        full_name: values.fullName,
+        location: values.location,
       };
 
-      const { error: updateError } = await updateProfile(updates);
+      const { error } = await supabase.from('profiles').upsert(updates);
 
-      if (updateError) {
-        toast({
-          variant: "destructive",
-          title: "Error updating profile",
-          description: updateError.message,
-        });
-      } else {
-        toast({
-          title: "Profile updated!",
-          description: "Your profile has been updated successfully.",
-        });
-        if (onProfileUpdate) {
-          await onProfileUpdate();
-        } else {
-          navigate("/profile");
-        }
+      if (error) {
+        throw new Error(error.message);
       }
-    } catch (err) {
-      console.error("Unexpected error during profile update:", err);
-      toast({
-        variant: "destructive",
-        title: "Unexpected error",
-        description: "An unexpected error occurred. Please try again.",
-      });
+
+      // Optimistically update the profile in the UI
+      setProfile({
+        ...profile,
+        username: values.username,
+        full_name: values.fullName,
+        location: values.location,
+      } as Profile);
+
+      setApiError(null);
+      alert('Profile updated successfully!');
+    } catch (err: any) {
+      setApiError(err.message);
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
         <FormField
           control={form.control}
           name="username"
@@ -131,13 +140,12 @@ const ProfileForm = ({ profile: propProfile, userEmail, onProfileUpdate }: Profi
             <FormItem>
               <FormLabel>Username</FormLabel>
               <FormControl>
-                <Input placeholder="johndoe" {...field} />
+                <Input placeholder="shadcn" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="fullName"
@@ -151,62 +159,29 @@ const ProfileForm = ({ profile: propProfile, userEmail, onProfileUpdate }: Profi
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="location"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Location (Optional)</FormLabel>
+              <FormLabel>Location</FormLabel>
               <FormControl>
-                <LocationSelect 
-                  control={form.control}
-                  defaultValue={field.value}
+                <LocationSelect
+                  value={field.value}
+                  onChange={field.onChange}
                 />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        
-        <FormField
-          control={form.control}
-          name="telegram_id"
-          render={({ field }) => (
-            <FormItem>
-              <div className="flex items-center gap-2">
-                <FormLabel>Telegram ID (Optional)</FormLabel>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-4 w-4 p-0">
-                        <HelpCircle className="h-4 w-4" />
-                        <span className="sr-only">Telegram ID Help</span>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>You can get your Telegram ID by messaging @get_id_bot on Telegram</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-              <FormControl>
-                <Input placeholder="123456789" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Updating profile...
-            </>
-          ) : (
-            "Update Profile"
-          )}
+        {apiError && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+            <span className="block sm:inline">{apiError}</span>
+          </div>
+        )}
+        <Button type="submit" disabled={loading}>
+          {loading ? "Updating..." : "Update Profile"}
         </Button>
       </form>
     </Form>

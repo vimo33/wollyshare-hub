@@ -87,5 +87,6 @@ export interface BorrowRequestWithDetails {
   status: 'pending' | 'approved' | 'rejected' | 'cancelled';
   created_at: string;
   owner_name: string;
+  borrower_name?: string;
   message?: string;
 }
