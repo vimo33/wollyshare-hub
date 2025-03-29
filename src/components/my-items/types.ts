@@ -7,6 +7,8 @@ export type Item = {
   image_url: string | null;
   weekday_availability: string;
   weekend_availability: string;
+  location?: string;
+  condition?: string;
 };
 
 export type ItemFormData = {
@@ -17,6 +19,8 @@ export type ItemFormData = {
   weekdayAvailability: string;
   weekendAvailability: string;
   imageUrl?: string | null;
+  location?: string;
+  condition?: string;
 };
 
 // Export the ItemFormValues type properly
@@ -26,4 +30,6 @@ export type ItemFormValues = {
   description: string;
   weekdayAvailability: string;
   weekendAvailability: string;
+  location?: string;
+  condition?: string;
 };

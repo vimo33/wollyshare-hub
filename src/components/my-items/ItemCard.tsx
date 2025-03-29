@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Edit, Trash2, Image } from "lucide-react";
 import { 
@@ -11,16 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { getAvailabilityText } from "./utils/availability-utils";
 import { getCategoryColor } from "./utils/category-utils";
-
-export type Item = {
-  id: string;
-  name: string;
-  category: string;
-  description: string | null;
-  image_url: string | null;
-  weekday_availability: string;
-  weekend_availability: string;
-};
+import { Item } from "./types";
 
 interface ItemCardProps {
   item: Item;

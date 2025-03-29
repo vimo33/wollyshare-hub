@@ -12,8 +12,8 @@ export interface Item {
   weekday_availability: string;
   weekend_availability: string;
   ownerName?: string;
-  location: string;
-  condition: string;
+  location?: string;
+  condition?: string;
   locationAddress?: string;
   created_at?: string;
   updated_at?: string;

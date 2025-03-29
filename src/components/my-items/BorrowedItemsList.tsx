@@ -1,11 +1,12 @@
 
 import { useEffect } from "react";
-import { Item } from "@/types/supabase";
 import { Skeleton } from "@/components/ui/skeleton";
 import ItemsGrid from "../items/ItemsGrid";
+import { Item as SupabaseItem } from "@/types/supabase";
+import { Item as ItemType } from "@/types/item";
 
 interface BorrowedItemsListProps {
-  items: Item[];
+  items: SupabaseItem[];
   isLoading: boolean;
   error: Error | null;
 }
@@ -48,10 +49,28 @@ const BorrowedItemsList = ({ items, isLoading, error }: BorrowedItemsListProps) 
     );
   }
 
+  // Map Supabase items to ItemType items expected by ItemsGrid
+  const mappedItems: ItemType[] = items.map(item => ({
+    id: item.id,
+    name: item.name,
+    description: item.description,
+    category: item.category,
+    image_url: item.image_url,
+    user_id: item.user_id,
+    weekday_availability: item.weekday_availability,
+    weekend_availability: item.weekend_availability,
+    location: item.location,
+    condition: item.condition,
+    ownerName: item.ownerName,
+    locationAddress: item.locationAddress,
+    created_at: item.created_at,
+    updated_at: item.updated_at
+  }));
+
   return (
     <div>
       <h3 className="text-lg font-semibold mb-4">Items You've Borrowed</h3>
-      <ItemsGrid items={items} />
+      <ItemsGrid items={mappedItems} />
     </div>
   );
 };
