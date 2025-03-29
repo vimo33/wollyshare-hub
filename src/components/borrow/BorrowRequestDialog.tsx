@@ -1,139 +1,142 @@
-
-import React, { useState } from "react";
-import { Item } from "@/types/item";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle
-} from "@/components/ui/dialog";
+import React from "react";
+import { Item } from "@/types/supabase";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { 
-  Form, 
-  FormControl, 
-  FormField, 
-  FormItem, 
-  FormLabel, 
-  FormMessage
-} from "@/components/ui/form";
+import { Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { format } from "date-fns";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { CalendarIcon } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
-import { format } from "date-fns";
-import { createBorrowRequest } from "@/services/borrowRequestService";
-import { useToast } from "@/components/ui/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
+import { Separator } from "@/components/ui/separator";
 import { useTelegramChat } from "@/hooks/useTelegramChat";
-
-// Schema for form validation
-const formSchema = z.object({
-  message: z.string().min(1, "Message is required"),
-  startDate: z.date({
-    required_error: "Start date is required",
-  }),
-  endDate: z.date({
-    required_error: "End date is required",
-  }),
-}).refine(data => data.startDate <= data.endDate, {
-  message: "End date cannot be before start date",
-  path: ["endDate"],
-});
 
 interface BorrowRequestDialogProps {
   item: Item;
   isOpen: boolean;
   onClose: () => void;
-  onRequestSent?: () => void; // Callback to refresh parent component
+  onRequestSent?: () => void;
+  onSuccess?: () => void;
 }
 
-const BorrowRequestDialog = ({ 
+const formSchema = z.object({
+  message: z.string().min(10, {
+    message: "Message must be at least 10 characters.",
+  }),
+});
+
+type FormValues = z.infer<typeof formSchema>;
+
+const BorrowRequestDialog: React.FC<BorrowRequestDialogProps> = ({ 
   item, 
   isOpen, 
   onClose,
-  onRequestSent
-}: BorrowRequestDialogProps) => {
+  onRequestSent,
+  onSuccess
+}) => {
   const { toast } = useToast();
-  const { user } = useAuth();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { startTelegramChat } = useTelegramChat();
-  
-  // Form setup with react-hook-form
-  const form = useForm<z.infer<typeof formSchema>>({
+  const { user, profile } = useAuth();
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const { sendTelegramMessage } = useTelegramChat();
+
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       message: "",
-      startDate: new Date(),
-      endDate: new Date(),
-    }
+    },
   });
 
-  const handleClose = () => {
-    form.reset();
-    onClose();
-  };
+  // Reset form when dialog opens/closes
+  React.useEffect(() => {
+    if (!isOpen) {
+      form.reset();
+    }
+  }, [isOpen, form]);
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (data: FormValues) => {
     if (!user) {
       toast({
+        title: "Authentication Required",
+        description: "You must be signed in to request items.",
         variant: "destructive",
-        title: "Not authenticated",
-        description: "Please sign in to borrow items",
       });
       return;
     }
-    
+
+    setIsSubmitting(true);
+
     try {
-      setIsSubmitting(true);
-      
-      // Format dates for storage
-      const requestData = {
+      // Get current date in ISO format
+      const now = new Date();
+      const currentDate = format(now, "yyyy-MM-dd");
+      // Default end date (14 days later)
+      const endDate = format(
+        new Date(now.setDate(now.getDate() + 14)),
+        "yyyy-MM-dd"
+      );
+
+      const { error } = await supabase.from("borrow_requests").insert({
         item_id: item.id,
         owner_id: item.user_id,
-        message: values.message,
-        start_date: format(values.startDate, "yyyy-MM-dd"),
-        end_date: format(values.endDate, "yyyy-MM-dd"),
-      };
-      
-      // Create the borrow request
-      const result = await createBorrowRequest(requestData);
-      
-      // Try to start a Telegram chat
-      // This will succeed silently or fail silently
-      try {
-        await startTelegramChat(
-          user.id, 
-          item.user_id, 
-          item.name
-        );
-      } catch (chatError) {
-        // Log but don't show to user since this is a non-critical feature
-        console.error("Failed to start Telegram chat:", chatError);
-      }
-      
-      toast({
-        title: "Request sent!",
-        description: "Your borrow request has been sent to the owner.",
+        borrower_id: user.id,
+        status: "pending",
+        message: data.message,
+        start_date: currentDate,
+        end_date: endDate,
       });
+
+      if (error) {
+        throw error;
+      }
+
+      // Try to send Telegram notification if owner has Telegram ID
+      if (item.ownerName) {
+        try {
+          // Get owner's profile to check for telegram_id
+          const { data: ownerData } = await supabase
+            .from('profiles')
+            .select('telegram_id')
+            .eq('id', item.user_id)
+            .single();
+            
+          if (ownerData?.telegram_id) {
+            const requesterName = profile?.username || profile?.full_name || 'Someone';
+            const message = `🔔 *New Borrow Request*\n\n${requesterName} wants to borrow your item "${item.name}".\n\nMessage: "${data.message}"\n\nPlease check the app to approve or reject this request.`;
+            
+            await sendTelegramMessage(ownerData.telegram_id, message);
+          }
+        } catch (telegramError) {
+          console.error("Failed to send Telegram notification:", telegramError);
+          // Don't throw here, we still want to succeed even if the notification fails
+        }
+      }
+
+      toast({
+        title: "Request Sent!",
+        description: `Your request for ${item.name} has been sent to the owner.`,
+      });
+
+      onClose();
       
-      // Trigger refresh of parent component
+      // Call onRequestSent callback if provided
       if (onRequestSent) {
         onRequestSent();
       }
       
-      handleClose();
+      // Call onSuccess callback if provided
+      if (onSuccess) {
+        onSuccess();
+      }
+      
     } catch (error: any) {
-      console.error("Error sending borrow request:", error);
       toast({
+        title: "Error",
+        description: error.message || "Failed to send request. Please try again.",
         variant: "destructive",
-        title: "Failed to send request",
-        description: error.message || "Please try again later",
       });
     } finally {
       setIsSubmitting(false);
@@ -141,113 +144,53 @@ const BorrowRequestDialog = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[425px]">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Borrow Request</DialogTitle>
+          <DialogTitle>Request to Borrow</DialogTitle>
           <DialogDescription>
-            Send a request to borrow {item.name} from its owner.
+            Send a request to borrow this item from {item.ownerName || "the owner"}.
           </DialogDescription>
         </DialogHeader>
-        
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {/* Date range selection */}
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="startDate"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Start Date</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "w-full pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "PPP")
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={(date) => date < new Date()}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="endDate"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>End Date</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "w-full pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "PPP")
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={(date) => 
-                            date < new Date() || 
-                            (form.getValues().startDate && date < form.getValues().startDate)
-                          }
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+
+        <div className="py-2">
+          <h3 className="font-medium text-lg">{item.name}</h3>
+          <p className="text-sm text-muted-foreground">{item.description}</p>
+          
+          <Separator className="my-4" />
+          
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <p className="text-muted-foreground">Location:</p>
+              <p>{item.location || "Not specified"}</p>
             </div>
-            
-            {/* Message field */}
+            <div>
+              <p className="text-muted-foreground">Category:</p>
+              <p className="capitalize">{item.category}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Weekday Availability:</p>
+              <p>{item.weekday_availability}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Weekend Availability:</p>
+              <p>{item.weekend_availability}</p>
+            </div>
+          </div>
+        </div>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
             <FormField
               control={form.control}
               name="message"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Message to owner</FormLabel>
+                  <FormLabel>Message to Owner</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Please let me borrow this item..."
+                      placeholder="Please explain why you'd like to borrow this item and when you need it."
+                      className="min-h-[100px]"
                       {...field}
                     />
                   </FormControl>
@@ -255,13 +198,20 @@ const BorrowRequestDialog = ({
                 </FormItem>
               )}
             />
-            
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={handleClose}>
+
+            <DialogFooter className="mt-6">
+              <Button type="button" variant="outline" onClick={onClose}>
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Sending..." : "Send Request"}
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  "Send Request"
+                )}
               </Button>
             </DialogFooter>
           </form>

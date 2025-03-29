@@ -1,109 +1,21 @@
 
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { Item } from "@/types/item";
+import { useEffect } from "react";
+import { Item } from "@/types/supabase";
 import { Skeleton } from "@/components/ui/skeleton";
 import ItemsGrid from "../items/ItemsGrid";
 
-const BorrowedItemsList = () => {
-  const [borrowedItems, setBorrowedItems] = useState<Item[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const { user } = useAuth();
+interface BorrowedItemsListProps {
+  items: Item[];
+  isLoading: boolean;
+  error: Error | null;
+}
 
+const BorrowedItemsList = ({ items, isLoading, error }: BorrowedItemsListProps) => {
   useEffect(() => {
-    if (user) {
-      fetchBorrowedItems();
+    if (error) {
+      console.error("Error in BorrowedItemsList:", error);
     }
-  }, [user]);
-
-  const fetchBorrowedItems = async () => {
-    try {
-      setIsLoading(true);
-      
-      // Get all approved borrow requests by the current user
-      const { data: approvedRequests, error: requestsError } = await supabase
-        .from('borrow_requests')
-        .select('item_id, owner_id')
-        .eq('borrower_id', user?.id)
-        .eq('status', 'approved');
-        
-      if (requestsError) throw requestsError;
-      
-      if (approvedRequests && approvedRequests.length > 0) {
-        // Get item details for each borrowed item
-        const itemIds = approvedRequests.map(request => request.item_id);
-        
-        const { data: itemsData, error: itemsError } = await supabase
-          .from('items')
-          .select(`
-            id, 
-            name, 
-            category, 
-            description, 
-            image_url, 
-            weekday_availability, 
-            weekend_availability,
-            user_id
-          `)
-          .in('id', itemIds);
-          
-        if (itemsError) throw itemsError;
-        
-        // Get owner details (username/profile) for display
-        if (itemsData && itemsData.length > 0) {
-          const ownerIds = [...new Set(itemsData.map(item => item.user_id))];
-          
-          const { data: ownersData, error: ownersError } = await supabase
-            .from('profiles')
-            .select('id, username, full_name')
-            .in('id', ownerIds);
-            
-          if (ownersError) throw ownersError;
-          
-          // Validate category and map owner names to items
-          const validCategories = ["tools", "kitchen", "electronics", "sports", "books", "games", "diy-craft", "other"] as const;
-          
-          const itemsWithOwners = itemsData.map(item => {
-            const owner = ownersData?.find(owner => owner.id === item.user_id);
-            const ownerName = owner?.username || owner?.full_name || 'Unknown User';
-            
-            // Ensure category is one of the valid types or fallback to "other"
-            const category = validCategories.includes(item.category as any) 
-              ? item.category as Item['category']
-              : "other";
-            
-            return {
-              ...item,
-              category,
-              ownerName,
-              location: "Owner's Location", // We could fetch actual location if needed
-              locationAddress: undefined
-            } as Item;
-          });
-          
-          setBorrowedItems(itemsWithOwners);
-        } else {
-          setBorrowedItems([]);
-        }
-      } else {
-        setBorrowedItems([]);
-      }
-    } catch (error) {
-      console.error("Error fetching borrowed items:", error);
-      setBorrowedItems([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  if (!user) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-muted-foreground">Please sign in to view your borrowed items.</p>
-      </div>
-    );
-  }
+  }, [error]);
 
   if (isLoading) {
     return (
@@ -118,7 +30,16 @@ const BorrowedItemsList = () => {
     );
   }
 
-  if (borrowedItems.length === 0) {
+  if (error) {
+    return (
+      <div className="text-center py-8 border-2 border-dashed rounded-lg border-red-200 p-8">
+        <h3 className="text-lg font-semibold mb-2 text-red-600">Error Loading Borrowed Items</h3>
+        <p className="text-muted-foreground">{error.message}</p>
+      </div>
+    );
+  }
+
+  if (items.length === 0) {
     return (
       <div className="text-center py-12 border-2 border-dashed rounded-lg border-muted p-8">
         <h3 className="text-lg font-semibold mb-2">No Borrowed Items</h3>
@@ -130,7 +51,7 @@ const BorrowedItemsList = () => {
   return (
     <div>
       <h3 className="text-lg font-semibold mb-4">Items You've Borrowed</h3>
-      <ItemsGrid items={borrowedItems} />
+      <ItemsGrid items={items} />
     </div>
   );
 };

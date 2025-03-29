@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,9 +20,16 @@ import {
 } from "@/components/ui/tooltip";
 import { HelpCircle } from "lucide-react";
 
-const ProfileForm = () => {
+interface ProfileFormProps {
+  profile?: any;
+  userEmail?: string;
+  onProfileUpdate?: () => Promise<void>;
+}
+
+const ProfileForm = ({ profile: propProfile, userEmail, onProfileUpdate }: ProfileFormProps = {}) => {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const { profile } = useAuth();
+  const { profile: authProfile } = useAuth();
+  const profile = propProfile || authProfile;
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -82,20 +90,24 @@ const ProfileForm = () => {
         updated_at: new Date().toISOString(),
       };
 
-      const { error } = await updateProfile(updates);
+      const { error: updateError } = await updateProfile(updates);
 
-      if (error) {
+      if (updateError) {
         toast({
           variant: "destructive",
           title: "Error updating profile",
-          description: error.message,
+          description: updateError.message,
         });
       } else {
         toast({
           title: "Profile updated!",
           description: "Your profile has been updated successfully.",
         });
-        navigate("/profile");
+        if (onProfileUpdate) {
+          await onProfileUpdate();
+        } else {
+          navigate("/profile");
+        }
       }
     } catch (err) {
       console.error("Unexpected error during profile update:", err);
@@ -148,8 +160,8 @@ const ProfileForm = () => {
               <FormLabel>Location (Optional)</FormLabel>
               <FormControl>
                 <LocationSelect 
-                  value={field.value} 
-                  onChange={field.onChange}
+                  control={form.control}
+                  defaultValue={field.value}
                 />
               </FormControl>
               <FormMessage />

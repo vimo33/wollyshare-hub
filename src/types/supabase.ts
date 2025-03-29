@@ -62,6 +62,8 @@ export interface Item {
   condition: string;
   locationAddress?: string;
   ownerName?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 // Define Invitation type
@@ -73,4 +75,17 @@ export interface Invitation {
   created_at: string;
   expires_at: string;
   is_used: boolean;
+}
+
+// Define BorrowRequestWithDetails type for the request history
+export interface BorrowRequestWithDetails {
+  id: string;
+  item_id: string;
+  item_name: string;
+  owner_id: string;
+  borrower_id: string;
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+  created_at: string;
+  owner_name: string;
+  message?: string;
 }

@@ -12,12 +12,14 @@ interface Location {
 }
 
 interface LocationSelectProps {
-  control: Control<any>;
+  control?: Control<any>;
   isRequired?: boolean;
   defaultValue?: string;
+  value?: string;
+  onChange?: (value: string) => void;
 }
 
-const LocationSelect = ({ control, isRequired = false, defaultValue }: LocationSelectProps) => {
+const LocationSelect = ({ control, isRequired = false, defaultValue, value, onChange }: LocationSelectProps) => {
   const [locations, setLocations] = useState<Location[]>([]);
   const [isLoadingLocations, setIsLoadingLocations] = useState(true);
 
@@ -66,47 +68,72 @@ const LocationSelect = ({ control, isRequired = false, defaultValue }: LocationS
     }
   }, [defaultValue]);
 
+  // If control is provided, use the FormField wrapper
+  if (control) {
+    return (
+      <FormField
+        control={control}
+        name="location"
+        render={({ field }) => {
+          // Make sure we use defaultValue if field.value is empty
+          const currentValue = field.value || defaultValue || '';
+          
+          return (
+            <FormItem>
+              <FormLabel>Your Location{isRequired && "*"}</FormLabel>
+              <Select 
+                onValueChange={field.onChange} 
+                value={currentValue} 
+                disabled={isLoadingLocations || locations.length === 0}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select your location" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {locations.map((location) => (
+                    <SelectItem key={location.id} value={location.id}>
+                      {location.name} - {location.address}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {locations.length === 0 && !isLoadingLocations && (
+                <p className="text-sm text-muted-foreground">No locations available. Please contact an administrator.</p>
+              )}
+              <FormMessage />
+            </FormItem>
+          );
+        }}
+      />
+    );
+  }
+
+  // If no control is provided, use the direct component
   return (
-    <FormField
-      control={control}
-      name="location"
-      render={({ field }) => {
-        // Make sure we use defaultValue if field.value is empty
-        const value = field.value || defaultValue || '';
-        
-        console.log("LocationSelect rendering with field value:", field.value);
-        console.log("LocationSelect rendering with defaultValue:", defaultValue);
-        console.log("LocationSelect using value:", value);
-        
-        return (
-          <FormItem>
-            <FormLabel>Your Location{isRequired && "*"}</FormLabel>
-            <Select 
-              onValueChange={field.onChange} 
-              value={value} 
-              disabled={isLoadingLocations || locations.length === 0}
-            >
-              <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select your location" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                {locations.map((location) => (
-                  <SelectItem key={location.id} value={location.id}>
-                    {location.name} - {location.address}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {locations.length === 0 && !isLoadingLocations && (
-              <p className="text-sm text-muted-foreground">No locations available. Please contact an administrator.</p>
-            )}
-            <FormMessage />
-          </FormItem>
-        );
-      }}
-    />
+    <div className="space-y-2">
+      <label className="text-sm font-medium">Your Location{isRequired && "*"}</label>
+      <Select 
+        onValueChange={onChange} 
+        value={value || defaultValue || ''} 
+        disabled={isLoadingLocations || locations.length === 0}
+      >
+        <SelectTrigger>
+          <SelectValue placeholder="Select your location" />
+        </SelectTrigger>
+        <SelectContent>
+          {locations.map((location) => (
+            <SelectItem key={location.id} value={location.id}>
+              {location.name} - {location.address}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {locations.length === 0 && !isLoadingLocations && (
+        <p className="text-sm text-muted-foreground">No locations available. Please contact an administrator.</p>
+      )}
+    </div>
   );
 };
 

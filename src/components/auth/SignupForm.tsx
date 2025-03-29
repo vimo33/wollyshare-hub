@@ -148,8 +148,8 @@ const SignupForm: React.FC<SignupFormProps> = ({ invitationToken }) => {
               <FormLabel>Location (Optional)</FormLabel>
               <FormControl>
                 <LocationSelect 
-                  value={field.value} 
-                  onChange={field.onChange}
+                  control={form.control}
+                  defaultValue={field.value}
                 />
               </FormControl>
               <FormMessage />

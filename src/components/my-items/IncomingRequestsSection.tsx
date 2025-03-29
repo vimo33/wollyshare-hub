@@ -1,14 +1,15 @@
+
 import React from "react";
 import IncomingRequestsHeader from "./incoming-requests/IncomingRequestsHeader";
 import IncomingRequestsContent from "./incoming-requests/IncomingRequestsContent";
-import { IncomingRequest } from "@/types";
+import { IncomingRequest } from "@/types/supabase";
 
 interface IncomingRequestsSectionProps {
   requests: IncomingRequest[];
   isLoading: boolean;
   isError: boolean;
   error: any;
-  refreshRequests: () => void; // Add refresh function
+  refreshRequests: () => void;
 }
 
 const IncomingRequestsSection = ({
@@ -16,7 +17,7 @@ const IncomingRequestsSection = ({
   isLoading,
   isError,
   error,
-  refreshRequests, // Include in props
+  refreshRequests,
 }: IncomingRequestsSectionProps) => {
   
   return (
@@ -27,7 +28,7 @@ const IncomingRequestsSection = ({
         isLoading={isLoading}
         isError={isError}
         error={error}
-        refreshRequests={refreshRequests} // Pass to content
+        refreshRequests={refreshRequests}
       />
     </div>
   );
