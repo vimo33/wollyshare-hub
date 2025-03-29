@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import {
   Dialog,
@@ -46,6 +47,9 @@ const BorrowRequestDialog = ({
       return;
     }
 
+    console.log("Submit request clicked for item:", item.name);
+    console.log("Current user:", user);
+    
     setIsSubmitting(true);
 
     try {
@@ -55,6 +59,8 @@ const BorrowRequestDialog = ({
         message,
       };
 
+      console.log("Sending borrow request with data:", requestData);
+      
       await createBorrowRequest(requestData, user.id);
 
       toast({

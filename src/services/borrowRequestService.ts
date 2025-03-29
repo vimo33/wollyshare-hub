@@ -11,8 +11,12 @@ interface BorrowRequestData {
 // Create a new borrow request
 export const createBorrowRequest = async (requestData: BorrowRequestData, userId: string) => {
   if (!userId) {
+    console.error("User not authenticated");
     throw new Error("User not authenticated");
   }
+
+  console.log("Creating borrow request with userId:", userId);
+  console.log("Request data:", requestData);
 
   const { data, error } = await supabase
     .from("borrow_requests")
@@ -28,6 +32,7 @@ export const createBorrowRequest = async (requestData: BorrowRequestData, userId
     throw error;
   }
 
+  console.log("Successfully created borrow request:", data);
   return data;
 };
 
@@ -63,8 +68,11 @@ export const updateBorrowRequestStatus = async (
   userId: string
 ) => {
   if (!userId) {
+    console.error("User not authenticated");
     throw new Error("User not authenticated");
   }
+
+  console.log("Updating borrow request status:", { requestId, status, userId });
 
   const { data, error } = await supabase
     .from("borrow_requests")
@@ -77,5 +85,6 @@ export const updateBorrowRequestStatus = async (
     throw error;
   }
 
+  console.log("Successfully updated borrow request status:", data);
   return data;
 };

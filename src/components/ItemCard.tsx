@@ -1,3 +1,4 @@
+
 import { useState, useCallback, memo } from "react";
 import { Item } from "@/types/supabase";
 import { useToast } from "@/hooks/use-toast";
@@ -49,6 +50,8 @@ const ItemCard = memo(({
   const handleRequestClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     
+    console.log("Request button clicked. User authenticated:", !!user);
+    
     if (!user) {
       toast({
         title: "Authentication required",
@@ -62,10 +65,11 @@ const ItemCard = memo(({
   }, [user, toast]);
 
   const handleRequestSuccess = useCallback(() => {
+    console.log("Borrow request successfully submitted");
     // Could add additional logic here after a successful request
   }, []);
 
-  // Create the item object for the dialog without useMemo
+  // Create the item object for the dialog
   const itemForDialog: Item = {
     id,
     name,
