@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import * as z from "zod";
 import { useForm } from "react-hook-form";
@@ -16,7 +17,7 @@ import { Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { ItemFormValues } from "./types";
-import { handleItemSubmit } from "@/utils/form-submit-utils";
+import { handleItemSubmit } from "../../utils/form-submit-utils"; // Using relative path
 import ItemFormFields from "./form/ItemFormFields";
 
 // Define form schema
