@@ -15,22 +15,36 @@ export const createBorrowRequest = async (requestData: BorrowRequestData, userId
     throw new Error("User not authenticated");
   }
 
-  console.log("Creating borrow request with userId:", userId);
+  // Verify current auth session to ensure we're using the correct user ID
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError) {
+    console.error("Auth verification error:", authError);
+    throw new Error(`Authentication verification failed: ${authError.message}`);
+  }
+  
+  if (authData.user?.id !== userId) {
+    console.warn("Auth mismatch detected - context user vs current auth user:", userId, "vs", authData.user?.id);
+    // Continue with the verified auth user ID instead
+    userId = authData.user?.id || userId;
+  }
+
+  console.log("Creating borrow request with verified userId:", userId);
   console.log("Request data:", requestData);
 
-  // The key fix: use both borrower_id and requester_id to ensure compatibility with any RLS policy
+  // Use both borrower_id and requester_id to ensure compatibility with any RLS policy
   const { data, error } = await supabase
     .from("borrow_requests")
     .insert({
       ...requestData,
       borrower_id: userId,
-      requester_id: userId, // Add this to ensure we match the RLS policy
+      requester_id: userId, // Critical for RLS policy match
       status: "pending",
     })
     .select();
 
   if (error) {
     console.error("Error creating borrow request:", error);
+    console.error("Error details:", JSON.stringify(error, null, 2));
     throw error;
   }
 
