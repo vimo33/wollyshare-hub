@@ -1,3 +1,4 @@
+
 // Define the IncomingRequest type
 export interface IncomingRequest {
   id: string;
@@ -35,4 +36,41 @@ export interface Profile {
   telegram_id?: string;
   created_at: string;
   updated_at: string;
+  email?: string;
+  is_member?: boolean;
+}
+
+// Admin profile type
+export interface AdminProfile {
+  id: string;
+  username: string;
+  full_name: string;
+  created_at?: string;
+}
+
+// Item type
+export interface Item {
+  id: string;
+  name: string;
+  category: 'tools' | 'kitchen' | 'electronics' | 'sports' | 'other';
+  description: string | null;
+  image_url: string | null;
+  weekday_availability: string;
+  weekend_availability: string;
+  user_id: string;
+  location: string;
+  condition: string;
+  locationAddress?: string;
+  ownerName?: string;
+}
+
+// Define Invitation type
+export interface Invitation {
+  id: string;
+  email: string;
+  token: string;
+  created_by: string;
+  created_at: string;
+  expires_at: string;
+  is_used: boolean;
 }

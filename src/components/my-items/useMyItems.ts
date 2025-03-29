@@ -28,16 +28,16 @@ export const useMyItems = () => {
         throw supabaseError;
       }
 
-      // Transform the data to match the Item type
+      // Ensure we have the correct types
       const transformedItems: Item[] = data.map((item) => ({
         id: item.id,
         name: item.name,
         category: item.category as Item['category'],
         description: item.description || null,
+        user_id: item.user_id,
         image_url: item.image_url || null,
         weekday_availability: item.weekday_availability || 'anytime',
         weekend_availability: item.weekend_availability || 'anytime',
-        user_id: item.user_id,
         location: item.location || 'Unknown',
         condition: item.condition || 'Good',
         locationAddress: undefined
@@ -45,14 +45,14 @@ export const useMyItems = () => {
 
       setItems(transformedItems);
     } catch (err: any) {
-      setError(err);
       console.error("Error fetching items:", err);
+      setError(err);
     } finally {
       setIsLoading(false);
     }
   }, [user]);
 
-  const deleteItem = async (itemId: string) => {
+  const deleteItem = useCallback(async (itemId: string) => {
     try {
       if (!user) {
         throw new Error("User not authenticated");
@@ -75,7 +75,7 @@ export const useMyItems = () => {
       console.error("Error deleting item:", err);
       throw err;
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     if (user) {
@@ -83,5 +83,11 @@ export const useMyItems = () => {
     }
   }, [user, fetchItems]);
 
-  return { items, isLoading, error, refetchItems: fetchItems, deleteItem };
+  return { 
+    items, 
+    isLoading, 
+    error, 
+    refetchItems: fetchItems, 
+    deleteItem 
+  };
 };
