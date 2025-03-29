@@ -6,8 +6,6 @@ interface BorrowRequestData {
   item_id: string;
   owner_id: string;
   message: string;
-  start_date: string;
-  end_date: string;
 }
 
 // Create a new borrow request
@@ -45,8 +43,6 @@ export const getBorrowRequests = async (itemId: string) => {
       owner_id,
       status,
       message,
-      start_date,
-      end_date,
       created_at
     `)
     .eq("item_id", itemId)

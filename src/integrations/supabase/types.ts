@@ -41,6 +41,7 @@ export type Database = {
           item_id: string
           message: string | null
           owner_id: string
+          requester_id: string | null
           status: string
           updated_at: string
         }
@@ -51,6 +52,7 @@ export type Database = {
           item_id: string
           message?: string | null
           owner_id: string
+          requester_id?: string | null
           status?: string
           updated_at?: string
         }
@@ -61,6 +63,7 @@ export type Database = {
           item_id?: string
           message?: string | null
           owner_id?: string
+          requester_id?: string | null
           status?: string
           updated_at?: string
         }

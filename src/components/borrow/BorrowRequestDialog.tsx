@@ -1,106 +1,78 @@
-
-import React from "react";
-import * as z from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import React, { useState } from "react";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
-import { createBorrowRequest } from "@/services/borrowRequestService";
-import { useTelegramChat } from "@/hooks/useTelegramChat";
-import { useAuth } from "@/contexts/AuthContext";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Item } from "@/types/supabase";
+import { createBorrowRequest } from "@/services/borrowRequestService";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
-const borrowRequestFormSchema = z.object({
-  message: z.string().optional(),
-  start_date: z.string().min(1, {
-    message: "Please select a start date.",
-  }),
-  end_date: z.string().min(1, {
-    message: "Please select an end date.",
-  }),
-});
-
-export interface BorrowRequestFormValues extends z.infer<typeof borrowRequestFormSchema> {}
-
-export interface BorrowRequestDialogProps {
+interface BorrowRequestDialogProps {
   item: Item;
   isOpen: boolean;
   onClose: () => void;
-  onRequestSent?: () => void;
   onSuccess?: () => void;
 }
 
-const BorrowRequestDialog: React.FC<BorrowRequestDialogProps> = ({ 
-  item, 
-  isOpen, 
-  onClose, 
-  onRequestSent, 
-  onSuccess 
-}) => {
+const BorrowRequestDialog = ({
+  item,
+  isOpen,
+  onClose,
+  onSuccess,
+}: BorrowRequestDialogProps) => {
+  const [message, setMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
-  const { startTelegramChat } = useTelegramChat();
-  
-  const form = useForm<BorrowRequestFormValues>({
-    resolver: zodResolver(borrowRequestFormSchema),
-    defaultValues: {
-      message: "",
-      start_date: "",
-      end_date: "",
-    },
-  });
 
-  const handleSubmit = async (values: BorrowRequestFormValues) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
     if (!user) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "You must be logged in to send a request",
+        description: "You must be logged in to request items",
       });
       return;
     }
-    
+
+    setIsSubmitting(true);
+
     try {
-      await createBorrowRequest({
+      const requestData = {
         item_id: item.id,
         owner_id: item.user_id,
-        message: values.message || '',
-        start_date: values.start_date,
-        end_date: values.end_date,
-      }, user.id);
+        message,
+      };
 
-      // Start Telegram chat between users after successful request
-      if (user.id && item.user_id) {
-        await startTelegramChat(user.id, item.user_id, item.name);
-      }
+      await createBorrowRequest(requestData, user.id);
 
       toast({
         title: "Request sent!",
-        description: "Your request has been submitted to the item owner.",
+        description: "The owner has been notified of your request.",
       });
-      
-      // After successful submission:
-      if (onRequestSent) onRequestSent();
-      if (onSuccess) onSuccess();
 
+      if (onSuccess) onSuccess();
       onClose();
     } catch (error: any) {
+      console.error("Error submitting request:", error);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: `Failed to send request: ${error.message}`,
+        title: "Failed to send request",
+        description: error.message,
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -110,58 +82,29 @@ const BorrowRequestDialog: React.FC<BorrowRequestDialogProps> = ({
         <DialogHeader>
           <DialogTitle>Request to Borrow</DialogTitle>
           <DialogDescription>
-            Send a borrow request to the item owner.
+            Send a borrow request to the owner of {item.name}.
           </DialogDescription>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="start_date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Start Date</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <Label htmlFor="message">Message</Label>
+            <Input
+              id="message"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Enter a message for the owner"
+              type="text"
             />
-            <FormField
-              control={form.control}
-              name="end_date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>End Date</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="message"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Message</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Write a message to the item owner"
-                      className="resize-none"
-                      {...field}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            <DialogFooter>
-              <Button type="submit">Send Request</Button>
-            </DialogFooter>
-          </form>
-        </Form>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="submit" onClick={handleSubmit} disabled={isSubmitting}>
+            {isSubmitting ? "Submitting..." : "Submit Request"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
