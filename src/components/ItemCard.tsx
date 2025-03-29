@@ -82,7 +82,7 @@ const ItemCard = memo(({
   return (
     <>
       <div
-        className="rounded-2xl overflow-hidden bg-white shadow-sm border border-gray-100 transition-all duration-300 hover:shadow-md hover:-translate-y-1 cursor-pointer"
+        className="rounded-2xl overflow-hidden bg-white shadow-sm border border-gray-100 transition-all duration-300 hover:shadow-md hover:-translate-y-1 cursor-pointer w-full max-w-md mx-auto"
         onClick={onClick}
       >
         <ImageContainer 

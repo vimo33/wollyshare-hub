@@ -45,8 +45,8 @@ const ItemCard = ({ item, onEdit, onDelete }: ItemCardProps) => {
   }, [item.name, item.image_url]);
 
   return (
-    <Card className="overflow-hidden">
-      <div className="relative h-48 bg-muted">
+    <Card className="overflow-hidden w-full max-w-md mx-auto">
+      <div className="relative h-[12rem] sm:h-[16rem] bg-muted">
         {item.image_url && !imageError ? (
           <img
             src={item.image_url}
