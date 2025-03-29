@@ -15,29 +15,35 @@ export const createBorrowRequest = async (requestData: BorrowRequestData, userId
     throw new Error("User not authenticated");
   }
 
-  // Verify current auth session to ensure we're using the correct user ID
+  // Always fetch the current auth user directly from Supabase to ensure the most recent session
   const { data: authData, error: authError } = await supabase.auth.getUser();
   if (authError) {
     console.error("Auth verification error:", authError);
     throw new Error(`Authentication verification failed: ${authError.message}`);
   }
   
-  if (authData.user?.id !== userId) {
-    console.warn("Auth mismatch detected - context user vs current auth user:", userId, "vs", authData.user?.id);
-    // Continue with the verified auth user ID instead
-    userId = authData.user?.id || userId;
+  if (!authData.user) {
+    console.error("No authenticated user found in current session");
+    throw new Error("Authentication required. Please log in again.");
   }
-
-  console.log("Creating borrow request with verified userId:", userId);
+  
+  // Log the verification process
+  console.log("Auth verification - provided userId:", userId);
+  console.log("Auth verification - current session userId:", authData.user.id);
+  
+  // Always use the Supabase auth user ID to ensure RLS compatibility
+  const currentUserId = authData.user.id;
+  
+  console.log("Creating borrow request with verified userId:", currentUserId);
   console.log("Request data:", requestData);
 
-  // Use both borrower_id and requester_id to ensure compatibility with any RLS policy
+  // Create the request with explicit requester_id to satisfy RLS policy
   const { data, error } = await supabase
     .from("borrow_requests")
     .insert({
       ...requestData,
-      borrower_id: userId,
-      requester_id: userId, // Critical for RLS policy match
+      borrower_id: currentUserId,
+      requester_id: currentUserId, // Critical for RLS policy match
       status: "pending",
     })
     .select();
@@ -45,6 +51,12 @@ export const createBorrowRequest = async (requestData: BorrowRequestData, userId
   if (error) {
     console.error("Error creating borrow request:", error);
     console.error("Error details:", JSON.stringify(error, null, 2));
+    console.error("Request payload:", JSON.stringify({
+      ...requestData,
+      borrower_id: currentUserId,
+      requester_id: currentUserId,
+      status: "pending",
+    }, null, 2));
     throw error;
   }
 
