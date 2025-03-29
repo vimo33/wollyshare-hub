@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import * as z from "zod";
 import { useForm } from "react-hook-form";
@@ -17,7 +16,7 @@ import { Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { ItemFormValues } from "./types";
-import { handleItemSubmit } from "../../utils/form-submit-utils"; // Using relative path
+import { submitItemForm, updateItemForm } from "../../utils/form-submit-utils"; // Using relative path
 import ItemFormFields from "./form/ItemFormFields";
 
 // Define form schema
@@ -67,13 +66,15 @@ const ItemFormDialog = ({ open, onOpenChange, itemData, onSuccess }: ItemFormDia
     setIsSubmitting(true);
 
     try {
-      const result = await handleItemSubmit({
-        data,
-        userId: user.id,
-        imageFile,
-        itemId: itemData?.id,
-        existingImageUrl: itemData?.imageUrl,
-      });
+      let result;
+      
+      if (itemData?.id) {
+        // Update existing item
+        result = await updateItemForm(itemData.id, data, user.id);
+      } else {
+        // Create new item
+        result = await submitItemForm(data, user.id);
+      }
 
       if (result.success) {
         toast({
