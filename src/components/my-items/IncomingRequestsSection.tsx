@@ -26,7 +26,7 @@ const IncomingRequestsSection = ({ onStatusChange }: IncomingRequestsSectionProp
   }, []);
 
   return (
-    <div className="mt-8 border rounded-lg overflow-hidden">
+    <div className="overflow-hidden">
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <IncomingRequestsHeader isOpen={isOpen} />
         <IncomingRequestsContent 

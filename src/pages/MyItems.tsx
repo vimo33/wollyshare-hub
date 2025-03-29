@@ -6,12 +6,14 @@ import { Button } from "@/components/ui/button";
 import MyItemsList from "@/components/my-items/MyItemsList";
 import ItemFormDialog from "@/components/my-items/ItemFormDialog";
 import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import IncomingRequestsSection from "@/components/my-items/IncomingRequestsSection";
 import BorrowRequestHistory from "@/components/my-items/BorrowRequestHistory";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const MyItems = () => {
   const [isAddItemOpen, setIsAddItemOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("pending");
   const { user } = useAuth();
   const { toast } = useToast();
   const itemsListRef = useRef<{ fetchItems: () => Promise<void> } | null>(null);
@@ -64,11 +66,25 @@ const MyItems = () => {
       {/* Items list - explicitly showing only the current user's items */}
       <MyItemsList ref={itemsListRef} />
 
-      {/* Incoming Borrow Requests Section */}
-      <IncomingRequestsSection onStatusChange={handleRequestStatusChange} />
-
-      {/* My Borrow Request History Section */}
-      <BorrowRequestHistory />
+      {/* Borrow Requests Section with Tabs */}
+      <div className="mt-8 border rounded-lg overflow-hidden">
+        <Tabs defaultValue="pending" className="w-full">
+          <div className="bg-muted/50 p-4">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="pending">Pending Requests</TabsTrigger>
+              <TabsTrigger value="history">Request History</TabsTrigger>
+            </TabsList>
+          </div>
+          
+          <TabsContent value="pending" className="mt-0 border-0">
+            <IncomingRequestsSection onStatusChange={handleRequestStatusChange} />
+          </TabsContent>
+          
+          <TabsContent value="history" className="mt-0 border-0">
+            <BorrowRequestHistory />
+          </TabsContent>
+        </Tabs>
+      </div>
 
       {/* Add item dialog */}
       <ItemFormDialog 
