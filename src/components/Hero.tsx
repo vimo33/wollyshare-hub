@@ -8,7 +8,7 @@ const Hero = () => {
   const [stats, setStats] = useState({
     itemsCount: '0',
     membersCount: '0',
-    categoriesCount: '0'
+    borrowedCount: '0'  // Changed from categoriesCount to borrowedCount
   });
 
   useEffect(() => {
@@ -33,31 +33,26 @@ const Hero = () => {
         const totalMembers = await getTotalMembers();
         console.log("Total members count fetched:", totalMembers);
 
-        // Fetch unique categories from all items
-        const { data: categoriesData, error: categoriesError } = await supabase
-          .from('items')
-          .select('category')
-          .limit(1000);
+        // Fetch approved borrow requests count instead of categories
+        const { count: borrowedCount, error: borrowedError } = await supabase
+          .from('borrow_requests')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'approved');
 
         if (itemsError) {
           console.error('Error fetching items count:', itemsError);
         }
 
-        if (categoriesError) {
-          console.error('Error fetching categories:', categoriesError);
+        if (borrowedError) {
+          console.error('Error fetching borrowed count:', borrowedError);
         }
 
-        // Get unique categories count
-        const uniqueCategories = categoriesData 
-          ? [...new Set(categoriesData.map(item => item.category))]
-          : [];
-
-        console.log(`Stats: ${itemsCount} items, ${totalMembers} members, ${uniqueCategories.length} categories`);
+        console.log(`Stats: ${itemsCount} items, ${totalMembers} members, ${borrowedCount} items borrowed`);
         
         setStats({
           itemsCount: itemsCount?.toString() || '0',
           membersCount: totalMembers.toString(),
-          categoriesCount: uniqueCategories.length.toString() || '0'
+          borrowedCount: borrowedCount?.toString() || '0'
         });
       } catch (error) {
         console.error('Error fetching statistics:', error);
@@ -103,7 +98,7 @@ const Hero = () => {
           </p>
         </div>
         
-        {/* Statistics - Total Users count from all profiles */}
+        {/* Statistics - Updated to show Items Borrowed instead of Categories */}
         <div className={cn(
           "grid grid-cols-1 md:grid-cols-3 gap-8 transition-all duration-1000 delay-300",
           isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
@@ -117,8 +112,8 @@ const Hero = () => {
             <p className="text-muted-foreground">Total Users</p>
           </div>
           <div className="glass rounded-2xl p-6 text-center hover-lift">
-            <div className="text-3xl font-bold mb-2">{stats.categoriesCount}</div>
-            <p className="text-muted-foreground">Categories Available</p>
+            <div className="text-3xl font-bold mb-2">{stats.borrowedCount}</div>
+            <p className="text-muted-foreground">Items Borrowed</p>
           </div>
         </div>
       </div>
