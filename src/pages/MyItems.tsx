@@ -18,6 +18,7 @@ const MyItems = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const itemsListRef = useRef<{ fetchItems: () => Promise<void> } | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     console.log("MyItems page mounted - should show ONLY current user's items");
@@ -45,6 +46,11 @@ const MyItems = () => {
   const handleRequestStatusChange = () => {
     // This function is called when a request status changes (approved/rejected)
     // We could show a toast or refresh some data if needed
+  };
+
+  const handleRequestSent = () => {
+    // Trigger a refresh of the incoming requests list
+    setRefreshTrigger(prev => prev + 1);
   };
 
   return (
@@ -85,7 +91,10 @@ const MyItems = () => {
           </TabsContent>
           
           <TabsContent value="incoming" className="mt-0 p-6">
-            <IncomingRequestsSection onStatusChange={handleRequestStatusChange} />
+            <IncomingRequestsSection 
+              onStatusChange={handleRequestStatusChange} 
+              refreshTrigger={refreshTrigger}
+            />
           </TabsContent>
           
           <TabsContent value="history" className="mt-0 p-6">

@@ -7,9 +7,10 @@ import { useIncomingRequests } from "./incoming-requests/useIncomingRequests";
 
 interface IncomingRequestsSectionProps {
   onStatusChange: () => void;
+  refreshTrigger?: number; // Optional trigger to force refresh
 }
 
-const IncomingRequestsSection = ({ onStatusChange }: IncomingRequestsSectionProps) => {
+const IncomingRequestsSection = ({ onStatusChange, refreshTrigger }: IncomingRequestsSectionProps) => {
   const [isOpen, setIsOpen] = useState(true);
   
   const {
@@ -20,10 +21,10 @@ const IncomingRequestsSection = ({ onStatusChange }: IncomingRequestsSectionProp
     fetchIncomingRequests
   } = useIncomingRequests(onStatusChange);
 
-  // Re-fetch on mount to ensure we have the latest data
+  // Re-fetch when refreshTrigger changes or on mount
   useEffect(() => {
     fetchIncomingRequests();
-  }, []);
+  }, [refreshTrigger]);
 
   return (
     <div className="overflow-hidden">

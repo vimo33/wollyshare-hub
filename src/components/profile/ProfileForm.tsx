@@ -19,8 +19,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { CardContent, CardFooter } from "@/components/ui/card";
-import { Loader2, Save } from "lucide-react";
+import { HelpCircle, Loader2, MessageSquare, Save } from "lucide-react";
 import ProfileAvatar from "./ProfileAvatar";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 // Define form schema
 const profileFormSchema = z.object({
@@ -28,6 +29,7 @@ const profileFormSchema = z.object({
   fullName: z.string().min(2, { message: "Full name is required" }),
   email: z.string().email({ message: "Please enter a valid email address" }).optional(),
   location: z.string().optional(),
+  telegramId: z.string().optional(),
 });
 
 export type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -49,6 +51,7 @@ const ProfileForm = ({ profile, userEmail, onProfileUpdate }: ProfileFormProps) 
       fullName: "",
       email: "",
       location: "",
+      telegramId: "",
     },
   });
 
@@ -62,6 +65,7 @@ const ProfileForm = ({ profile, userEmail, onProfileUpdate }: ProfileFormProps) 
         fullName: profile.full_name || "",
         email: profile.email || userEmail || "",
         location: profile.location || "",
+        telegramId: profile.telegram_id || "",
       });
     }
   }, [profile, userEmail, form]);
@@ -76,6 +80,7 @@ const ProfileForm = ({ profile, userEmail, onProfileUpdate }: ProfileFormProps) 
         full_name: data.fullName,
         email: data.email,
         location: data.location,
+        telegram_id: data.telegramId,
       });
       
       if (updatedProfile) {
@@ -164,7 +169,45 @@ const ProfileForm = ({ profile, userEmail, onProfileUpdate }: ProfileFormProps) 
 
           <LocationSelect 
             control={form.control} 
-            defaultValue={profile.location || ""}
+            defaultValue={profile?.location || ""}
+          />
+          
+          <FormField
+            control={form.control}
+            name="telegramId"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex items-center gap-1.5">
+                  <FormLabel>Telegram ID</FormLabel>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-5 w-5 p-0">
+                          <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-sm">
+                        <p>Find your Telegram ID by messaging @get_id_bot on Telegram. This enables direct communication for borrowing items.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+                <FormControl>
+                  <div className="flex">
+                    <div className="relative flex-grow">
+                      <Input 
+                        placeholder="123456789" 
+                        {...field} 
+                        className="pl-9"
+                      />
+                      <MessageSquare className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    </div>
+                  </div>
+                </FormControl>
+                <p className="text-xs text-muted-foreground mt-1">Enter your Telegram ID to enable chat between borrowers and lenders</p>
+                <FormMessage />
+              </FormItem>
+            )}
           />
         </CardContent>
         <CardFooter>

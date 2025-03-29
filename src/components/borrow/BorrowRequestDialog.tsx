@@ -15,12 +15,14 @@ import {
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { AlertCircle } from 'lucide-react';
+import { useTelegramChat } from '@/hooks/useTelegramChat';
 
 type BorrowRequestDialogProps = {
   item: Item;
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  onRequestSent?: () => void; // New callback for refreshing incoming requests
 };
 
 const BorrowRequestDialog = ({
@@ -28,11 +30,13 @@ const BorrowRequestDialog = ({
   isOpen,
   onClose,
   onSuccess,
+  onRequestSent,
 }: BorrowRequestDialogProps) => {
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
+  const { startTelegramChat } = useTelegramChat();
 
   const handleSubmit = async () => {
     if (!user) {
@@ -58,8 +62,37 @@ const BorrowRequestDialog = ({
           title: 'Request sent',
           description: 'Your borrow request has been sent to the owner',
         });
+        
+        // Try to start a Telegram chat
+        try {
+          const chatResult = await startTelegramChat(
+            user.id,
+            item.user_id,
+            item.name
+          );
+          
+          if (chatResult.success) {
+            toast({
+              title: 'Telegram notification sent',
+              description: 'The owner will be notified via Telegram',
+            });
+          } else if (chatResult.error) {
+            // Log the error but don't show to user as it's a non-critical feature
+            console.log('Telegram chat could not be created:', chatResult.error);
+          }
+        } catch (telegramError) {
+          console.error('Error with Telegram integration:', telegramError);
+          // Don't show this error to the user as Telegram is a supplementary feature
+        }
+        
         setMessage('');
         onSuccess();
+        
+        // Call the callback to refresh incoming requests
+        if (onRequestSent) {
+          onRequestSent();
+        }
+        
         onClose();
       } else {
         toast({

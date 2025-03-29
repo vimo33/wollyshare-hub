@@ -181,6 +181,7 @@ export type Database = {
           id: string
           is_member: boolean | null
           location: string | null
+          telegram_id: string | null
           updated_at: string | null
           username: string | null
         }
@@ -192,6 +193,7 @@ export type Database = {
           id: string
           is_member?: boolean | null
           location?: string | null
+          telegram_id?: string | null
           updated_at?: string | null
           username?: string | null
         }
@@ -203,6 +205,7 @@ export type Database = {
           id?: string
           is_member?: boolean | null
           location?: string | null
+          telegram_id?: string | null
           updated_at?: string | null
           username?: string | null
         }
@@ -244,6 +247,7 @@ export type Database = {
           id: string
           is_member: boolean | null
           location: string | null
+          telegram_id: string | null
           updated_at: string | null
           username: string | null
         }[]
