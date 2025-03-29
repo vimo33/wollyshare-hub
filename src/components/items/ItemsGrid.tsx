@@ -1,5 +1,5 @@
 
-import { memo } from 'react';
+import { memo, useEffect, useState } from 'react';
 import ItemCard from "../ItemCard";
 import { Item } from "@/types/item";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -13,6 +13,17 @@ interface ItemsGridProps {
  */
 const ItemsGrid = memo(({ items }: ItemsGridProps) => {
   const isMobile = useIsMobile();
+  // Add state to track if items are mounted to help with animations
+  const [isMounted, setIsMounted] = useState(false);
+  
+  // Set mounted after a small delay to ensure animations run properly
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsMounted(true);
+    }, 50);
+    
+    return () => clearTimeout(timer);
+  }, []);
   
   return (
     <div 
@@ -23,7 +34,7 @@ const ItemsGrid = memo(({ items }: ItemsGridProps) => {
       {items.map((item, index) => (
         <div
           key={item.id}
-          className="opacity-0 animate-fade-up"
+          className={`${isMounted ? 'opacity-0 animate-fade-up' : 'opacity-0'}`}
           style={{ 
             animationDelay: `${index * 50}ms`, 
             animationFillMode: 'forwards' 

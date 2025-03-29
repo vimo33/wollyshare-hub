@@ -1,6 +1,7 @@
 
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import IncomingRequestsTable from "./IncomingRequestsTable";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface IncomingRequest {
   id: string;
@@ -30,7 +31,11 @@ const IncomingRequestsContent = ({
   return (
     <CollapsibleContent>
       {isLoading ? (
-        <div className="p-4 text-center">Loading incoming requests...</div>
+        <div className="p-4 space-y-3">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+        </div>
       ) : incomingRequests.length === 0 ? (
         <div className="p-8 text-center text-muted-foreground">
           You have no pending borrow requests.

@@ -83,13 +83,34 @@ export const useIncomingRequests = (onStatusChange: () => void) => {
         description: "Failed to load incoming requests. Please try again.",
         variant: "destructive"
       });
+      // Set empty array to prevent undefined
+      setIncomingRequests([]);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
+    // Fetch requests on mount
     fetchIncomingRequests();
+    
+    // Set up real-time subscription for borrow_requests updates
+    const borrowRequestsSubscription = supabase
+      .channel('borrow_requests_changes')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'borrow_requests' 
+      }, () => {
+        // Refresh incoming requests when changes occur
+        fetchIncomingRequests();
+      })
+      .subscribe();
+
+    // Clean up subscription
+    return () => {
+      borrowRequestsSubscription.unsubscribe();
+    };
   }, []);
 
   const handleUpdateStatus = async (requestId: string, status: 'approved' | 'rejected') => {

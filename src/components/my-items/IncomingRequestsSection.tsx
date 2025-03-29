@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Collapsible } from "@/components/ui/collapsible";
 import IncomingRequestsHeader from "./incoming-requests/IncomingRequestsHeader";
 import IncomingRequestsContent from "./incoming-requests/IncomingRequestsContent";
@@ -16,8 +16,14 @@ const IncomingRequestsSection = ({ onStatusChange }: IncomingRequestsSectionProp
     incomingRequests,
     isLoading,
     processingRequestIds,
-    handleUpdateStatus
+    handleUpdateStatus,
+    fetchIncomingRequests
   } = useIncomingRequests(onStatusChange);
+
+  // Re-fetch on mount to ensure we have the latest data
+  useEffect(() => {
+    fetchIncomingRequests();
+  }, []);
 
   return (
     <div className="mt-8 border rounded-lg overflow-hidden">

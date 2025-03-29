@@ -31,8 +31,10 @@ export const useHomePageItems = (): UseHomePageItemsResult => {
     isLoading, 
     error, 
     refetch,
-    locationData
-  } = useItemsQuery({ userId: undefined, enabled: true });
+  } = useItemsQuery({ 
+    userId: undefined, 
+    enabled: true  // Always enable fetching
+  });
   
   // Memoized callback for category changes
   const handleCategoryChange = useCallback((category: string | null) => {

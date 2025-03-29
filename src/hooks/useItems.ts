@@ -34,10 +34,11 @@ export const useItems = (userId?: string): UseItemsResult => {
 
   // Set isLoaded state once data is available
   useEffect(() => {
-    if (items.length > 0 && !isLoaded && !isLoading) {
+    if (!isLoading && !isLoaded) {
+      // Set loaded to true even with empty results - loading is complete
       setIsLoaded(true);
     }
-  }, [items, isLoading, isLoaded]);
+  }, [isLoading, isLoaded]);
   
   // Memoize the return value to prevent unnecessary re-renders
   return useMemo(() => ({ 

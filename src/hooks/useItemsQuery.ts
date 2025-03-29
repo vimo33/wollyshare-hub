@@ -62,7 +62,8 @@ export const useLocationsQuery = () => {
       
       return locMap;
     },
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    // Set staleTime to 0 to ensure fresh data on mount
+    staleTime: 1000 * 60 * 5, // Keep 5 minutes cache for subsequent loads
   });
 };
 
@@ -94,7 +95,8 @@ export const useProfilesQuery = () => {
       console.log(`Fetched ${userMap.size} user profiles`);
       return userMap;
     },
-    staleTime: 1000 * 60 * 5, // Cache profiles for 5 minutes
+    // Set staleTime to ensure fresh data on mount
+    staleTime: 1000 * 60 * 5, // Keep 5 minutes cache for subsequent loads
   });
 };
 
@@ -113,7 +115,7 @@ export const useItemsQuery = ({ userId, enabled = true }: UseItemsQueryOptions =
     error: profilesError
   } = useProfilesQuery();
 
-  // Use React Query to fetch items
+  // Use React Query to fetch items - always enabled by default
   const itemsQuery = useQuery({
     queryKey: userId ? itemsQueryKeys.byUser(userId) : itemsQueryKeys.all,
     queryFn: async () => {
@@ -143,8 +145,10 @@ export const useItemsQuery = ({ userId, enabled = true }: UseItemsQueryOptions =
         return transformItemData(item, userInfo, locationData);
       });
     },
+    // Ensure data fetching is enabled when dependencies are ready
     enabled: enabled && !isLocationLoading && !isProfilesLoading,
-    staleTime: 1000 * 60 * 2, // Cache items for 2 minutes
+    // Lower staleTime to ensure fresh data on initial mount
+    staleTime: 1000 * 60 * 2, // 2 minutes
   });
 
   return {

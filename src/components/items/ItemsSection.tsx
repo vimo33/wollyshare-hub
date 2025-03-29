@@ -1,11 +1,12 @@
 
-import { memo, useState, useEffect } from "react";
+import { memo } from "react";
 import { Item } from "@/types/item";
 import LoadingState from "./LoadingState";
 import EmptyState from "./EmptyState";
 import SearchBar from "./SearchBar";
 import CategoryFilter from "./CategoryFilter";
-import ItemsGrid from "./ItemsGrid"; // Direct import instead of lazy loading
+import ItemsGrid from "./ItemsGrid";
+import ItemsSkeletonGrid from "./ItemsSkeletonGrid";
 
 interface ItemsSectionProps {
   items: Item[];
@@ -24,13 +25,6 @@ const ItemsSection = memo(({
   activeCategory, 
   setActiveCategory 
 }: ItemsSectionProps) => {
-  const [isClient, setIsClient] = useState(false);
-  
-  // Use useEffect to ensure we're rendering on the client side
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
   return (
     <section className="py-16 px-6 bg-gradient-to-b from-white to-gray-50">
       <div className="max-w-7xl mx-auto">
@@ -49,11 +43,7 @@ const ItemsSection = memo(({
 
         {/* Items Grid with improved rendering */}
         {isLoading ? (
-          <LoadingState />
-        ) : !isClient ? (
-          <div className="min-h-[400px] flex items-center justify-center">
-            <div className="animate-pulse">Loading items...</div>
-          </div>
+          <ItemsSkeletonGrid />
         ) : items.length > 0 ? (
           <ItemsGrid items={items} />
         ) : (
