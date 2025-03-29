@@ -6,36 +6,28 @@ import {
 import Index from "./pages/Index";
 import MyItems from "./pages/MyItems";
 import Profile from "./pages/Profile";
-import RootLayout from "./pages/RootLayout";
 import Authentication from "./pages/Authentication";
 import { ErrorBoundary } from 'react-error-boundary';
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <RootLayout />,
-    children: [
-      {
-        index: true,
-        element: <Index />,
-      },
-      {
-        path: "my-items",
-        element: <MyItems />,
-      },
-      {
-        path: "profile",
-        element: <Profile />,
-      },
-    ],
+    element: <Index />
+  },
+  {
+    path: "/my-items",
+    element: <MyItems />
+  },
+  {
+    path: "/profile",
+    element: <Profile />
   },
   {
     path: "/auth",
-    element: <Authentication />,
-  },
+    element: <Authentication />
+  }
 ]);
 
-// Modify the main component to include the error boundary
 const App = () => {
   return (
     <ErrorBoundary fallback={<div className="container p-6 text-center">

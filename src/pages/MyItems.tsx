@@ -1,6 +1,6 @@
 
 import React from "react";
-import { PageHeader } from "@/components/ui/page-header";
+import PageHeader from "@/components/ui/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useMyItems } from "@/hooks/useMyItems";
 import MyItemsList from "@/components/my-items/MyItemsList";
@@ -15,7 +15,7 @@ const MyItems = () => {
 
   return (
     <div className="container py-6">
-      <PageHeader heading="My Items" text="Manage your shared items and borrow requests." />
+      <PageHeader title="My Items" description="Manage your shared items and borrow requests." />
       
       <Tabs defaultValue="my-items" className="w-full mt-6">
         <TabsList className="w-full border-b">

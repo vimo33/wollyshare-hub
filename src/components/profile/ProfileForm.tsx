@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { Profile } from "@/types/supabase";
 
 const formSchema = z.object({
   username: z.string().min(2, {
@@ -28,16 +29,22 @@ const formSchema = z.object({
   telegramId: z.string().optional(),
 });
 
-const ProfileForm = () => {
+interface ProfileFormProps {
+  profile?: Profile | null;
+  userEmail?: string;
+  onProfileUpdate?: () => Promise<void>;
+}
+
+const ProfileForm: React.FC<ProfileFormProps> = ({ profile, userEmail, onProfileUpdate }) => {
   const { user } = useAuth();
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      username: user?.user_metadata?.username || "",
-      fullName: user?.user_metadata?.full_name || "",
-      telegramId: user?.user_metadata?.telegram_id || "",
+      username: user?.user_metadata?.username || profile?.username || "",
+      fullName: user?.user_metadata?.full_name || profile?.full_name || "",
+      telegramId: user?.user_metadata?.telegram_id || profile?.telegram_id || "",
     },
   });
 
@@ -74,6 +81,10 @@ const ProfileForm = () => {
       toast({
         title: "Profile updated successfully!",
       });
+      
+      if (onProfileUpdate) {
+        await onProfileUpdate();
+      }
     } catch (error: any) {
       toast({
         variant: "destructive",
