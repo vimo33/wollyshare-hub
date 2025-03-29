@@ -9,7 +9,7 @@ interface IncomingRequestsContentProps {
   isLoading: boolean;
   isError: boolean;
   error: any;
-  refreshRequests: () => void; // Add refresh function
+  refreshRequests: () => void;
 }
 
 const IncomingRequestsContent = ({
@@ -17,7 +17,7 @@ const IncomingRequestsContent = ({
   isLoading,
   isError,
   error,
-  refreshRequests, // Include in props
+  refreshRequests,
 }: IncomingRequestsContentProps) => {
   if (isLoading) {
     return (

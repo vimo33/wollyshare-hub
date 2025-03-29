@@ -1,8 +1,9 @@
+
 import {
   createBrowserRouter,
   RouterProvider,
 } from "react-router-dom";
-import Home from "./pages/Home";
+import Index from "./pages/Index";
 import MyItems from "./pages/MyItems";
 import Profile from "./pages/Profile";
 import RootLayout from "./pages/RootLayout";
@@ -16,7 +17,7 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Home />,
+        element: <Index />,
       },
       {
         path: "my-items",
