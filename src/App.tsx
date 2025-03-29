@@ -2,7 +2,6 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Header from "@/components/Header";
@@ -19,8 +18,6 @@ import MyItems from "./pages/MyItems";
 import Profile from "./pages/Profile";
 import { useAuth } from "@/contexts/AuthContext";
 import MobileBottomNav from "@/components/mobile/MobileBottomNav";
-
-const queryClient = new QueryClient();
 
 // Admin route guard component
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
@@ -63,19 +60,17 @@ const AppRoutes = () => {
 };
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <AuthProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Header />
-          <AppRoutes />
-          <MobileBottomNav />
-        </BrowserRouter>
-      </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <TooltipProvider>
+    <AuthProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <Header />
+        <AppRoutes />
+        <MobileBottomNav />
+      </BrowserRouter>
+    </AuthProvider>
+  </TooltipProvider>
 );
 
 export default App;

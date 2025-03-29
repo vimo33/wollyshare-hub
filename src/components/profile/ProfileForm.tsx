@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -76,7 +77,8 @@ const ProfileForm = () => {
             console.error("Error fetching profile:", error);
             setApiError(error.message);
           } else if (profileData) {
-            setProfile(profileData);
+            // Use a type assertion to ensure the profile data has the correct type
+            setProfile(profileData as Profile);
             form.setValue("username", profileData.username || "");
             form.setValue("fullName", profileData.full_name || "");
             form.setValue("location", profileData.location || "");
@@ -101,7 +103,7 @@ const ProfileForm = () => {
 
       const updates = {
         id: user.id,
-        updated_at: new Date(),
+        updated_at: new Date().toISOString(), // Convert Date to string
         username: values.username,
         full_name: values.fullName,
         location: values.location,
@@ -114,12 +116,14 @@ const ProfileForm = () => {
       }
 
       // Optimistically update the profile in the UI
-      setProfile({
-        ...profile,
-        username: values.username,
-        full_name: values.fullName,
-        location: values.location,
-      } as Profile);
+      if (profile) {
+        setProfile({
+          ...profile,
+          username: values.username,
+          full_name: values.fullName,
+          location: values.location || '',
+        });
+      }
 
       setApiError(null);
       alert('Profile updated successfully!');
