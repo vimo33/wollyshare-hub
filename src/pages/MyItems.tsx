@@ -10,6 +10,7 @@ import IncomingRequestsSection from "@/components/my-items/IncomingRequestsSecti
 import RequestHistorySection from "@/components/my-items/RequestHistorySection";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 const MyItems = () => {
   const { user, isLoading: isAuthLoading } = useAuth();
@@ -58,23 +59,24 @@ const MyItems = () => {
         <Button onClick={() => navigate("/browse")}>Browse Items</Button>
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-8">
+      <Tabs defaultValue="my-items" className="w-full">
+        <TabsList className="w-full md:w-auto mb-6 grid grid-cols-2 md:grid-cols-4 gap-2">
+          <TabsTrigger value="my-items">My Items</TabsTrigger>
+          <TabsTrigger value="incoming-requests">Incoming Requests</TabsTrigger>
+          <TabsTrigger value="history">History</TabsTrigger>
+          <TabsTrigger value="borrowed-items">Borrowed Items</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="my-items">
           <MyItemsList 
             items={myItems} 
             isLoading={isItemsLoading} 
             error={itemsError}
             onRequestSent={fetchIncomingRequests}
           />
-          
-          <BorrowedItemsList 
-            items={borrowedItems}
-            isLoading={isBorrowedLoading}
-            error={borrowedError}
-          />
-        </div>
+        </TabsContent>
         
-        <div className="space-y-8">
+        <TabsContent value="incoming-requests">
           <IncomingRequestsSection 
             requests={requests || []}
             isLoading={isRequestsLoading}
@@ -82,10 +84,20 @@ const MyItems = () => {
             error={requestsError}
             refreshRequests={fetchIncomingRequests}
           />
-          
+        </TabsContent>
+        
+        <TabsContent value="history">
           <RequestHistorySection />
-        </div>
-      </div>
+        </TabsContent>
+        
+        <TabsContent value="borrowed-items">
+          <BorrowedItemsList 
+            items={borrowedItems}
+            isLoading={isBorrowedLoading}
+            error={borrowedError}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

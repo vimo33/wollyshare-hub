@@ -68,8 +68,8 @@ const IncomingRequestsTable = ({
           <TableRow>
             <TableHead className="w-[100px]">Requester</TableHead>
             <TableHead>Item</TableHead>
-            <TableHead>Start Date</TableHead>
-            <TableHead>End Date</TableHead>
+            <TableHead>Created At</TableHead>
+            <TableHead>Message</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -78,8 +78,8 @@ const IncomingRequestsTable = ({
             <TableRow key={request.id}>
               <TableCell className="font-medium">{request.requester_username}</TableCell>
               <TableCell>{request.item_name}</TableCell>
-              <TableCell>{formatDate(request.start_date)}</TableCell>
-              <TableCell>{formatDate(request.end_date)}</TableCell>
+              <TableCell>{formatDate(request.created_at)}</TableCell>
+              <TableCell className="max-w-xs truncate">{request.message || '-'}</TableCell>
               <TableCell className="text-right">
                 <div className="flex space-x-2 justify-end">
                   <Button 
