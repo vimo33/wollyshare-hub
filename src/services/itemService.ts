@@ -5,7 +5,9 @@ import { useAuth } from "@/contexts/AuthContext";
 
 // Get all incoming borrow requests for the current user's items
 export const getIncomingRequests = async (): Promise<IncomingRequest[]> => {
-  const { user } = useAuth();
+  // Get the user from local storage or session
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user;
   
   if (!user) {
     throw new Error("User not authenticated");
