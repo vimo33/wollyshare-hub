@@ -61,17 +61,25 @@ const BorrowedItemsList = () => {
             
           if (ownersError) throw ownersError;
           
-          // Map owner names to items
+          // Validate category and map owner names to items
+          const validCategories = ["tools", "kitchen", "electronics", "sports", "books", "games", "diy-craft", "other"] as const;
+          
           const itemsWithOwners = itemsData.map(item => {
             const owner = ownersData?.find(owner => owner.id === item.user_id);
             const ownerName = owner?.username || owner?.full_name || 'Unknown User';
             
+            // Ensure category is one of the valid types or fallback to "other"
+            const category = validCategories.includes(item.category as any) 
+              ? item.category as Item['category']
+              : "other";
+            
             return {
               ...item,
+              category,
               ownerName,
               location: "Owner's Location", // We could fetch actual location if needed
               locationAddress: undefined
-            };
+            } as Item;
           });
           
           setBorrowedItems(itemsWithOwners);
