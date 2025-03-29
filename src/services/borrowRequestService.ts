@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 // Interface for borrow request data
@@ -37,13 +36,12 @@ export const createBorrowRequest = async (requestData: BorrowRequestData, userId
   console.log("Creating borrow request with verified userId:", currentUserId);
   console.log("Request data:", requestData);
 
-  // Create the payload with the correct schema fields - borrower_id is required by the schema
+  // Create the payload with the correct schema fields
   const payload = {
     item_id: requestData.item_id,
     owner_id: requestData.owner_id,
     message: requestData.message,
     requester_id: currentUserId,
-    borrower_id: currentUserId, // Required field per database schema
     status: "pending",
   };
 

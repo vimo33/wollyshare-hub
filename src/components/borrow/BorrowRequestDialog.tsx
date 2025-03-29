@@ -16,7 +16,6 @@ import { Item } from "@/types/supabase";
 import { createBorrowRequest } from "@/services/borrowRequestService";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 
 interface BorrowRequestDialogProps {
   item: Item;
@@ -49,21 +48,8 @@ const BorrowRequestDialog = ({
       return;
     }
 
-    // Verify current auth session
-    const { data: authData, error: authError } = await supabase.auth.getUser();
-    if (authError || !authData.user) {
-      console.error("Auth verification failed:", authError);
-      toast({
-        variant: "destructive",
-        title: "Authentication Error",
-        description: "Please log in again and retry",
-      });
-      return;
-    }
-
     console.log("Submit request clicked for item:", item.name);
     console.log("Current user from AuthContext:", user);
-    console.log("Current user from Supabase auth:", authData.user);
     
     setIsSubmitting(true);
 
