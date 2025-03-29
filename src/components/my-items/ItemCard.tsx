@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Edit, Trash2, Image } from "lucide-react";
 import { 
@@ -73,6 +72,18 @@ const ItemCard = ({ item, onEdit, onDelete }: ItemCardProps) => {
       
       <CardContent>
         <div className="space-y-2">
+          {item.location && (
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Location:</span>
+              <span className="font-medium">{item.location}</span>
+            </div>
+          )}
+          {item.condition && (
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Condition:</span>
+              <span className="font-medium">{item.condition}</span>
+            </div>
+          )}
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Weekdays:</span>
             <span className="font-medium">{getAvailabilityText(item.weekday_availability)}</span>

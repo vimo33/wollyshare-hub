@@ -58,8 +58,8 @@ export interface Item {
   weekday_availability: string;
   weekend_availability: string;
   user_id: string;
-  location: string;
-  condition: string;
+  location?: string; 
+  condition?: string;
   locationAddress?: string;
   ownerName?: string;
   created_at?: string;

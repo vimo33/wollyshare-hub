@@ -113,8 +113,8 @@ const MyItemsList = ({
                 <p>
                   <Badge>Category: {item.category}</Badge>
                 </p>
-                <p>Condition: {item.condition}</p>
-                <p>Location: {item.location}</p>
+                <p>Condition: {item.condition || "Not specified"}</p>
+                <p>Location: {item.location || "Not specified"}</p>
               </CardContent>
               <CardFooter className="flex justify-between">
                 <Button onClick={() => handleBorrowRequest(item)}>

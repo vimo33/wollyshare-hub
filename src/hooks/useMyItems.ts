@@ -38,8 +38,8 @@ export const useMyItems = () => {
         weekday_availability: item.weekday_availability || 'anytime',
         weekend_availability: item.weekend_availability || 'anytime',
         user_id: item.user_id,
-        location: item.location || 'Unknown',
-        condition: item.condition || 'Good',
+        location: item.location,
+        condition: item.condition,
         created_at: item.created_at,
         updated_at: item.updated_at,
         locationAddress: undefined

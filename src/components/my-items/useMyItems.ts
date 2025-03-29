@@ -38,8 +38,8 @@ export const useMyItems = () => {
         image_url: item.image_url || null,
         weekday_availability: item.weekday_availability || 'anytime',
         weekend_availability: item.weekend_availability || 'anytime',
-        location: item.location || 'Unknown', 
-        condition: item.condition || 'Good',
+        location: item.location,
+        condition: item.condition,
         locationAddress: undefined
       }));
 

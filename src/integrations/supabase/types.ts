@@ -136,10 +136,12 @@ export type Database = {
       items: {
         Row: {
           category: string
+          condition: string | null
           created_at: string | null
           description: string | null
           id: string
           image_url: string | null
+          location: string | null
           name: string
           updated_at: string | null
           user_id: string
@@ -148,10 +150,12 @@ export type Database = {
         }
         Insert: {
           category: string
+          condition?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
           image_url?: string | null
+          location?: string | null
           name: string
           updated_at?: string | null
           user_id: string
@@ -160,10 +164,12 @@ export type Database = {
         }
         Update: {
           category?: string
+          condition?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
           image_url?: string | null
+          location?: string | null
           name?: string
           updated_at?: string | null
           user_id?: string
