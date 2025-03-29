@@ -18,6 +18,7 @@ export const createBorrowRequest = async (requestData: BorrowRequestData, userId
   console.log("Creating borrow request with userId:", userId);
   console.log("Request data:", requestData);
 
+  // The key fix: use borrower_id instead of requester_id to match the RLS policy
   const { data, error } = await supabase
     .from("borrow_requests")
     .insert({

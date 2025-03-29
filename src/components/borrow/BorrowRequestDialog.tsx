@@ -39,6 +39,7 @@ const BorrowRequestDialog = ({
     e.preventDefault();
     
     if (!user) {
+      console.error("User not authenticated when submitting request");
       toast({
         variant: "destructive",
         title: "Error",
@@ -49,6 +50,7 @@ const BorrowRequestDialog = ({
 
     console.log("Submit request clicked for item:", item.name);
     console.log("Current user:", user);
+    console.log("User ID for borrow request:", user.id);
     
     setIsSubmitting(true);
 

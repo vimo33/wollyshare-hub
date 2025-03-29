@@ -51,6 +51,7 @@ const ItemCard = memo(({
     e.stopPropagation();
     
     console.log("Request button clicked. User authenticated:", !!user);
+    console.log("User details:", user);
     
     if (!user) {
       toast({
