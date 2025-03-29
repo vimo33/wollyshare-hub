@@ -1,6 +1,5 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
 
 // Interface for borrow request data
 interface BorrowRequestData {
@@ -12,10 +11,8 @@ interface BorrowRequestData {
 }
 
 // Create a new borrow request
-export const createBorrowRequest = async (requestData: BorrowRequestData) => {
-  const { user } = useAuth();
-  
-  if (!user) {
+export const createBorrowRequest = async (requestData: BorrowRequestData, userId: string) => {
+  if (!userId) {
     throw new Error("User not authenticated");
   }
 
@@ -23,7 +20,7 @@ export const createBorrowRequest = async (requestData: BorrowRequestData) => {
     .from("borrow_requests")
     .insert({
       ...requestData,
-      borrower_id: user.id,
+      borrower_id: userId,
       status: "pending",
     })
     .select();
@@ -66,11 +63,10 @@ export const getBorrowRequests = async (itemId: string) => {
 // Update a borrow request status
 export const updateBorrowRequestStatus = async (
   requestId: string, 
-  status: 'approved' | 'rejected' | 'cancelled'
+  status: 'approved' | 'rejected' | 'cancelled',
+  userId: string
 ) => {
-  const { user } = useAuth();
-  
-  if (!user) {
+  if (!userId) {
     throw new Error("User not authenticated");
   }
 

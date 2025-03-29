@@ -1,3 +1,4 @@
+
 import React from "react";
 import * as z from "zod";
 import { useForm } from "react-hook-form";
@@ -14,8 +15,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { createBorrowRequest } from "@/services/borrowRequestService";
+import { useTelegramChat } from "@/hooks/useTelegramChat";
+import { useAuth } from "@/contexts/AuthContext";
 import { Item } from "@/types/supabase";
 
 const borrowRequestFormSchema = z.object({
@@ -35,12 +38,20 @@ export interface BorrowRequestDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onRequestSent?: () => void;
-  onSuccess?: () => void; // Add this optional prop
+  onSuccess?: () => void;
 }
 
-const BorrowRequestDialog: React.FC<BorrowRequestDialogProps> = ({ item, isOpen, onClose, onRequestSent, onSuccess }) => {
+const BorrowRequestDialog: React.FC<BorrowRequestDialogProps> = ({ 
+  item, 
+  isOpen, 
+  onClose, 
+  onRequestSent, 
+  onSuccess 
+}) => {
   const { toast } = useToast();
-
+  const { user } = useAuth();
+  const { startTelegramChat } = useTelegramChat();
+  
   const form = useForm<BorrowRequestFormValues>({
     resolver: zodResolver(borrowRequestFormSchema),
     defaultValues: {
@@ -51,6 +62,15 @@ const BorrowRequestDialog: React.FC<BorrowRequestDialogProps> = ({ item, isOpen,
   });
 
   const handleSubmit = async (values: BorrowRequestFormValues) => {
+    if (!user) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "You must be logged in to send a request",
+      });
+      return;
+    }
+    
     try {
       await createBorrowRequest({
         item_id: item.id,
@@ -58,7 +78,12 @@ const BorrowRequestDialog: React.FC<BorrowRequestDialogProps> = ({ item, isOpen,
         message: values.message || '',
         start_date: values.start_date,
         end_date: values.end_date,
-      });
+      }, user.id);
+
+      // Start Telegram chat between users after successful request
+      if (user.id && item.user_id) {
+        await startTelegramChat(user.id, item.user_id, item.name);
+      }
 
       toast({
         title: "Request sent!",

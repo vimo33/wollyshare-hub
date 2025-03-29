@@ -1,9 +1,13 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const telegramBotToken = import.meta.env.VITE_TELEGRAM_BOT_TOKEN || '7668612759:AAE3nly6dp0iA0XwwWuVSxwX6eeur61ZTyE'; // Temp hardcoded for testing
 
 export const useTelegramChat = () => {
+  // Get user from useAuth hook at the component level
+  const { user } = useAuth();
+
   const startTelegramChat = async (requesterId: string, ownerId: string, itemName: string) => {
     try {
       if (!telegramBotToken) {
