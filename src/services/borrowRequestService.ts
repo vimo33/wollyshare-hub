@@ -18,12 +18,13 @@ export const createBorrowRequest = async (requestData: BorrowRequestData, userId
   console.log("Creating borrow request with userId:", userId);
   console.log("Request data:", requestData);
 
-  // The key fix: use borrower_id instead of requester_id to match the RLS policy
+  // The key fix: use both borrower_id and requester_id to ensure compatibility with any RLS policy
   const { data, error } = await supabase
     .from("borrow_requests")
     .insert({
       ...requestData,
       borrower_id: userId,
+      requester_id: userId, // Add this to ensure we match the RLS policy
       status: "pending",
     })
     .select();
