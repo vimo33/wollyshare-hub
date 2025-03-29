@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import IncomingRequestsSection from "@/components/my-items/IncomingRequestsSection";
 import BorrowRequestHistory from "@/components/my-items/BorrowRequestHistory";
+import BorrowedItemsList from "@/components/my-items/BorrowedItemsList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const MyItems = () => {
@@ -67,8 +68,9 @@ const MyItems = () => {
       <div className="mt-8 border rounded-lg overflow-hidden">
         <Tabs defaultValue="my-items" value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="bg-muted/50 p-4">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="my-items">My Items</TabsTrigger>
+              <TabsTrigger value="borrowed">Items I Borrowed</TabsTrigger>
               <TabsTrigger value="incoming">Incoming Requests</TabsTrigger>
               <TabsTrigger value="history">Request History</TabsTrigger>
             </TabsList>
@@ -76,6 +78,10 @@ const MyItems = () => {
           
           <TabsContent value="my-items" className="mt-0 p-6">
             <MyItemsList ref={itemsListRef} />
+          </TabsContent>
+          
+          <TabsContent value="borrowed" className="mt-0 p-6">
+            <BorrowedItemsList />
           </TabsContent>
           
           <TabsContent value="incoming" className="mt-0 p-6">
