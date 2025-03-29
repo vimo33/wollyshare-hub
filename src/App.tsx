@@ -6,7 +6,7 @@ import {
 import Index from "./pages/Index";
 import MyItems from "./pages/MyItems";
 import Profile from "./pages/Profile";
-import Authentication from "./pages/Authentication";
+import Authentication from "@/pages/Authentication";
 import { ErrorBoundary } from 'react-error-boundary';
 
 const router = createBrowserRouter([
