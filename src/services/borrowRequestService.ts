@@ -37,13 +37,12 @@ export const createBorrowRequest = async (requestData: BorrowRequestData, userId
   console.log("Creating borrow request with verified userId:", currentUserId);
   console.log("Request data:", requestData);
 
-  // Create the payload with the correct schema fields - include both borrower_id and requester_id
+  // Create the payload with the correct schema fields, focusing on borrower_id which is used in RLS
   const payload = {
     item_id: requestData.item_id,
     owner_id: requestData.owner_id,
     message: requestData.message,
-    requester_id: currentUserId,
-    borrower_id: currentUserId, // Required NOT NULL field per database schema
+    borrower_id: currentUserId, // Required for NOT NULL constraint and RLS policy
     status: "pending",
   };
 
