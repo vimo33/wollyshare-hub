@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { IncomingRequest } from "@/types/supabase";
 import { updateBorrowRequestStatus } from "@/services/borrowRequestService";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface IncomingRequestsTableProps {
   requests: IncomingRequest[];
@@ -24,13 +25,23 @@ const IncomingRequestsTable = ({
   refreshRequests,
 }: IncomingRequestsTableProps) => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [processingIds, setProcessingIds] = React.useState<Set<string>>(new Set());
 
   const handleUpdateStatus = async (requestId: string, status: 'approved' | 'rejected') => {
+    if (!user) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "You must be logged in to update request status",
+      });
+      return;
+    }
+
     try {
       setProcessingIds(prev => new Set(prev).add(requestId));
       
-      await updateBorrowRequestStatus(requestId, status);
+      await updateBorrowRequestStatus(requestId, status, user.id);
       
       toast({
         title: status === 'approved' ? "Request approved!" : "Request declined",
