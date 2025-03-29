@@ -1,171 +1,214 @@
-
-import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
-import { createBorrowRequest } from '@/services/borrowRequestService';
-import { Item } from '@/types/item';
+import React from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { AlertCircle } from 'lucide-react';
-import { useTelegramChat } from '@/hooks/useTelegramChat';
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
+import * as z from "zod";
+import { createBorrowRequest } from "@/services/borrowService";
+import { useAuth } from "@/contexts/AuthContext";
+import { Item } from "@/types/supabase";
+import { useToast } from "@/components/ui/use-toast";
+import useTelegramChat from "@/hooks/useTelegramChat";
 
-type BorrowRequestDialogProps = {
+interface BorrowRequestDialogProps {
   item: Item;
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: () => void;
-  onRequestSent?: () => void; // New callback for refreshing incoming requests
-};
+  onRequestSent?: () => void; // Add callback prop for refreshing requests
+}
 
-const BorrowRequestDialog = ({
-  item,
-  isOpen,
+const BorrowRequestDialog = ({ 
+  item, 
+  isOpen, 
   onClose,
-  onSuccess,
-  onRequestSent,
+  onRequestSent 
 }: BorrowRequestDialogProps) => {
-  const [message, setMessage] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { user } = useAuth();
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const borrowRequestSchema = z.object({
+    dateRange: z.object({
+      from: z.date({
+        required_error: "A start date is required.",
+      }),
+      to: z.date({
+        required_error: "An end date is required.",
+      }),
+    }),
+    message: z.string().optional(),
+  });
+  
+  type BorrowRequestFormValues = z.infer<typeof borrowRequestSchema>;
+  
   const { toast } = useToast();
   const { startTelegramChat } = useTelegramChat();
+  const { user } = useAuth();
 
-  const handleSubmit = async () => {
-    if (!user) {
-      toast({
-        title: 'Authentication required',
-        description: 'You must be logged in to request items',
-        variant: 'destructive',
-      });
-      return;
-    }
+  const form = useForm<BorrowRequestFormValues>({
+    resolver: zodResolver(borrowRequestSchema),
+    defaultValues: {
+      dateRange: {
+        from: new Date(),
+        to: new Date(),
+      },
+      message: "",
+    },
+  });
 
+  const onSubmit = async (data: BorrowRequestFormValues) => {
     setIsSubmitting(true);
 
     try {
-      const result = await createBorrowRequest(
-        item.id,
-        item.user_id,
-        message
-      );
-
-      if (result.success) {
+      if (!user) {
         toast({
-          title: 'Request sent',
-          description: 'Your borrow request has been sent to the owner',
+          variant: "destructive",
+          title: "You must be logged in to request an item",
+        });
+        return;
+      }
+
+      const { error, data: requestData } = await createBorrowRequest({
+        item_id: item.id,
+        start_date: data.dateRange.from,
+        end_date: data.dateRange.to,
+        message: data.message,
+      });
+
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Error creating borrow request",
+          description: error.message,
+        });
+      } else {
+        // Start Telegram chat
+        if (user) {
+          try {
+            await startTelegramChat(
+              user.id, 
+              item.user_id, 
+              item.name
+            );
+          } catch (chatError) {
+            // Silently log the error but don't impact the user experience
+            console.error("Failed to start Telegram chat:", chatError);
+          }
+        }
+
+        toast({
+          title: "Request sent successfully!",
+          description: "The item owner has been notified of your request.",
         });
         
-        // Try to start a Telegram chat
-        try {
-          const chatResult = await startTelegramChat(
-            user.id,
-            item.user_id,
-            item.name
-          );
-          
-          if (chatResult.success) {
-            toast({
-              title: 'Telegram notification sent',
-              description: 'The owner will be notified via Telegram',
-            });
-          } else if (chatResult.error) {
-            // Log the error but don't show to user as it's a non-critical feature
-            console.log('Telegram chat could not be created:', chatResult.error);
-          }
-        } catch (telegramError) {
-          console.error('Error with Telegram integration:', telegramError);
-          // Don't show this error to the user as Telegram is a supplementary feature
-        }
-        
-        setMessage('');
-        onSuccess();
-        
-        // Call the callback to refresh incoming requests
+        // Call the onRequestSent callback if provided
         if (onRequestSent) {
           onRequestSent();
         }
         
         onClose();
-      } else {
-        toast({
-          title: 'Error sending request',
-          description: result.error || 'An unknown error occurred',
-          variant: 'destructive',
-        });
       }
-    } catch (error: any) {
+    } catch (err) {
       toast({
-        title: 'Error sending request',
-        description: error.message || 'An unknown error occurred',
-        variant: 'destructive',
+        variant: "destructive",
+        title: "Unexpected error",
+        description: "An unexpected error occurred. Please try again.",
       });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Prevent requesting your own item
-  const isOwnItem = user && user.id === item.user_id;
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Request to Borrow</DialogTitle>
           <DialogDescription>
-            Send a request to borrow the item "{item.name}" from {item.ownerName || 'the owner'}.
+            Submit a request to borrow this item.
           </DialogDescription>
         </DialogHeader>
-
-        {isOwnItem ? (
-          <div className="flex items-start space-x-2 text-amber-600 bg-amber-50 p-3 rounded-md">
-            <AlertCircle className="h-5 w-5 flex-shrink-0" />
-            <p className="text-sm">You cannot request to borrow your own item.</p>
-          </div>
-        ) : (
-          <>
-            <div className="space-y-4 py-2">
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium">Message to Owner</h4>
-                <Textarea
-                  placeholder="Introduce yourself and explain why you'd like to borrow this item..."
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  className="h-32"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium">Availability</h4>
-                <p className="text-sm text-gray-500">
-                  <strong>Weekdays:</strong> {item.weekday_availability}
-                  <br />
-                  <strong>Weekends:</strong> {item.weekend_availability}
-                </p>
-              </div>
-            </div>
-
-            <DialogFooter>
-              <Button variant="outline" onClick={onClose}>
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleSubmit} 
-                disabled={isSubmitting || !message.trim()}
-              >
-                {isSubmitting ? 'Sending...' : 'Send Request'}
-              </Button>
-            </DialogFooter>
-          </>
-        )}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="dateRange"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Date range</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-[240px] pl-3 text-left font-normal",
+                            !field.value?.from && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value?.from ? (
+                            field.value?.to ? (
+                              `${format(field.value.from, "MMM dd, yyyy")} - ${format(field.value.to, "MMM dd, yyyy")}`
+                            ) : (
+                              format(field.value.from, "MMM dd, yyyy")
+                            )
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="center" side="bottom">
+                      <Calendar
+                        mode="range"
+                        defaultMonth={field.value?.from}
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        disabled={(date) =>
+                          date < new Date()
+                        }
+                        numberOfMonths={2}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="message"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Message (Optional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Write a message to the owner" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? "Submitting..." : "Submit Request"}
+            </Button>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

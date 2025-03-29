@@ -1,55 +1,48 @@
-
+import React from "react";
 import {
   Table,
   TableBody,
+  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import IncomingRequestRow from "./IncomingRequestRow";
-
-interface IncomingRequest {
-  id: string;
-  item_id: string;
-  item_name: string;
-  borrower_id: string;
-  borrower_name: string;
-  message: string;
-  created_at: string;
-}
+import { IncomingRequest } from "@/types/supabase";
 
 interface IncomingRequestsTableProps {
   requests: IncomingRequest[];
-  onUpdateStatus: (requestId: string, status: 'approved' | 'rejected') => Promise<void>;
-  processingRequestIds: Set<string>;
+  refreshRequests: () => void; // Add refresh function
 }
 
 const IncomingRequestsTable = ({ 
-  requests, 
-  onUpdateStatus, 
-  processingRequestIds 
+  requests,
+  refreshRequests, // Include in props
 }: IncomingRequestsTableProps) => {
   return (
-    <div className="p-4">
+    <div className="w-full overflow-x-auto">
       <Table>
+        <TableCaption>A list of your incoming requests.</TableCaption>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-[100px]">Requester</TableHead>
             <TableHead>Item</TableHead>
-            <TableHead>Requested By</TableHead>
-            <TableHead>Date</TableHead>
-            <TableHead>Message</TableHead>
-            <TableHead>Actions</TableHead>
+            <TableHead>Start Date</TableHead>
+            <TableHead>End Date</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {requests.map((request) => (
-            <IncomingRequestRow 
-              key={request.id}
-              request={request}
-              onUpdateStatus={onUpdateStatus}
-              processingRequestIds={processingRequestIds}
-            />
+            <TableRow key={request.id}>
+              <TableCell className="font-medium">{request.requester_username}</TableCell>
+              <TableCell>{request.item_name}</TableCell>
+              <TableCell>{new Date(request.start_date).toLocaleDateString()}</TableCell>
+              <TableCell>{new Date(request.end_date).toLocaleDateString()}</TableCell>
+              <TableCell className="text-right">
+                {/* Add action buttons here */}
+              </TableCell>
+            </TableRow>
           ))}
         </TableBody>
       </Table>

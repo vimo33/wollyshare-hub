@@ -1,172 +1,159 @@
-import { forwardRef, useImperativeHandle, useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import React from "react";
+import { Item } from "@/types/supabase";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { PlusCircle } from "lucide-react";
+import ItemForm from "./ItemForm";
+import { useMyItems } from "./useMyItems";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import BorrowRequestDialog from "@/components/borrow/BorrowRequestDialog";
 import { useToast } from "@/components/ui/use-toast";
-import ItemFormDialog from "./ItemFormDialog";
-import ItemCard from "./ItemCard";
-import DeleteConfirmDialog from "./DeleteConfirmDialog";
-import EmptyItemsState from "./EmptyItemsState";
-import LoadingItemsState from "./LoadingItemsState";
-import { supabase } from "@/integrations/supabase/client";
-import { Item } from "@/types/item";
-import { useState } from "react";
-import { useItemsQuery, itemsQueryKeys } from "@/hooks/useItemsQuery";
-import { useQueryClient } from "@tanstack/react-query";
 
-export interface MyItemsListRef {
-  fetchItems: () => Promise<void>;
+interface MyItemsListProps {
+  items: Item[];
+  isLoading: boolean;
+  error: any;
+  onRequestSent?: () => void; // Add the callback prop
 }
 
-const MyItemsList = forwardRef<MyItemsListRef>((props, ref) => {
-  const { user } = useAuth();
+const MyItemsList = ({ 
+  items, 
+  isLoading, 
+  error,
+  onRequestSent, // Include in props
+}: MyItemsListProps) => {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-  
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [itemToEdit, setItemToEdit] = useState<Item | null>(null);
-  
-  // Only fetch items if user is logged in
-  const { data: items = [], isLoading, error, refetch } = useItemsQuery({
-    userId: user?.id,
-    enabled: !!user
-  });
-  
-  // Handle error with toast notification
-  useEffect(() => {
-    if (error) {
-      console.error('Error fetching user items:', error);
-      toast({
-        title: "Error loading your items",
-        description: "There was a problem retrieving your items. Please try again.",
-        variant: "destructive"
-      });
-    }
-  }, [error, toast]);
-  
-  // Expose fetchItems method via ref
-  useImperativeHandle(ref, () => ({
-    fetchItems: async () => {
-      await refetch();
-    }
-  }));
+  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+  const [isRequestDialogOpen, setIsRequestDialogOpen] = React.useState(false);
+  const [selectedItem, setSelectedItem] = React.useState<Item | null>(null);
+  const { deleteItem } = useMyItems();
 
-  const handleDelete = (itemId: string) => {
-    setItemToDelete(itemId);
-    setDeleteDialogOpen(true);
+  const handleOpenDialog = () => {
+    setIsDialogOpen(true);
   };
 
-  const confirmDelete = async () => {
-    if (!itemToDelete || !user) return;
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+  };
 
+  const handleDeleteItem = async (itemId: string) => {
     try {
-      const { error } = await supabase
-        .from('items')
-        .delete()
-        .eq('id', itemToDelete);
-
-      if (error) throw error;
-
-      // Invalidate queries to refetch data
-      queryClient.invalidateQueries({
-        queryKey: itemsQueryKeys.byUser(user.id)
-      });
-      
+      await deleteItem(itemId);
       toast({
-        title: "Item Deleted",
-        description: "Your item has been removed successfully.",
+        title: "Item deleted successfully!",
       });
-    } catch (error) {
-      console.error("Error deleting item:", error);
+    } catch (error: any) {
       toast({
-        title: "Error",
-        description: "Failed to delete item. Please try again.",
         variant: "destructive",
-      });
-    } finally {
-      setDeleteDialogOpen(false);
-      setItemToDelete(null);
-    }
-  };
-
-  const handleEdit = (item: Item) => {
-    setItemToEdit(item);
-    setEditDialogOpen(true);
-  };
-
-  const handleItemSaved = () => {
-    if (user) {
-      queryClient.invalidateQueries({
-        queryKey: itemsQueryKeys.byUser(user.id)
+        title: "Error deleting item",
+        description: error.message,
       });
     }
   };
 
-  if (!user) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-muted-foreground">Please sign in to view your items.</p>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return <LoadingItemsState />;
-  }
-
-  if (items.length === 0) {
-    return <EmptyItemsState />;
-  }
-
+  const handleBorrowRequest = (item: Item) => {
+    setSelectedItem(item);
+    setIsRequestDialogOpen(true);
+  };
+  
+  // Pass onRequestSent to the BorrowRequestDialog
   return (
-    <div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {items.map((item) => (
-          <ItemCard 
-            key={item.id}
-            item={{
-              id: item.id,
-              name: item.name,
-              category: item.category,
-              description: item.description,
-              image_url: item.image_url,
-              weekday_availability: item.weekday_availability,
-              weekend_availability: item.weekend_availability,
-            }}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-          />
-        ))}
+    <div className="bg-white rounded-lg shadow-md p-4">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-semibold">My Items</h2>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="outline" onClick={handleOpenDialog}>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Add Item
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Add a new item</DialogTitle>
+              <DialogDescription>
+                Make sure to add all the details of your item.
+              </DialogDescription>
+            </DialogHeader>
+            <ItemForm onClose={handleCloseDialog} />
+          </DialogContent>
+        </Dialog>
       </div>
-
-      {/* Delete confirmation dialog */}
-      <DeleteConfirmDialog
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        onConfirm={confirmDelete}
-      />
-
-      {/* Edit item dialog */}
-      {itemToEdit && (
-        <ItemFormDialog
-          open={editDialogOpen}
-          onOpenChange={setEditDialogOpen}
-          itemData={{
-            id: itemToEdit.id,
-            name: itemToEdit.name,
-            category: itemToEdit.category,
-            description: itemToEdit.description || "",
-            weekdayAvailability: itemToEdit.weekday_availability,
-            weekendAvailability: itemToEdit.weekend_availability,
-            imageUrl: itemToEdit.image_url,
-          }}
-          onSuccess={handleItemSaved}
+      
+      {isLoading ? (
+        <p>Loading items...</p>
+      ) : error ? (
+        <p className="text-red-500">Error: {error.message}</p>
+      ) : items.length === 0 ? (
+        <p>No items added yet.</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {items.map((item) => (
+            <Card key={item.id}>
+              <CardHeader>
+                <CardTitle>{item.name}</CardTitle>
+                <CardDescription>{item.description}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p>
+                  <Badge>Category: {item.category}</Badge>
+                </p>
+                <p>Condition: {item.condition}</p>
+                <p>Location: {item.location}</p>
+              </CardContent>
+              <CardFooter className="flex justify-between">
+                <Button onClick={() => handleBorrowRequest(item)}>
+                  Request to Borrow
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => handleDeleteItem(item.id)}
+                >
+                  Delete
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      )}
+      
+      {selectedItem && (
+        <BorrowRequestDialog 
+          item={selectedItem} 
+          isOpen={isRequestDialogOpen}
+          onClose={() => setIsRequestDialogOpen(false)}
+          onRequestSent={onRequestSent} // Pass the callback
         />
       )}
+      
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Add a new item</DialogTitle>
+            <DialogDescription>
+              Make sure to add all the details of your item.
+            </DialogDescription>
+          </DialogHeader>
+          <ItemForm onClose={handleCloseDialog} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
-});
-
-MyItemsList.displayName = "MyItemsList";
+};
 
 export default MyItemsList;

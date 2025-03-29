@@ -1,43 +1,34 @@
-
-import { useState, useEffect } from "react";
-import { Collapsible } from "@/components/ui/collapsible";
+import React from "react";
 import IncomingRequestsHeader from "./incoming-requests/IncomingRequestsHeader";
 import IncomingRequestsContent from "./incoming-requests/IncomingRequestsContent";
-import { useIncomingRequests } from "./incoming-requests/useIncomingRequests";
+import { IncomingRequest } from "@/types";
 
 interface IncomingRequestsSectionProps {
-  onStatusChange: () => void;
-  refreshTrigger?: number; // Optional trigger to force refresh
+  requests: IncomingRequest[];
+  isLoading: boolean;
+  isError: boolean;
+  error: any;
+  refreshRequests: () => void; // Add refresh function
 }
 
-const IncomingRequestsSection = ({ onStatusChange, refreshTrigger }: IncomingRequestsSectionProps) => {
-  const [isOpen, setIsOpen] = useState(true);
+const IncomingRequestsSection = ({
+  requests,
+  isLoading,
+  isError,
+  error,
+  refreshRequests, // Include in props
+}: IncomingRequestsSectionProps) => {
   
-  const {
-    incomingRequests,
-    isLoading,
-    processingRequestIds,
-    handleUpdateStatus,
-    fetchIncomingRequests
-  } = useIncomingRequests(onStatusChange);
-
-  // Re-fetch when refreshTrigger changes or on mount
-  useEffect(() => {
-    fetchIncomingRequests();
-  }, [refreshTrigger]);
-
   return (
-    <div className="overflow-hidden">
-      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <IncomingRequestsHeader isOpen={isOpen} />
-        <IncomingRequestsContent 
-          isOpen={isOpen}
-          isLoading={isLoading}
-          incomingRequests={incomingRequests}
-          processingRequestIds={processingRequestIds}
-          onUpdateStatus={handleUpdateStatus}
-        />
-      </Collapsible>
+    <div className="bg-white rounded-lg shadow-md p-4">
+      <IncomingRequestsHeader count={requests.length} />
+      <IncomingRequestsContent
+        requests={requests}
+        isLoading={isLoading}
+        isError={isError}
+        error={error}
+        refreshRequests={refreshRequests} // Pass to content
+      />
     </div>
   );
 };

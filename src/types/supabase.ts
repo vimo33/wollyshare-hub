@@ -1,37 +1,61 @@
-
-// Define types for our Supabase tables
-import { Database } from '@/integrations/supabase/types';
-
-// Use existing Database type but add our custom types
-export type Profile = {
+export interface Profile {
   id: string;
-  username: string | null;
-  full_name: string | null;
-  avatar_url: string | null;
+  user_id: string;
+  username: string;
+  full_name: string;
+  location?: string;
+  location_address?: string;
   is_member: boolean;
-  email: string | null;
-  created_at: string | null;
-  updated_at: string | null;
-  location: string | null;  // Added location property
-};
-
-export type AdminProfile = {
-  id: string;
-  username: string | null;
-  full_name: string | null;
-  created_at: string | null;
-  updated_at: string | null;
-};
-
-export type Invitation = {
-  id: string;
-  email: string;
-  token: string;
-  is_used: boolean;
   created_at: string;
-  created_by: string;
-  expires_at: string;
-};
+  updated_at: string;
+  telegram_id?: string; // Add telegram_id property
+}
 
-// Utility type to access tables from the Database type
-export type Tables = Database['public']['Tables'];
+export interface AdminProfile {
+    id: string;
+    user_id: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface Item {
+    id: string;
+    created_at: string;
+    updated_at: string;
+    name: string;
+    description: string;
+    image_urls: string[];
+    user_id: string;
+    category: string;
+    city: string;
+    country: string;
+    lat: number;
+    lng: number;
+}
+
+export interface BorrowRequest {
+    id: string;
+    created_at: string;
+    item_id: string;
+    requester_id: string;
+    owner_id: string;
+    start_date: string;
+    end_date: string;
+    message: string;
+    status: 'pending' | 'accepted' | 'rejected' | 'returned';
+}
+
+export interface IncomingRequest {
+    id: string;
+    created_at: string;
+    item_id: string;
+    requester_id: string;
+    owner_id: string;
+    start_date: string;
+    end_date: string;
+    message: string;
+    status: 'pending' | 'accepted' | 'rejected' | 'returned';
+    item_name: string;
+    requester_username: string;
+    requester_full_name: string;
+}
