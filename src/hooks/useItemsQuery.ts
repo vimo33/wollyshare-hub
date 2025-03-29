@@ -62,7 +62,6 @@ export const useLocationsQuery = () => {
       
       return locMap;
     },
-    // Set staleTime to 0 to ensure fresh data on mount
     staleTime: 1000 * 60 * 5, // Keep 5 minutes cache for subsequent loads
   });
 };
@@ -95,7 +94,6 @@ export const useProfilesQuery = () => {
       console.log(`Fetched ${userMap.size} user profiles`);
       return userMap;
     },
-    // Set staleTime to ensure fresh data on mount
     staleTime: 1000 * 60 * 5, // Keep 5 minutes cache for subsequent loads
   });
 };

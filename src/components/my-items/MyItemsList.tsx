@@ -13,35 +13,24 @@ import {
 import { PlusCircle } from "lucide-react";
 import ItemForm from "./ItemForm";
 import { useMyItems } from "./useMyItems";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import BorrowRequestDialog from "@/components/borrow/BorrowRequestDialog";
-import { useToast } from "@/components/ui/use-toast";
+import ItemCard from "@/components/ItemCard";
+import { useToast } from "@/hooks/use-toast";
 
 interface MyItemsListProps {
   items: Item[];
   isLoading: boolean;
   error: any;
-  onRequestSent?: () => void; // Add the callback prop
+  onRequestSent?: () => void;
 }
 
 const MyItemsList = ({ 
   items, 
   isLoading, 
   error,
-  onRequestSent, // Include in props
+  onRequestSent,
 }: MyItemsListProps) => {
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
-  const [isRequestDialogOpen, setIsRequestDialogOpen] = React.useState(false);
-  const [selectedItem, setSelectedItem] = React.useState<Item | null>(null);
   const { deleteItem } = useMyItems();
 
   const handleOpenDialog = () => {
@@ -67,12 +56,6 @@ const MyItemsList = ({
     }
   };
 
-  const handleBorrowRequest = (item: Item) => {
-    setSelectedItem(item);
-    setIsRequestDialogOpen(true);
-  };
-  
-  // Pass onRequestSent to the BorrowRequestDialog
   return (
     <div className="bg-white rounded-lg shadow-md p-4">
       <div className="flex justify-between items-center mb-4">
@@ -105,41 +88,23 @@ const MyItemsList = ({
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {items.map((item) => (
-            <Card key={item.id}>
-              <CardHeader>
-                <CardTitle>{item.name}</CardTitle>
-                <CardDescription>{item.description}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p>
-                  <Badge>Category: {item.category}</Badge>
-                </p>
-                <p>Condition: {item.condition || "Not specified"}</p>
-                <p>Location: {item.location || "Not specified"}</p>
-              </CardContent>
-              <CardFooter className="flex justify-between">
-                <Button onClick={() => handleBorrowRequest(item)}>
-                  Request to Borrow
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={() => handleDeleteItem(item.id)}
-                >
-                  Delete
-                </Button>
-              </CardFooter>
-            </Card>
+            <ItemCard
+              key={item.id}
+              id={item.id}
+              name={item.name}
+              ownerName={"You"}
+              location={item.location || "Not specified"}
+              locationAddress={undefined}
+              weekdayAvailability={item.weekday_availability || "anytime"}
+              weekendAvailability={item.weekend_availability || "anytime"}
+              category={item.category as any}
+              imageUrl={item.image_url}
+              user_id={item.user_id}
+              condition={item.condition || "Good"}
+              onClick={() => {}}
+            />
           ))}
         </div>
-      )}
-      
-      {selectedItem && (
-        <BorrowRequestDialog 
-          item={selectedItem} 
-          isOpen={isRequestDialogOpen}
-          onClose={() => setIsRequestDialogOpen(false)}
-          onRequestSent={onRequestSent} // Pass the callback
-        />
       )}
       
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
