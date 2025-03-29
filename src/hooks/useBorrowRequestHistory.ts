@@ -30,8 +30,7 @@ export const useBorrowRequestHistory = () => {
           borrower_id,
           status,
           message,
-          created_at,
-          profiles:owner_id (username, full_name)
+          created_at
         `)
         .eq("borrower_id", user.id)
         .order("created_at", { ascending: false });
@@ -40,20 +39,42 @@ export const useBorrowRequestHistory = () => {
         throw requestsError;
       }
 
+      // Get owner names separately to avoid join errors
+      const ownerIds = (data || []).map(request => request.owner_id);
+      const { data: ownerProfiles, error: ownersError } = await supabase
+        .from('profiles')
+        .select('id, username, full_name')
+        .in('id', ownerIds);
+
+      if (ownersError) {
+        console.error("Error fetching owner profiles:", ownersError);
+      }
+
+      // Create a map of owner ids to names
+      const ownerMap = new Map();
+      if (ownerProfiles) {
+        ownerProfiles.forEach(profile => {
+          ownerMap.set(profile.id, profile.username || profile.full_name || 'Unknown Owner');
+        });
+      }
+
       // Transform the data to match the BorrowRequestWithDetails type
-      const transformedRequests: BorrowRequestWithDetails[] = (data || []).map((request) => ({
-        id: request.id,
-        item_id: request.item_id,
-        item_name: request.items?.name || 'Unknown Item',
-        owner_id: request.owner_id,
-        borrower_id: request.borrower_id,
-        status: (request.status || 'pending') as BorrowRequestWithDetails['status'],
-        message: request.message || '',
-        created_at: request.created_at,
-        owner_name: request.profiles?.username || 
-                    request.profiles?.full_name || 
-                    'Unknown Owner'
-      }));
+      const transformedRequests: BorrowRequestWithDetails[] = (data || []).map((request) => {
+        // Use the owner map to get the owner name
+        const ownerName = ownerMap.get(request.owner_id) || 'Unknown Owner';
+
+        return {
+          id: request.id,
+          item_id: request.item_id,
+          item_name: request.items?.name || 'Unknown Item',
+          owner_id: request.owner_id,
+          borrower_id: request.borrower_id,
+          status: (request.status || 'pending') as BorrowRequestWithDetails['status'],
+          message: request.message || '',
+          created_at: request.created_at,
+          owner_name: ownerName
+        };
+      });
 
       setRequests(transformedRequests);
     } catch (err: any) {

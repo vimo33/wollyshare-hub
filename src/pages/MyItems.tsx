@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMyItems } from "@/hooks/useMyItems";
@@ -9,7 +10,6 @@ import IncomingRequestsSection from "@/components/my-items/IncomingRequestsSecti
 import RequestHistorySection from "@/components/my-items/RequestHistorySection";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import BorrowRequestDialog from "@/components/borrow/BorrowRequestDialog";
 
 const MyItems = () => {
   const { user, isLoading: isAuthLoading } = useAuth();
@@ -76,9 +76,9 @@ const MyItems = () => {
         
         <div className="space-y-8">
           <IncomingRequestsSection 
-            requests={requests}
+            requests={requests || []}
             isLoading={isRequestsLoading}
-            isError={isRequestsError}
+            isError={isRequestsError || false}
             error={requestsError}
             refreshRequests={fetchIncomingRequests}
           />

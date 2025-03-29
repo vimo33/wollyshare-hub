@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -148,6 +147,8 @@ const SignupForm: React.FC<SignupFormProps> = ({ invitationToken }) => {
               <FormLabel>Location (Optional)</FormLabel>
               <FormControl>
                 <LocationSelect 
+                  onChange={field.onChange}
+                  value={field.value}
                   control={form.control}
                   defaultValue={field.value}
                 />

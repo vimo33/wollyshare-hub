@@ -59,7 +59,7 @@ const ProfilePage: React.FC = () => {
           description="View and update your profile information"
         />
         <ProfileForm 
-          profile={profile} 
+          profile={profile}
           userEmail={user.email}
           onProfileUpdate={handleProfileUpdate}
         />

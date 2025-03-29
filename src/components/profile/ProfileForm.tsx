@@ -18,6 +18,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { Profile } from '@/types/supabase';
 import LocationSelect from '../auth/LocationSelect';
 
+// Define props for ProfileForm
+interface ProfileFormProps {
+  profile: Profile | null;
+  userEmail?: string;
+  onProfileUpdate?: () => Promise<void>;
+}
+
 const profileFormSchema = z.object({
   username: z.string()
     .min(2, {
@@ -44,55 +51,31 @@ const profileFormSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
-const ProfileForm = () => {
+const ProfileForm: React.FC<ProfileFormProps> = ({ profile, userEmail, onProfileUpdate }) => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
-      username: "",
-      fullName: "",
-      location: "",
+      username: profile?.username || "",
+      fullName: profile?.full_name || "",
+      location: profile?.location || "",
       website: "",
       bio: "",
     },
     mode: "onChange",
   });
 
+  // Update form when profile changes
   useEffect(() => {
-    const fetchProfile = async () => {
-      if (user) {
-        setLoading(true);
-        try {
-          const { data: profileData, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', user.id)
-            .single();
-
-          if (error) {
-            console.error("Error fetching profile:", error);
-            setApiError(error.message);
-          } else if (profileData) {
-            // Use a type assertion to ensure the profile data has the correct type
-            setProfile(profileData as Profile);
-            form.setValue("username", profileData.username || "");
-            form.setValue("fullName", profileData.full_name || "");
-            form.setValue("location", profileData.location || "");
-          }
-        } catch (err: any) {
-          setApiError(err.message);
-        } finally {
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchProfile();
-  }, [user, form]);
+    if (profile) {
+      form.setValue("username", profile.username || "");
+      form.setValue("fullName", profile.full_name || "");
+      form.setValue("location", profile.location || "");
+    }
+  }, [profile, form]);
 
   const handleSubmit = async (values: ProfileFormValues) => {
     setLoading(true);
@@ -115,14 +98,9 @@ const ProfileForm = () => {
         throw new Error(error.message);
       }
 
-      // Optimistically update the profile in the UI
-      if (profile) {
-        setProfile({
-          ...profile,
-          username: values.username,
-          full_name: values.fullName,
-          location: values.location || '',
-        });
+      // Call the callback if provided
+      if (onProfileUpdate) {
+        await onProfileUpdate();
       }
 
       setApiError(null);

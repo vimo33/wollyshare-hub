@@ -20,11 +20,8 @@ export const getIncomingRequests = async (): Promise<IncomingRequest[]> => {
         item_id,
         items:item_id (name),
         borrower_id,
-        profiles:borrower_id (username),
         status,
         message,
-        start_date,
-        end_date,
         created_at
       `)
       .eq("owner_id", user.id)
@@ -36,15 +33,34 @@ export const getIncomingRequests = async (): Promise<IncomingRequest[]> => {
       throw error;
     }
 
+    // Get borrower usernames separately
+    const borrowerIds = (data || []).map(request => request.borrower_id);
+    const { data: borrowerProfiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, username')
+      .in('id', borrowerIds);
+
+    if (profilesError) {
+      console.error("Error fetching borrower profiles:", profilesError);
+    }
+
+    // Create a map of borrower ids to usernames
+    const borrowerMap = new Map();
+    if (borrowerProfiles) {
+      borrowerProfiles.forEach(profile => {
+        borrowerMap.set(profile.id, profile.username || 'Unknown User');
+      });
+    }
+
     // Transform the data to match the IncomingRequest type
     return (data || []).map((request) => ({
       id: request.id,
       item_id: request.item_id,
       item_name: request.items?.name || 'Unknown Item',
       borrower_id: request.borrower_id,
-      requester_username: request.profiles?.username || 'Unknown User',
-      start_date: request.start_date || '',  // Fallback for missing fields
-      end_date: request.end_date || '',      // Fallback for missing fields
+      requester_username: borrowerMap.get(request.borrower_id) || 'Unknown User',
+      start_date: '',  // Set default value as it's not in database yet
+      end_date: '',    // Set default value as it's not in database yet
       status: (request.status || 'pending') as IncomingRequest['status'],
       message: request.message || '',
       created_at: request.created_at,
