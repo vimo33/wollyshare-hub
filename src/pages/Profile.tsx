@@ -8,10 +8,12 @@ import ProfileHeader from "@/components/profile/ProfileHeader";
 import ProfileForm from "@/components/profile/ProfileForm";
 import { getProfile } from "@/services/profileService";
 import { Profile } from "@/types/supabase";
+import { useToast } from "@/hooks/use-toast";
 
 const ProfilePage: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -19,9 +21,19 @@ const ProfilePage: React.FC = () => {
   const fetchLatestProfile = async () => {
     if (user) {
       setLoading(true);
-      const latestProfile = await getProfile();
-      setProfile(latestProfile);
-      setLoading(false);
+      try {
+        const latestProfile = await getProfile();
+        setProfile(latestProfile);
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+        toast({
+          variant: "destructive",
+          title: "Failed to load profile",
+          description: "Please try again later."
+        });
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -36,6 +48,9 @@ const ProfilePage: React.FC = () => {
 
   // Function to handle profile updates
   const handleProfileUpdate = async () => {
+    toast({
+      title: "Profile updated successfully!"
+    });
     await fetchLatestProfile();
   };
 

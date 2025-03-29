@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -16,8 +16,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Profile } from "@/types/supabase";
+import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
   username: z.string().min(2, {
@@ -38,17 +39,30 @@ interface ProfileFormProps {
 const ProfileForm: React.FC<ProfileFormProps> = ({ profile, userEmail, onProfileUpdate }) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      username: user?.user_metadata?.username || profile?.username || "",
-      fullName: user?.user_metadata?.full_name || profile?.full_name || "",
-      telegramId: user?.user_metadata?.telegram_id || profile?.telegram_id || "",
+      username: "",
+      fullName: "",
+      telegramId: "",
     },
   });
 
+  // Update form values when profile changes
+  useEffect(() => {
+    if (profile) {
+      form.reset({
+        username: profile.username || "",
+        fullName: profile.full_name || "",
+        telegramId: profile.telegram_id || "",
+      });
+    }
+  }, [profile, form]);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsSubmitting(true);
     try {
       if (!user) {
         throw new Error("User not authenticated");
@@ -77,10 +91,6 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ profile, userEmail, onProfile
           telegram_id: values.telegramId,
         },
       });
-
-      toast({
-        title: "Profile updated successfully!",
-      });
       
       if (onProfileUpdate) {
         await onProfileUpdate();
@@ -91,16 +101,18 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ profile, userEmail, onProfile
         title: "Error updating profile",
         description: error.message,
       });
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 p-6">
         <FormItem>
           <FormLabel>Username</FormLabel>
           <FormControl>
-            <Input placeholder="shadcn" {...form.register("username")} />
+            <Input placeholder="shadcn" {...form.register("username")} disabled={isSubmitting} />
           </FormControl>
           <FormDescription>
             This is your public display name.
@@ -110,7 +122,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ profile, userEmail, onProfile
         <FormItem>
           <FormLabel>Full Name</FormLabel>
           <FormControl>
-            <Input placeholder="John Doe" {...form.register("fullName")} />
+            <Input placeholder="John Doe" {...form.register("fullName")} disabled={isSubmitting} />
           </FormControl>
           <FormDescription>
             This is your full name.
@@ -120,7 +132,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ profile, userEmail, onProfile
         <FormItem>
           <FormLabel>Telegram ID</FormLabel>
           <FormControl>
-            <Input placeholder="Your Telegram ID" {...form.register("telegramId")} />
+            <Input placeholder="Your Telegram ID" {...form.register("telegramId")} disabled={isSubmitting} />
           </FormControl>
           <FormDescription>
             Enter your Telegram ID to receive notifications.
@@ -128,7 +140,16 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ profile, userEmail, onProfile
           <FormMessage />
           <p className="text-sm text-muted-foreground mt-1">Message @WollyShareBot with /start to enable notifications.</p>
         </FormItem>
-        <Button type="submit">Submit</Button>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Updating...
+            </>
+          ) : (
+            "Submit"
+          )}
+        </Button>
       </form>
     </Form>
   );
