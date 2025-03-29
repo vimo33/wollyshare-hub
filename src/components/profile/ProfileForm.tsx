@@ -95,6 +95,11 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ profile, userEmail, onProfile
       if (onProfileUpdate) {
         await onProfileUpdate();
       }
+
+      toast({
+        title: "Profile updated",
+        description: "Your profile has been successfully updated.",
+      });
     } catch (error: any) {
       toast({
         variant: "destructive",

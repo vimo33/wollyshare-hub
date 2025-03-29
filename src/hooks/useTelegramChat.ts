@@ -2,7 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
-const telegramBotToken = import.meta.env.VITE_TELEGRAM_BOT_TOKEN || '7668612759:AAE3nly6dp0iA0XwwWuVSxwX6eeur61ZTyE'; // Temp hardcoded for testing
+const telegramBotToken = import.meta.env.VITE_TELEGRAM_BOT_TOKEN || ''; // Fallback to empty string
 
 export const useTelegramChat = () => {
   // Get user from useAuth hook at the component level
@@ -24,28 +24,31 @@ export const useTelegramChat = () => {
       const requesterTelegramId = requesterResult.data?.telegram_id;
       const ownerTelegramId = ownerResult.data?.telegram_id;
 
-      if (!requesterTelegramId || !ownerTelegramId) {
-        console.warn('Missing Telegram IDs', { requesterTelegramId, ownerTelegramId });
+      if (!requesterTelegramId && !ownerTelegramId) {
+        console.warn('No Telegram IDs found for requester or owner');
         return;
       }
 
       // Send messages to both users
-      const messages = [
-        { 
+      const messages = [];
+
+      if (requesterTelegramId) {
+        messages.push({ 
           chat_id: requesterTelegramId, 
           text: `You requested ${itemName}. Chat with the owner!` 
-        },
-        { 
+        });
+      }
+
+      if (ownerTelegramId) {
+        messages.push({ 
           chat_id: ownerTelegramId, 
           text: `Your item "${itemName}" was requested. Chat with the borrower!` 
-        }
-      ];
+        });
+      }
 
       await Promise.all(messages.map(msg =>
-        fetch(`https://api.telegram.org/bot${telegramBotToken}/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(msg),
+        supabase.functions.invoke('send-telegram-notification', {
+          body: msg
         })
       ));
 
