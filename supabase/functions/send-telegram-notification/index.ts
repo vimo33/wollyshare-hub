@@ -19,11 +19,12 @@ serve(async (req) => {
       throw new Error("Telegram bot token not configured");
     }
     
-    const { chat_id, message } = await req.json();
+    const requestData = await req.json();
+    const { chat_id, text } = requestData;
     console.log(`Sending message to chat_id: ${chat_id}`);
     
-    if (!chat_id || !message) {
-      throw new Error("Chat ID and message are required");
+    if (!chat_id || !text) {
+      throw new Error("Chat ID and text are required");
     }
     
     const telegramApiUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
@@ -35,7 +36,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         chat_id,
-        text: message,
+        text,
       }),
     });
     

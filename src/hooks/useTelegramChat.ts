@@ -17,17 +17,24 @@ export const useTelegramChat = () => {
 
       // Get telegram_id for requester and owner
       const [requesterResult, ownerResult] = await Promise.all([
-        supabase.from('profiles').select('telegram_id').eq('id', requesterId).single(),
-        supabase.from('profiles').select('telegram_id').eq('id', ownerId).single()
+        supabase.from('profiles').select('telegram_id, username').eq('id', requesterId).single(),
+        supabase.from('profiles').select('telegram_id, username').eq('id', ownerId).single()
       ]);
 
       const requesterTelegramId = requesterResult.data?.telegram_id;
       const ownerTelegramId = ownerResult.data?.telegram_id;
+      const requesterUsername = requesterResult.data?.username || 'Someone';
+      const ownerUsername = ownerResult.data?.username || 'the owner';
 
       if (!requesterTelegramId && !ownerTelegramId) {
         console.warn('No Telegram IDs found for requester or owner');
         return;
       }
+
+      console.log('Sending notifications to:', {
+        requester: { id: requesterId, telegramId: requesterTelegramId },
+        owner: { id: ownerId, telegramId: ownerTelegramId }
+      });
 
       // Send messages to both users
       const messages = [];
@@ -35,22 +42,26 @@ export const useTelegramChat = () => {
       if (requesterTelegramId) {
         messages.push({ 
           chat_id: requesterTelegramId, 
-          text: `You requested ${itemName}. Chat with the owner!` 
+          text: `You requested "${itemName}". Chat with ${ownerUsername}!` 
         });
       }
 
       if (ownerTelegramId) {
         messages.push({ 
           chat_id: ownerTelegramId, 
-          text: `Your item "${itemName}" was requested. Chat with the borrower!` 
+          text: `${requesterUsername} has requested your item "${itemName}". Chat with them!` 
         });
       }
 
-      await Promise.all(messages.map(msg =>
+      console.log('Prepared messages:', JSON.stringify(messages));
+
+      const results = await Promise.all(messages.map(msg =>
         supabase.functions.invoke('send-telegram-notification', {
           body: msg
         })
       ));
+
+      console.log('Notification results:', results);
 
     } catch (error) {
       console.error('Error starting Telegram chat:', error);

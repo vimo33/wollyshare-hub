@@ -140,10 +140,14 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ profile, userEmail, onProfile
             <Input placeholder="Your Telegram ID" {...form.register("telegramId")} disabled={isSubmitting} />
           </FormControl>
           <FormDescription>
-            Enter your Telegram ID to receive notifications.
+            Enter your Telegram ID to receive notifications. To find your ID:
           </FormDescription>
           <FormMessage />
-          <p className="text-sm text-muted-foreground mt-1">Message @WollyShareBot with /start to enable notifications.</p>
+          <ol className="text-sm text-muted-foreground mt-1 list-decimal pl-5 space-y-1">
+            <li>Message @WollyShareBot with /start to enable notifications</li>
+            <li>Find your Telegram ID by messaging @userinfobot on Telegram</li>
+            <li>Paste the numeric ID here (e.g., 123456789)</li>
+          </ol>
         </FormItem>
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? (

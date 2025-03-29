@@ -52,6 +52,7 @@ const BorrowRequestDialog = ({
 
     console.log("Submit request clicked for item:", item.name);
     console.log("Current user from AuthContext:", user);
+    console.log("User telegram data: Check profiles table for", user.id);
     
     setIsSubmitting(true);
 
@@ -67,6 +68,11 @@ const BorrowRequestDialog = ({
       await createBorrowRequest(requestData, user.id);
 
       // Send Telegram notifications
+      console.log("Starting Telegram chat with:", {
+        requesterId: user.id,
+        ownerId: item.user_id,
+        itemName: item.name
+      });
       await startTelegramChat(user.id, item.user_id, item.name);
 
       toast({
