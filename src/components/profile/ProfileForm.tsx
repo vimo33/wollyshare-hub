@@ -1,170 +1,122 @@
+import React from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 
-import React, { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import { Form } from "@/components/ui/form";
 import {
-  Form,
-  FormControl,
-  FormField,
   FormItem,
   FormLabel,
+  FormControl,
+  FormDescription,
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-import { Profile } from '@/types/supabase';
-import LocationSelect from '../auth/LocationSelect';
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
-// Define props for ProfileForm
-interface ProfileFormProps {
-  profile: Profile | null;
-  userEmail?: string;
-  onProfileUpdate?: () => Promise<void>;
-}
-
-const profileFormSchema = z.object({
-  username: z.string()
-    .min(2, {
-      message: "Username must be at least 2 characters.",
-    })
-    .max(30, {
-      message: "Username must not be longer than 30 characters.",
-    }),
-  fullName: z.string()
-    .min(2, {
-      message: "Full name must be at least 2 characters.",
-    })
-    .max(50, {
-      message: "Full name must not be longer than 50 characters.",
-    }),
-  location: z.string().optional(),
-  website: z.string().url({ message: "Please enter a valid URL." }).optional(),
-  bio: z.string()
-    .max(160, {
-      message: "Bio must not be longer than 160 characters.",
-    })
-    .optional(),
+const formSchema = z.object({
+  username: z.string().min(2, {
+    message: "Username must be at least 2 characters.",
+  }),
+  fullName: z.string().min(2, {
+    message: "Full name must be at least 2 characters.",
+  }),
+  telegramId: z.string().optional(),
 });
 
-type ProfileFormValues = z.infer<typeof profileFormSchema>;
-
-const ProfileForm: React.FC<ProfileFormProps> = ({ profile, userEmail, onProfileUpdate }) => {
+const ProfileForm = () => {
   const { user } = useAuth();
-  const [loading, setLoading] = useState(false);
-  const [apiError, setApiError] = useState<string | null>(null);
+  const { toast } = useToast();
 
-  const form = useForm<ProfileFormValues>({
-    resolver: zodResolver(profileFormSchema),
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
-      username: profile?.username || "",
-      fullName: profile?.full_name || "",
-      location: profile?.location || "",
-      website: "",
-      bio: "",
+      username: user?.user_metadata?.username || "",
+      fullName: user?.user_metadata?.full_name || "",
+      telegramId: user?.user_metadata?.telegram_id || "",
     },
-    mode: "onChange",
   });
 
-  // Update form when profile changes
-  useEffect(() => {
-    if (profile) {
-      form.setValue("username", profile.username || "");
-      form.setValue("fullName", profile.full_name || "");
-      form.setValue("location", profile.location || "");
-    }
-  }, [profile, form]);
-
-  const handleSubmit = async (values: ProfileFormValues) => {
-    setLoading(true);
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       if (!user) {
-        throw new Error("User not authenticated.");
+        throw new Error("User not authenticated");
       }
 
-      const updates = {
-        id: user.id,
-        updated_at: new Date().toISOString(), // Convert Date to string
-        username: values.username,
-        full_name: values.fullName,
-        location: values.location,
-      };
-
-      const { error } = await supabase.from('profiles').upsert(updates);
+      const { data, error } = await supabase.from("profiles").upsert(
+        {
+          id: user.id,
+          username: values.username,
+          full_name: values.fullName,
+          telegram_id: values.telegramId,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "id" }
+      ).select();
 
       if (error) {
-        throw new Error(error.message);
+        throw error;
       }
 
-      // Call the callback if provided
-      if (onProfileUpdate) {
-        await onProfileUpdate();
-      }
+      // Update user metadata
+      await supabase.auth.updateUser({
+        data: {
+          username: values.username,
+          full_name: values.fullName,
+          telegram_id: values.telegramId,
+        },
+      });
 
-      setApiError(null);
-      alert('Profile updated successfully!');
-    } catch (err: any) {
-      setApiError(err.message);
-    } finally {
-      setLoading(false);
+      toast({
+        title: "Profile updated successfully!",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error updating profile",
+        description: error.message,
+      });
     }
-  };
+  }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
-        <FormField
-          control={form.control}
-          name="username"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Username</FormLabel>
-              <FormControl>
-                <Input placeholder="shadcn" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="fullName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Full Name</FormLabel>
-              <FormControl>
-                <Input placeholder="John Doe" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="location"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Location</FormLabel>
-              <FormControl>
-                <LocationSelect
-                  value={field.value}
-                  onChange={field.onChange}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        {apiError && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-            <span className="block sm:inline">{apiError}</span>
-          </div>
-        )}
-        <Button type="submit" disabled={loading}>
-          {loading ? "Updating..." : "Update Profile"}
-        </Button>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <FormItem>
+          <FormLabel>Username</FormLabel>
+          <FormControl>
+            <Input placeholder="shadcn" {...form.register("username")} />
+          </FormControl>
+          <FormDescription>
+            This is your public display name.
+          </FormDescription>
+          <FormMessage />
+        </FormItem>
+        <FormItem>
+          <FormLabel>Full Name</FormLabel>
+          <FormControl>
+            <Input placeholder="John Doe" {...form.register("fullName")} />
+          </FormControl>
+          <FormDescription>
+            This is your full name.
+          </FormDescription>
+          <FormMessage />
+        </FormItem>
+        <FormItem>
+          <FormLabel>Telegram ID</FormLabel>
+          <FormControl>
+            <Input placeholder="Your Telegram ID" {...form.register("telegramId")} />
+          </FormControl>
+          <FormDescription>
+            Enter your Telegram ID to receive notifications.
+          </FormDescription>
+          <FormMessage />
+          <p className="text-sm text-muted-foreground mt-1">Message @WollyShareBot with /start to enable notifications.</p>
+        </FormItem>
+        <Button type="submit">Submit</Button>
       </form>
     </Form>
   );

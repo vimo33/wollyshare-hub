@@ -1,26 +1,21 @@
 
+import { Database } from "@/integrations/supabase/types";
+
 /**
- * Represents an item that can be shared within the community
+ * Base item type from database schema
  */
-export interface Item {
-  id: string;
-  name: string;
-  description: string | null;
-  category: "tools" | "kitchen" | "electronics" | "sports" | "books" | "games" | "diy-craft" | "other";
-  image_url: string | null;
-  user_id: string;
-  weekday_availability: string;
-  weekend_availability: string;
+export type BaseItem = Database['public']['Tables']['items']['Row'];
+
+/**
+ * Extended Item type with additional UI properties
+ */
+export interface Item extends BaseItem {
   ownerName?: string;
-  location?: string;
-  condition?: string;
   locationAddress?: string;
-  created_at?: string;
-  updated_at?: string;
 }
 
 /**
- * Represents a user profile associated with items
+ * Represents an item owner
  */
 export interface ItemOwner {
   id: string;

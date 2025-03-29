@@ -1,78 +1,54 @@
 
-import { useState } from 'react';
+import { supabase } from "@/integrations/supabase/client";
 
-interface TelegramChatOptions {
-  botToken?: string;
-}
+const telegramBotToken = import.meta.env.VITE_TELEGRAM_BOT_TOKEN || '7668612759:AAE3nly6dp0iA0XwwWuVSxwX6eeur61ZTyE'; // Temp hardcoded for testing
 
-export const useTelegramChat = (options?: TelegramChatOptions) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-  
-  const botToken = options?.botToken || import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
-
-  // Function to send a telegram message
-  const sendTelegramMessage = async (chatId: string, text: string) => {
+export const useTelegramChat = () => {
+  const startTelegramChat = async (requesterId: string, ownerId: string, itemName: string) => {
     try {
-      setIsLoading(true);
-      setError(null);
-      
-      if (!botToken) {
-        throw new Error("Telegram bot token is missing");
+      if (!telegramBotToken) {
+        console.error('Telegram bot token missing');
+        return;
       }
-      
-      const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+
+      // Get telegram_id for requester and owner
+      const [requesterResult, ownerResult] = await Promise.all([
+        supabase.from('profiles').select('telegram_id').eq('id', requesterId).single(),
+        supabase.from('profiles').select('telegram_id').eq('id', ownerId).single()
+      ]);
+
+      const requesterTelegramId = requesterResult.data?.telegram_id;
+      const ownerTelegramId = ownerResult.data?.telegram_id;
+
+      if (!requesterTelegramId || !ownerTelegramId) {
+        console.warn('Missing Telegram IDs', { requesterTelegramId, ownerTelegramId });
+        return;
+      }
+
+      // Send messages to both users
+      const messages = [
+        { 
+          chat_id: requesterTelegramId, 
+          text: `You requested ${itemName}. Chat with the owner!` 
         },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: text,
-          parse_mode: 'HTML'
-        }),
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`Telegram API error: ${errorData.description}`);
-      }
-      
-      const data = await response.json();
-      return data;
-    } catch (err: any) {
-      setError(err);
-      console.error("Error sending Telegram message:", err);
-      throw err;
-    } finally {
-      setIsLoading(false);
+        { 
+          chat_id: ownerTelegramId, 
+          text: `Your item "${itemName}" was requested. Chat with the borrower!` 
+        }
+      ];
+
+      await Promise.all(messages.map(msg =>
+        fetch(`https://api.telegram.org/bot${telegramBotToken}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(msg),
+        })
+      ));
+
+    } catch (error) {
+      console.error('Error starting Telegram chat:', error);
     }
   };
 
-  // Function to initialize a chat between requester and owner
-  const initializeChat = async (requesterId: string, ownerId: string, itemName: string) => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      
-      // In a real implementation, we would query the profiles to get telegram_ids
-      // and then send messages to both parties
-      console.log(`Initializing chat for item ${itemName} between requester ${requesterId} and owner ${ownerId}`);
-      
-      return { success: true };
-    } catch (err: any) {
-      setError(err);
-      console.error("Error initializing Telegram chat:", err);
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return {
-    sendTelegramMessage,
-    initializeChat,
-    isLoading,
-    error
-  };
+  return { startTelegramChat };
 };

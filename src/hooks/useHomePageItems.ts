@@ -24,15 +24,13 @@ export const useHomePageItems = (): UseHomePageItemsResult => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   
-  // Important: We're directly using useItemsQuery here to ensure we get all items
-  // without any user filtering from useItems hook
+  // Important: Use useItemsQuery without a userId to get ALL items
   const { 
     data: items = [], 
     isLoading, 
     error, 
     refetch,
   } = useItemsQuery({ 
-    userId: undefined, 
     enabled: true  // Always enable fetching
   });
   

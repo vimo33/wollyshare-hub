@@ -1,91 +1,77 @@
 
-import { supabase } from "@/integrations/supabase/client";
 import { ItemFormValues } from "../types";
-import { uploadImage } from "./image-upload-utils";
+import { supabase } from "@/integrations/supabase/client";
+import sanitizeHtml from "sanitize-html";
 
-export async function handleItemSubmit({
-  data,
-  userId,
-  imageFile,
-  itemId,
-  existingImageUrl
-}: {
-  data: ItemFormValues;
-  userId: string;
-  imageFile: File | null;
-  itemId?: string;
-  existingImageUrl?: string | null;
-}) {
+export const submitItemForm = async (values: ItemFormValues, userId: string): Promise<{ success: boolean; error?: any }> => {
   try {
-    let imageUrl = existingImageUrl || null;
-
-    // If there's a new image file, upload it
-    if (imageFile) {
-      try {
-        imageUrl = await uploadImage(imageFile, userId);
-      } catch (uploadError) {
-        console.error("Error uploading image:", uploadError);
-        return { 
-          success: false, 
-          message: "Error uploading image. Item was not saved.",
-          error: uploadError 
-        };
-      }
-    }
-
-    if (itemId) {
-      // Update existing item
-      const { error } = await supabase
-        .from('items')
-        .update({
-          name: data.name,
-          category: data.category,
-          description: data.description || null,
-          image_url: imageUrl,
-          weekday_availability: data.weekdayAvailability,
-          weekend_availability: data.weekendAvailability,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', itemId);
-
-      if (error) {
-        console.error("Error updating item in database:", error);
-        return { success: false, message: "Error updating item", error };
-      }
-      
-      return { success: true, message: "Item updated successfully" };
-    } else {
-      // Insert new item
-      const { error, data: insertedData } = await supabase
-        .from('items')
-        .insert({
-          user_id: userId,
-          name: data.name,
-          category: data.category,
-          description: data.description || null,
-          image_url: imageUrl,
-          weekday_availability: data.weekdayAvailability,
-          weekend_availability: data.weekendAvailability,
-        })
-        .select();
-
-      if (error) {
-        console.error("Error inserting item in database:", error);
-        return { success: false, message: "Error saving item", error };
-      }
-      
-      return { 
-        success: true, 
-        message: "Item added successfully",
-        data: insertedData?.[0] || null
-      };
-    }
-  } catch (error) {
-    console.error("Error submitting form:", error);
-    return { 
-      success: false, 
-      message: "An unexpected error occurred while saving the item", 
-      error 
+    // Sanitize user inputs
+    const sanitizedValues = {
+      ...values,
+      name: sanitizeHtml(values.name, { allowedTags: [] }),
+      description: values.description ? sanitizeHtml(values.description, {
+        allowedTags: ['b', 'i', 'em', 'strong', 'a', 'p', 'br'],
+        allowedAttributes: {
+          'a': ['href']
+        }
+      }) : null,
+      location: values.location ? sanitizeHtml(values.location, { allowedTags: [] }) : null,
+      condition: values.condition ? sanitizeHtml(values.condition, { allowedTags: [] }) : null
     };
+
+    const { error } = await supabase.from("items").insert({
+      name: sanitizedValues.name,
+      category: sanitizedValues.category,
+      description: sanitizedValues.description,
+      weekday_availability: sanitizedValues.weekdayAvailability,
+      weekend_availability: sanitizedValues.weekendAvailability,
+      location: sanitizedValues.location,
+      condition: sanitizedValues.condition,
+      user_id: userId
+    });
+
+    if (error) throw error;
+    return { success: true };
+  } catch (error) {
+    console.error("Error submitting item form:", error);
+    return { success: false, error };
   }
-}
+};
+
+export const updateItemForm = async (itemId: string, values: ItemFormValues, userId: string): Promise<{ success: boolean; error?: any }> => {
+  try {
+    // Sanitize user inputs
+    const sanitizedValues = {
+      ...values,
+      name: sanitizeHtml(values.name, { allowedTags: [] }),
+      description: values.description ? sanitizeHtml(values.description, {
+        allowedTags: ['b', 'i', 'em', 'strong', 'a', 'p', 'br'],
+        allowedAttributes: {
+          'a': ['href']
+        }
+      }) : null,
+      location: values.location ? sanitizeHtml(values.location, { allowedTags: [] }) : null,
+      condition: values.condition ? sanitizeHtml(values.condition, { allowedTags: [] }) : null
+    };
+
+    const { error } = await supabase
+      .from("items")
+      .update({
+        name: sanitizedValues.name,
+        category: sanitizedValues.category,
+        description: sanitizedValues.description,
+        weekday_availability: sanitizedValues.weekdayAvailability,
+        weekend_availability: sanitizedValues.weekendAvailability,
+        location: sanitizedValues.location,
+        condition: sanitizedValues.condition
+      })
+      .eq("id", itemId)
+      .eq("user_id", userId);
+
+    if (error) throw error;
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating item:", error);
+    return { success: false, error };
+  }
+};
