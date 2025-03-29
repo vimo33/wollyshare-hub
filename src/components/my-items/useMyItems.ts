@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -37,8 +38,8 @@ export const useMyItems = () => {
         image_url: item.image_url || null,
         weekday_availability: item.weekday_availability || 'anytime',
         weekend_availability: item.weekend_availability || 'anytime',
-        location: item.location || 'Unknown', // Set default location if missing
-        condition: item.condition || 'Good', // Set default condition if missing
+        location: item.location || 'Unknown', 
+        condition: item.condition || 'Good',
         locationAddress: undefined
       }));
 

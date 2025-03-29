@@ -1,8 +1,9 @@
+
 import React from 'react';
 import { LocationSelectProps } from './types';
 import { Controller } from 'react-hook-form';
 
-const LocationSelect: React.FC<LocationSelectProps> = ({ value, onChange, className, control, defaultValue }) => {
+const LocationSelect: React.FC<LocationSelectProps> = ({ value, onChange, className, control, defaultValue, name }) => {
   const locations = [
     { id: 'london', name: 'London' },
     { id: 'paris', name: 'Paris' },
@@ -21,7 +22,7 @@ const LocationSelect: React.FC<LocationSelectProps> = ({ value, onChange, classN
     return (
       <Controller
         control={control}
-        name="location"
+        name={name || "location"}
         defaultValue={defaultValue || ""}
         render={({ field }) => (
           <select 
@@ -42,7 +43,9 @@ const LocationSelect: React.FC<LocationSelectProps> = ({ value, onChange, classN
 
   // Otherwise use standard controlled component
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    onChange(e.target.value);
+    if (onChange) {
+      onChange(e.target.value);
+    }
   };
 
   return (
