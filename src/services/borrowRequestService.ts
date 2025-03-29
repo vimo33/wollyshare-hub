@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 // Interface for borrow request data
@@ -38,11 +37,11 @@ export const createBorrowRequest = async (requestData: BorrowRequestData, userId
   console.log("Request data:", requestData);
 
   // Create the request with explicit requester_id to satisfy RLS policy
+  // Remove borrower_id as it's not in the schema
   const { data, error } = await supabase
     .from("borrow_requests")
     .insert({
       ...requestData,
-      borrower_id: currentUserId,
       requester_id: currentUserId, // Critical for RLS policy match
       status: "pending",
     })
@@ -53,7 +52,6 @@ export const createBorrowRequest = async (requestData: BorrowRequestData, userId
     console.error("Error details:", JSON.stringify(error, null, 2));
     console.error("Request payload:", JSON.stringify({
       ...requestData,
-      borrower_id: currentUserId,
       requester_id: currentUserId,
       status: "pending",
     }, null, 2));
