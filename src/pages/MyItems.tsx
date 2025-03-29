@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const MyItems = () => {
   const [isAddItemOpen, setIsAddItemOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("pending");
+  const [activeTab, setActiveTab] = useState("my-items");
   const { user } = useAuth();
   const { toast } = useToast();
   const itemsListRef = useRef<{ fetchItems: () => Promise<void> } | null>(null);
@@ -47,7 +47,7 @@ const MyItems = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-12 max-w-5xl">
+    <div className="container mx-auto px-4 py-8 max-w-5xl">
       <PageHeader
         title="My Items"
         description="Share your items with your community. Add, edit, or remove items you want to lend to your neighbors."
@@ -63,24 +63,26 @@ const MyItems = () => {
         </div>
       </PageHeader>
 
-      {/* Items list - explicitly showing only the current user's items */}
-      <MyItemsList ref={itemsListRef} />
-
-      {/* Borrow Requests Section with Tabs */}
+      {/* Tabbed content */}
       <div className="mt-8 border rounded-lg overflow-hidden">
-        <Tabs defaultValue="pending" className="w-full">
+        <Tabs defaultValue="my-items" value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="bg-muted/50 p-4">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="pending">Pending Requests</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="my-items">My Items</TabsTrigger>
+              <TabsTrigger value="incoming">Incoming Requests</TabsTrigger>
               <TabsTrigger value="history">Request History</TabsTrigger>
             </TabsList>
           </div>
           
-          <TabsContent value="pending" className="mt-0 border-0">
+          <TabsContent value="my-items" className="mt-0 p-6">
+            <MyItemsList ref={itemsListRef} />
+          </TabsContent>
+          
+          <TabsContent value="incoming" className="mt-0 p-6">
             <IncomingRequestsSection onStatusChange={handleRequestStatusChange} />
           </TabsContent>
           
-          <TabsContent value="history" className="mt-0 border-0">
+          <TabsContent value="history" className="mt-0 p-6">
             <BorrowRequestHistory />
           </TabsContent>
         </Tabs>
