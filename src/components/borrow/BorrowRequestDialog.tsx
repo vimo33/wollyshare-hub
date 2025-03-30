@@ -16,7 +16,6 @@ import { Item } from "@/types/supabase";
 import { createBorrowRequest } from "@/services/borrowRequestService";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { useTelegramChat } from "@/hooks/useTelegramChat";
 
 interface BorrowRequestDialogProps {
   item: Item;
@@ -35,7 +34,6 @@ const BorrowRequestDialog = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
-  const { startTelegramChat } = useTelegramChat();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,15 +63,8 @@ const BorrowRequestDialog = ({
 
       console.log("Sending borrow request with data:", requestData);
       
+      // This now handles both creating the request and sending notifications
       await createBorrowRequest(requestData, user.id);
-
-      // Send Telegram notifications
-      console.log("Starting Telegram chat with:", {
-        requesterId: user.id,
-        ownerId: item.user_id,
-        itemName: item.name
-      });
-      await startTelegramChat(user.id, item.user_id, item.name);
 
       toast({
         title: "Request sent!",

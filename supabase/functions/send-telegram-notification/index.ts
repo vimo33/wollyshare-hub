@@ -16,18 +16,23 @@ serve(async (req) => {
     const TELEGRAM_BOT_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN");
     
     if (!TELEGRAM_BOT_TOKEN) {
+      console.error("CRITICAL ERROR: Telegram bot token not configured in environment variables");
       throw new Error("Telegram bot token not configured");
     }
     
     const requestData = await req.json();
+    console.log("Received notification request with data:", JSON.stringify(requestData));
+    
     const { chat_id, text } = requestData;
-    console.log(`Sending message to chat_id: ${chat_id}`);
+    console.log(`Attempting to send message to chat_id: ${chat_id}, message: ${text}`);
     
     if (!chat_id || !text) {
+      console.error("Missing required parameters", { chat_id, text });
       throw new Error("Chat ID and text are required");
     }
     
     const telegramApiUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+    console.log(`Making request to Telegram API at: ${telegramApiUrl.split(TELEGRAM_BOT_TOKEN).join("REDACTED")}`);
     
     const telegramResponse = await fetch(telegramApiUrl, {
       method: "POST",
@@ -37,13 +42,15 @@ serve(async (req) => {
       body: JSON.stringify({
         chat_id,
         text,
+        parse_mode: "HTML",  // Allow HTML formatting in messages
       }),
     });
     
     const telegramData = await telegramResponse.json();
     
     if (!telegramResponse.ok) {
-      console.error("Telegram API error:", telegramData);
+      console.error("Telegram API error response:", telegramData);
+      console.error("Request details:", { chat_id, text_length: text?.length });
       throw new Error(`Telegram API error: ${JSON.stringify(telegramData)}`);
     }
     

@@ -8,6 +8,107 @@ interface BorrowRequestData {
   message: string;
 }
 
+// Send Telegram notifications to both owner and borrower
+const sendTelegramNotifications = async (
+  requesterId: string, 
+  ownerId: string, 
+  itemName: string,
+  itemId: string
+) => {
+  console.log("Preparing to send Telegram notifications for request:", {
+    requesterId,
+    ownerId,
+    itemName,
+    itemId
+  });
+
+  try {
+    // Get telegram_id and username for requester and owner
+    const [requesterResult, ownerResult] = await Promise.all([
+      supabase.from('profiles').select('telegram_id, username, full_name').eq('id', requesterId).single(),
+      supabase.from('profiles').select('telegram_id, username, full_name').eq('id', ownerId).single()
+    ]);
+
+    console.log("Retrieved profile data:", {
+      requester: requesterResult.data,
+      requesterError: requesterResult.error,
+      owner: ownerResult.data,
+      ownerError: ownerResult.error
+    });
+
+    if (requesterResult.error) {
+      console.error("Error fetching requester data:", requesterResult.error);
+    }
+    
+    if (ownerResult.error) {
+      console.error("Error fetching owner data:", ownerResult.error);
+    }
+
+    const requesterTelegramId = requesterResult.data?.telegram_id;
+    const ownerTelegramId = ownerResult.data?.telegram_id;
+    const requesterName = requesterResult.data?.full_name || requesterResult.data?.username || 'Someone';
+    const ownerName = ownerResult.data?.full_name || ownerResult.data?.username || 'the owner';
+
+    if (!requesterTelegramId && !ownerTelegramId) {
+      console.warn('No Telegram IDs found for requester or owner - skipping notifications');
+      return;
+    }
+
+    console.log('Sending notifications to:', {
+      requester: { 
+        id: requesterId, 
+        telegramId: requesterTelegramId,
+        name: requesterName 
+      },
+      owner: { 
+        id: ownerId, 
+        telegramId: ownerTelegramId,
+        name: ownerName 
+      }
+    });
+
+    // Prepare messages with more detailed information
+    const messages = [];
+
+    if (requesterTelegramId) {
+      messages.push({ 
+        chat_id: requesterTelegramId, 
+        text: `You requested <b>"${itemName}"</b>.\n\nThe owner, ${ownerName}, has been notified. You can now chat with them directly in Telegram.`
+      });
+    }
+
+    if (ownerTelegramId) {
+      messages.push({ 
+        chat_id: ownerTelegramId, 
+        text: `<b>${requesterName}</b> has requested your item <b>"${itemName}"</b>.\n\nThey've been notified about their request. You can now chat with them directly in Telegram.`
+      });
+    }
+
+    console.log('Prepared messages for sending:', JSON.stringify(messages));
+
+    // Send all messages and collect results
+    const results = await Promise.all(messages.map(async (msg) => {
+      console.log(`Sending notification to chat_id: ${msg.chat_id}`);
+      try {
+        const result = await supabase.functions.invoke('send-telegram-notification', {
+          body: msg
+        });
+        console.log(`Notification result for ${msg.chat_id}:`, result);
+        return result;
+      } catch (err) {
+        console.error(`Error sending notification to ${msg.chat_id}:`, err);
+        return { error: err };
+      }
+    }));
+
+    console.log('All notification results:', results);
+    return results;
+  } catch (error) {
+    console.error('Error in sendTelegramNotifications:', error);
+    return { error };
+  }
+};
+
 // Create a new borrow request
 export const createBorrowRequest = async (requestData: BorrowRequestData, userId: string) => {
   if (!userId) {
@@ -48,20 +149,52 @@ export const createBorrowRequest = async (requestData: BorrowRequestData, userId
 
   console.log("Final payload for insert:", payload);
 
-  const { data, error } = await supabase
-    .from("borrow_requests")
-    .insert(payload)
-    .select();
+  try {
+    // Get the item details for notification
+    const { data: itemData, error: itemError } = await supabase
+      .from("items")
+      .select("name")
+      .eq("id", requestData.item_id)
+      .single();
 
-  if (error) {
-    console.error("Error creating borrow request:", error);
-    console.error("Error details:", JSON.stringify(error, null, 2));
-    console.error("Request payload:", JSON.stringify(payload, null, 2));
+    if (itemError) {
+      console.error("Error fetching item details:", itemError);
+      throw itemError;
+    }
+
+    console.log("Retrieved item data for notification:", itemData);
+
+    // Insert the borrow request
+    const { data, error } = await supabase
+      .from("borrow_requests")
+      .insert(payload)
+      .select();
+
+    if (error) {
+      console.error("Error creating borrow request:", error);
+      console.error("Error details:", JSON.stringify(error, null, 2));
+      console.error("Request payload:", JSON.stringify(payload, null, 2));
+      throw error;
+    }
+
+    console.log("Successfully created borrow request:", data);
+
+    // Send notifications after successful request creation
+    console.log("Sending Telegram notifications for new request");
+    const notificationResults = await sendTelegramNotifications(
+      currentUserId,
+      requestData.owner_id,
+      itemData.name,
+      requestData.item_id
+    );
+    
+    console.log("Notification process completed:", notificationResults);
+    
+    return data;
+  } catch (error) {
+    console.error("Error in createBorrowRequest:", error);
     throw error;
   }
-
-  console.log("Successfully created borrow request:", data);
-  return data;
 };
 
 // Get borrow requests for a specific item

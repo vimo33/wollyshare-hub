@@ -68,6 +68,8 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ profile, userEmail, onProfile
         throw new Error("User not authenticated");
       }
 
+      console.log("Updating profile with Telegram ID:", values.telegramId);
+
       const { data, error } = await supabase.from("profiles").upsert(
         {
           id: user.id,
@@ -82,6 +84,8 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ profile, userEmail, onProfile
       if (error) {
         throw error;
       }
+
+      console.log("Profile update result:", data);
 
       // Update user metadata
       await supabase.auth.updateUser({
