@@ -42,13 +42,15 @@ const BorrowRequestDialog = ({
     setIsSubmitting(true);
 
     try {
+      // Fix: createBorrowRequest expects to return an object with success property, not an array
       const result = await createBorrowRequest({
         item_id: item.id,
         owner_id: item.user_id,
         message,
       });
 
-      if (result.success) {
+      // Check if result is an object with success property
+      if (result && 'success' in result && result.success) {
         toast({
           title: "Request sent",
           description: `Your request to borrow ${item.name} has been sent.`,
@@ -61,7 +63,7 @@ const BorrowRequestDialog = ({
       } else {
         toast({
           title: "Error sending request",
-          description: result.message || "There was a problem sending your request.",
+          description: result && 'message' in result ? result.message : "There was a problem sending your request.",
           variant: "destructive",
         });
       }

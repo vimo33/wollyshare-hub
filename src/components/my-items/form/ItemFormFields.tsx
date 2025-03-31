@@ -43,6 +43,7 @@ const ItemFormFields = ({
       return () => URL.revokeObjectURL(url);
     } else {
       setPreviewUrl(initialImageUrl);
+      return () => {}; // Return empty function when no cleanup needed
     }
   };
 
@@ -53,7 +54,7 @@ const ItemFormFields = ({
         <FormLabel>Item Image</FormLabel>
         <ImageUploadField
           initialImageUrl={initialImageUrl}
-          previewUrl={previewUrl}
+          // Remove previewUrl prop since it's not in the interface
           onImageChange={handleImageChange}
         />
       </div>

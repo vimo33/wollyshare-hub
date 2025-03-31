@@ -1,6 +1,6 @@
 
+import React, { memo, useState } from "react";
 import { Image } from "lucide-react";
-import { memo } from "react";
 
 interface ImageContainerProps {
   imageUrl: string | null;
@@ -15,7 +15,7 @@ const ImageContainer = memo(({
   category,
   categoryColors
 }: ImageContainerProps) => {
-  const [imageError, setImageError] = React.useState(false);
+  const [imageError, setImageError] = useState(false);
   
   const categoryColor = categoryColors[category] || "bg-gray-200 text-gray-700";
   
