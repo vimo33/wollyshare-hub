@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Item } from "@/types/supabase";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { PlusCircle } from "lucide-react";
 import ItemForm from "./ItemForm";
-import { useMyItems } from "./useMyItems";
+import { useMyItems } from "@/hooks/useMyItems";
 import { useToast } from "@/hooks/use-toast";
 import ItemFormDialog from "./ItemFormDialog";
 import DeleteConfirmDialog from "./DeleteConfirmDialog";
@@ -35,7 +36,7 @@ const MyItemsList = ({ items, isLoading, error }: MyItemsListProps) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
   const [selectedItem, setSelectedItem] = React.useState<Item | null>(null);
-  const { deleteItem } = useMyItems();
+  const { deleteItem, refetchItems } = useMyItems();
 
   const handleOpenDialog = () => {
     setIsDialogOpen(true);
@@ -127,7 +128,10 @@ const MyItemsList = ({ items, isLoading, error }: MyItemsListProps) => {
               Make sure to add all the details of your item.
             </DialogDescription>
           </DialogHeader>
-          <ItemForm onClose={handleCloseDialog} />
+          <ItemForm 
+            onClose={handleCloseDialog} 
+            onItemAdded={refetchItems} 
+          />
         </DialogContent>
       </Dialog>
 
@@ -142,8 +146,11 @@ const MyItemsList = ({ items, isLoading, error }: MyItemsListProps) => {
           description: selectedItem.description || "",
           weekdayAvailability: selectedItem.weekday_availability,
           weekendAvailability: selectedItem.weekend_availability,
+          location: selectedItem.location || "",
+          condition: selectedItem.condition || "",
           imageUrl: selectedItem.image_url || undefined
         } : undefined}
+        onSuccess={refetchItems}
       />
 
       {/* Delete Confirmation Dialog */}

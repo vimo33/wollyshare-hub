@@ -1,7 +1,6 @@
 
 import React, { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useMyItems } from "./useMyItems";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,12 +18,12 @@ import FormActions from "./form/FormActions";
 
 interface ItemFormProps {
   onClose: () => void;
+  onItemAdded: () => void; // New prop to trigger refetch in parent
 }
 
-const ItemForm = ({ onClose }: ItemFormProps) => {
+const ItemForm = ({ onClose, onItemAdded }: ItemFormProps) => {
   const { user } = useAuth();
   const { profile } = useProfileData();
-  const { refetchItems } = useMyItems();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -100,7 +99,7 @@ const ItemForm = ({ onClose }: ItemFormProps) => {
         title: "Item added successfully!",
       });
       
-      refetchItems();
+      onItemAdded(); // Call the callback to refresh the parent's item list
       onClose();
     } catch (error: any) {
       console.error("Error adding item:", error);
