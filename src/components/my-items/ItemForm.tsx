@@ -14,7 +14,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
+import { Loader2, Upload, X } from "lucide-react";
+import { uploadImage } from "./utils/image-upload-utils";
 
 interface ItemFormProps {
   onClose: () => void;
@@ -25,6 +26,8 @@ const ItemForm = ({ onClose }: ItemFormProps) => {
   const { refetchItems } = useMyItems();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -41,6 +44,23 @@ const ItemForm = ({ onClose }: ItemFormProps) => {
 
   const handleSelectChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -67,6 +87,12 @@ const ItemForm = ({ onClose }: ItemFormProps) => {
     try {
       setIsSubmitting(true);
       
+      // Upload image if selected
+      let image_url = null;
+      if (imageFile && user) {
+        image_url = await uploadImage(imageFile, user.id);
+      }
+      
       const response = await fetch("/api/items", {
         method: "POST",
         headers: {
@@ -76,7 +102,8 @@ const ItemForm = ({ onClose }: ItemFormProps) => {
           ...formData,
           user_id: user.id,
           condition: "Good", // Default value
-          location: "Home" // Default value
+          location: "Home", // Default value
+          image_url
         }),
       });
 
@@ -104,6 +131,51 @@ const ItemForm = ({ onClose }: ItemFormProps) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Image Upload */}
+      <div className="space-y-2">
+        <Label htmlFor="image">Item Image (Optional)</Label>
+        {imagePreview ? (
+          <div className="relative w-full h-48 bg-gray-100 rounded-md overflow-hidden">
+            <img 
+              src={imagePreview} 
+              alt="Item preview" 
+              className="w-full h-full object-contain" 
+            />
+            <Button 
+              type="button" 
+              variant="destructive" 
+              size="sm"
+              className="absolute top-2 right-2 rounded-full p-1 h-8 w-8"
+              onClick={removeImage}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        ) : (
+          <div className="flex items-center justify-center w-full">
+            <label 
+              htmlFor="image-upload" 
+              className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-md border-gray-300 cursor-pointer bg-gray-50 hover:bg-gray-100"
+            >
+              <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                <Upload className="w-8 h-8 mb-2 text-gray-500" />
+                <p className="text-sm text-gray-500">
+                  <span className="font-medium">Click to upload</span> or drag and drop
+                </p>
+                <p className="text-xs text-gray-500">PNG, JPG, WEBP (max 5MB)</p>
+              </div>
+              <input 
+                id="image-upload" 
+                type="file" 
+                className="hidden" 
+                accept="image/*"
+                onChange={handleImageUpload}
+              />
+            </label>
+          </div>
+        )}
+      </div>
+
       <div className="space-y-2">
         <Label htmlFor="name">Item Name</Label>
         <Input

@@ -22,7 +22,7 @@ export const useBorrowedItems = () => {
       // Get approved borrow requests for the current user
       const { data: borrowRequests, error: borrowError } = await supabase
         .from("borrow_requests")
-        .select("item_id")
+        .select("item_id, owner_id, created_at")
         .eq("borrower_id", user.id)
         .eq("status", "approved");
 
@@ -45,23 +45,53 @@ export const useBorrowedItems = () => {
       if (itemsError) {
         throw itemsError;
       }
+      
+      // Get owner details
+      const ownerIds = borrowRequests.map(request => request.owner_id);
+      const { data: owners, error: ownersError } = await supabase
+        .from("profiles")
+        .select("id, username, full_name, location")
+        .in("id", ownerIds);
+        
+      if (ownersError) {
+        throw ownersError;
+      }
+      
+      // Create maps for easy lookup
+      const ownerMap = new Map();
+      owners?.forEach(owner => {
+        ownerMap.set(owner.id, {
+          name: owner.username || owner.full_name || "Unknown Owner",
+          location: owner.location
+        });
+      });
+      
+      const borrowDatesMap = new Map();
+      borrowRequests.forEach(req => {
+        borrowDatesMap.set(req.item_id, req.created_at);
+      });
 
       // Transform the data to match the Item type
-      const transformedItems: Item[] = itemsData.map((item) => ({
-        id: item.id,
-        name: item.name,
-        category: item.category as Item['category'],
-        description: item.description || null,
-        image_url: item.image_url || null,
-        weekday_availability: item.weekday_availability || 'anytime',
-        weekend_availability: item.weekend_availability || 'anytime',
-        user_id: item.user_id,
-        location: item.location,
-        condition: item.condition,
-        created_at: item.created_at,
-        updated_at: item.updated_at,
-        locationAddress: undefined
-      }));
+      const transformedItems: Item[] = itemsData.map((item) => {
+        const ownerInfo = ownerMap.get(item.user_id) || { name: "Unknown Owner", location: null };
+        
+        return {
+          id: item.id,
+          name: item.name,
+          category: item.category as Item['category'],
+          description: item.description || null,
+          image_url: item.image_url || null,
+          weekday_availability: item.weekday_availability || 'anytime',
+          weekend_availability: item.weekend_availability || 'anytime',
+          user_id: item.user_id,
+          location: item.location,
+          condition: item.condition,
+          created_at: borrowDatesMap.get(item.id) || item.created_at, // Use borrow request date
+          updated_at: item.updated_at,
+          ownerName: ownerInfo.name,
+          locationAddress: ownerInfo.location
+        };
+      });
 
       setItems(transformedItems);
     } catch (err: any) {

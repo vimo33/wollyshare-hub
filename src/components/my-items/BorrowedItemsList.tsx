@@ -1,9 +1,7 @@
 
 import { useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import ItemsGrid from "../items/ItemsGrid";
 import { Item as SupabaseItem } from "@/types/supabase";
-import { Item as ItemType } from "@/types/item";
 import { format } from "date-fns";
 import { User, Calendar } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,7 +14,7 @@ interface BorrowedItemsListProps {
 
 const BorrowedItemCard = ({ item }: { item: SupabaseItem }) => {
   const formattedDate = item.created_at 
-    ? format(new Date(item.created_at), "MMM d, yyyy")
+    ? format(new Date(item.created_at), "MMM d, yyyy - h:mm a")
     : "Unknown date";
 
   return (

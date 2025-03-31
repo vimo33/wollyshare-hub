@@ -1,5 +1,4 @@
-
-import React, { useEffect } from "react";
+import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -11,113 +10,75 @@ import {
   FormControl,
   FormDescription,
   FormMessage,
+  FormField,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { Profile } from "@/types/supabase";
 import { Loader2 } from "lucide-react";
-
-const formSchema = z.object({
-  username: z.string().min(2, {
-    message: "Username must be at least 2 characters.",
-  }),
-  fullName: z.string().min(2, {
-    message: "Full name must be at least 2 characters.",
-  }),
-  telegramId: z.string().optional(),
-  telegramUsername: z.string().optional(),
-});
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface ProfileFormProps {
-  profile?: Profile | null;
-  userEmail?: string;
-  onProfileUpdate?: () => Promise<void>;
+  profile: {
+    username: string | null;
+    full_name: string | null;
+    location: string | null;
+    telegram_username: string | null;
+  } | null;
+  userEmail: string | null;
+  onProfileUpdate: () => void;
 }
 
-const ProfileForm: React.FC<ProfileFormProps> = ({ profile, userEmail, onProfileUpdate }) => {
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
+const updateProfileSchema = z.object({
+  username: z.string().min(2).max(50),
+  full_name: z.string().min(2).max(50),
+  location: z.string().min(2).max(50),
+  telegram_username: z.string().min(2).max(50),
+});
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+type UpdateProfileSchema = z.infer<typeof updateProfileSchema>;
+
+const ProfileForm = ({ profile, userEmail, onProfileUpdate }: ProfileFormProps) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const form = useForm<UpdateProfileSchema>({
+    resolver: zodResolver(updateProfileSchema),
     defaultValues: {
-      username: "",
-      fullName: "",
-      telegramId: "",
-      telegramUsername: "",
+      username: profile?.username || "",
+      full_name: profile?.full_name || "",
+      location: profile?.location || "",
+      telegram_username: profile?.telegram_username || "",
     },
   });
 
-  // Update form values when profile changes
-  useEffect(() => {
-    if (profile) {
-      form.reset({
-        username: profile.username || "",
-        fullName: profile.full_name || "",
-        telegramId: profile.telegram_id || "",
-        telegramUsername: profile.telegram_username || "",
-      });
-    }
-  }, [profile, form]);
-
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  async function handleSubmit(values: UpdateProfileSchema) {
     setIsSubmitting(true);
+    // Simulate successful submission
+    console.log(values);
     try {
-      if (!user) {
-        throw new Error("User not authenticated");
-      }
-
-      console.log("Updating profile with Telegram data:", {
-        telegramId: values.telegramId,
-        telegramUsername: values.telegramUsername
-      });
-
-      const { data, error } = await supabase.from("profiles").upsert(
-        {
-          id: user.id,
-          username: values.username,
-          full_name: values.fullName,
-          telegram_id: values.telegramId,
-          telegram_username: values.telegramUsername?.replace('@', ''), // Remove @ if included
-          updated_at: new Date().toISOString(),
+      // Make API request to update profile
+      const response = await fetch('/api/profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        { onConflict: "id" }
-      ).select();
+        body: JSON.stringify(values),
+      });
 
-      if (error) {
-        throw error;
+      if (response.ok) {
+        // Call the onProfileUpdate callback
+        onProfileUpdate();
+      } else {
+        // Handle error case
+        console.error('Profile update failed');
       }
-
-      console.log("Profile update result:", data);
-
-      // Update user metadata
-      await supabase.auth.updateUser({
-        data: {
-          username: values.username,
-          full_name: values.fullName,
-          telegram_id: values.telegramId,
-          telegram_username: values.telegramUsername?.replace('@', ''), // Remove @ if included
-        },
-      });
-      
-      if (onProfileUpdate) {
-        await onProfileUpdate();
-      }
-
-      toast({
-        title: "Profile updated",
-        description: "Your profile has been successfully updated.",
-      });
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error updating profile",
-        description: error.message,
-      });
+    } catch (error) {
+      console.error('Error updating profile:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -125,67 +86,115 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ profile, userEmail, onProfile
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 p-6">
-        <FormItem>
-          <FormLabel>Username</FormLabel>
-          <FormControl>
-            <Input placeholder="shadcn" {...form.register("username")} disabled={isSubmitting} />
-          </FormControl>
-          <FormDescription>
-            This is your public display name.
-          </FormDescription>
-          <FormMessage />
-        </FormItem>
-        <FormItem>
-          <FormLabel>Full Name</FormLabel>
-          <FormControl>
-            <Input placeholder="John Doe" {...form.register("fullName")} disabled={isSubmitting} />
-          </FormControl>
-          <FormDescription>
-            This is your full name.
-          </FormDescription>
-          <FormMessage />
-        </FormItem>
-        <FormItem>
-          <FormLabel>Telegram ID</FormLabel>
-          <FormControl>
-            <Input placeholder="Your Telegram ID" {...form.register("telegramId")} disabled={isSubmitting} />
-          </FormControl>
-          <FormDescription>
-            Enter your Telegram ID to receive notifications. To find your ID:
-          </FormDescription>
-          <FormMessage />
-          <ol className="text-sm text-muted-foreground mt-1 list-decimal pl-5 space-y-1">
-            <li>Message @WollyShareBot with /start to enable notifications</li>
-            <li>Find your Telegram ID by messaging @userinfobot on Telegram</li>
-            <li>Paste the numeric ID here (e.g., 123456789)</li>
-          </ol>
-        </FormItem>
-        <FormItem>
-          <FormLabel>Telegram Username</FormLabel>
-          <FormControl>
-            <Input placeholder="your_username" {...form.register("telegramUsername")} disabled={isSubmitting} />
-          </FormControl>
-          <FormDescription>
-            Enter your Telegram username to enable direct messaging. This is required for the "Message" button in notifications.
-          </FormDescription>
-          <FormMessage />
-          <ol className="text-sm text-muted-foreground mt-1 list-decimal pl-5 space-y-1">
-            <li>In Telegram, go to Settings → Username</li>
-            <li>Enter your username without the @ symbol</li>
-            <li>Paste it here (e.g., johndoe)</li>
-          </ol>
-        </FormItem>
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Updating...
-            </>
-          ) : (
-            "Submit"
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 px-6 py-4">
+        {/* Email Field (non-editable) */}
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <Input id="email" value={userEmail || ""} disabled className="bg-muted" />
+          <p className="text-sm text-muted-foreground">
+            Your email address is used for login and cannot be changed.
+          </p>
+        </div>
+
+        {/* Username Field */}
+        <FormField
+          control={form.control}
+          name="username"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Username</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter your username" {...field} />
+              </FormControl>
+              <FormDescription>
+                This is your public display name that others will see.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
           )}
-        </Button>
+        />
+
+        {/* Full Name Field */}
+        <FormField
+          control={form.control}
+          name="full_name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Full Name</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter your full name" {...field} />
+              </FormControl>
+              <FormDescription>
+                Your full name will be used for communication.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Location Field */}
+        <FormField
+          control={form.control}
+          name="location"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Location</FormLabel>
+              <FormControl>
+                <Select 
+                  onValueChange={field.onChange} 
+                  defaultValue={field.value}
+                  value={field.value}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select your community location" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Wollishofen">Wollishofen</SelectItem>
+                    <SelectItem value="Enge">Enge</SelectItem>
+                    <SelectItem value="Leimbach">Leimbach</SelectItem>
+                    <SelectItem value="Adliswil">Adliswil</SelectItem>
+                    <SelectItem value="Kilchberg">Kilchberg</SelectItem>
+                  </SelectContent>
+                </Select>
+              </FormControl>
+              <FormDescription>
+                This helps other members find items near them.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Telegram Username Field */}
+        <FormField
+          control={form.control}
+          name="telegram_username"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Telegram Username</FormLabel>
+              <FormControl>
+                <Input placeholder="@your_telegram_username" {...field} />
+              </FormControl>
+              <FormDescription>
+                Your Telegram username is used for borrow request notifications.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="flex justify-end space-x-2 pt-4">
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Updating...
+              </>
+            ) : (
+              'Save Changes'
+            )}
+          </Button>
+        </div>
       </form>
     </Form>
   );

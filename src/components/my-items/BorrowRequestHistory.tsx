@@ -1,129 +1,167 @@
 
-import { useState, useEffect } from "react";
-import { useBorrowRequestHistory } from "@/hooks/useBorrowRequestHistory";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { RefreshCw, Clock } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import React, { useEffect, useState } from "react";
 import { format } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { User, Calendar } from "lucide-react";
 
-const getStatusBadgeVariant = (status: string) => {
-  switch (status) {
-    case "approved":
-      return "bg-green-100 text-green-800";
-    case "rejected":
-      return "bg-red-100 text-red-800";
-    case "cancelled":
-      return "bg-gray-100 text-gray-800";
-    case "pending":
-      return "bg-yellow-100 text-yellow-800";
-    default:
-      return "bg-blue-100 text-blue-800";
-  }
-};
+interface BorrowRequest {
+  id: string;
+  item_id: string;
+  item_name: string;
+  borrower_id: string;
+  borrower_name: string;
+  status: string;
+  created_at: string;
+}
 
-const RequestHistoryCard = ({ request }) => {
-  const formattedDate = format(new Date(request.created_at), "MMM d, yyyy h:mm a");
-  
+const BorrowRequestCard = ({ request }: { request: BorrowRequest }) => {
+  const formattedDate = request.created_at 
+    ? format(new Date(request.created_at), "MMM d, yyyy - h:mm a")
+    : "Unknown date";
+
   return (
-    <Card className="mb-4">
-      <CardHeader className="py-3 px-4">
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="text-base">{request.item_name}</CardTitle>
-            <CardDescription className="text-xs flex items-center mt-1">
-              <Clock className="h-3 w-3 mr-1" />
-              {formattedDate}
-            </CardDescription>
-          </div>
-          <Badge className={getStatusBadgeVariant(request.status)}>
-            {request.status}
-          </Badge>
-        </div>
+    <Card className="overflow-hidden">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg">{request.item_name}</CardTitle>
       </CardHeader>
-      <CardContent className="py-2 px-4">
-        <p className="text-sm">
-          <span className="font-medium">{request.type === "outgoing" ? "Owner" : "Borrower"}:</span> {request.type === "outgoing" ? request.owner_name : request.requester_username}
+      
+      <CardContent className="space-y-2">
+        <p className="flex items-center text-sm">
+          <User className="h-4 w-4 mr-2 text-muted-foreground" />
+          <span>Shared with: {request.borrower_name || "Unknown"}</span>
         </p>
-        {request.message && (
-          <p className="text-sm mt-2 text-gray-600 italic">"{request.message}"</p>
-        )}
+        <p className="flex items-center text-sm">
+          <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
+          <span>Requested on: {formattedDate}</span>
+        </p>
       </CardContent>
     </Card>
   );
 };
 
 const BorrowRequestHistory = () => {
-  const { requests, isLoading, error, refetchRequests } = useBorrowRequestHistory();
-  const [showAll, setShowAll] = useState(false);
+  const { user } = useAuth();
+  const [requests, setRequests] = useState<BorrowRequest[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const displayedRequests = showAll ? requests : requests.slice(0, 5);
+  useEffect(() => {
+    const fetchRequests = async () => {
+      try {
+        if (!user) {
+          setRequests([]);
+          return;
+        }
+
+        setIsLoading(true);
+        const { data: borrowRequests, error: requestsError } = await supabase
+          .from("borrow_requests")
+          .select("id, item_id, status, created_at, borrower_id")
+          .eq("owner_id", user.id)
+          .order("created_at", { ascending: false });
+
+        if (requestsError) throw requestsError;
+
+        // If no requests, return early
+        if (!borrowRequests || borrowRequests.length === 0) {
+          setRequests([]);
+          setIsLoading(false);
+          return;
+        }
+
+        // Get item details
+        const itemIds = borrowRequests.map(req => req.item_id);
+        const { data: items, error: itemsError } = await supabase
+          .from("items")
+          .select("id, name")
+          .in("id", itemIds);
+
+        if (itemsError) throw itemsError;
+        
+        // Get borrower names
+        const borrowerIds = borrowRequests.map(req => req.borrower_id);
+        const { data: borrowers, error: borrowersError } = await supabase
+          .from("profiles")
+          .select("id, username, full_name")
+          .in("id", borrowerIds);
+
+        if (borrowersError) throw borrowersError;
+
+        // Create a map for easy lookup
+        const itemMap = new Map();
+        items?.forEach(item => itemMap.set(item.id, item.name));
+        
+        const borrowerMap = new Map();
+        borrowers?.forEach(borrower => {
+          const displayName = borrower.username || borrower.full_name || "Unknown";
+          borrowerMap.set(borrower.id, displayName);
+        });
+
+        // Combine data
+        const enrichedRequests = borrowRequests.map(request => ({
+          id: request.id,
+          item_id: request.item_id,
+          item_name: itemMap.get(request.item_id) || "Unknown Item",
+          borrower_id: request.borrower_id,
+          borrower_name: borrowerMap.get(request.borrower_id) || "Unknown User",
+          status: request.status,
+          created_at: request.created_at
+        }));
+
+        setRequests(enrichedRequests);
+      } catch (err: any) {
+        console.error("Error fetching borrow requests:", err);
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchRequests();
+  }, [user]);
 
   if (isLoading) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-12 w-full" />
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-32 w-full" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Skeleton className="h-48 w-full" />
+          <Skeleton className="h-48 w-full" />
+          <Skeleton className="h-48 w-full" />
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="text-center py-8 border-2 border-dashed rounded-lg border-red-200 p-8">
-        <h3 className="text-lg font-semibold mb-2 text-red-600">Error Loading Request History</h3>
-        <p className="text-muted-foreground mb-4">{error.message}</p>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={refetchRequests}
-        >
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Try Again
-        </Button>
+      <div className="text-center py-8">
+        <h3 className="text-lg font-semibold mb-2 text-red-600">Error</h3>
+        <p>{error}</p>
       </div>
     );
   }
 
-  if (requests.length === 0) {
+  if (!requests || requests.length === 0) {
     return (
       <div className="text-center py-12 border-2 border-dashed rounded-lg border-muted p-8">
-        <h3 className="text-lg font-semibold mb-2">No Borrow Requests Yet</h3>
-        <p className="text-muted-foreground">Your borrow request history will appear here.</p>
+        <h3 className="text-lg font-semibold mb-2">No Shared Items</h3>
+        <p className="text-muted-foreground">You haven't shared any items yet.</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold">Borrow Request History</h3>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={refetchRequests}
-        >
-          <RefreshCw className="h-4 w-4" />
-        </Button>
-      </div>
-
-      <div className="space-y-4">
-        {displayedRequests.map((request) => (
-          <RequestHistoryCard key={request.id} request={request} />
+    <div>
+      <h3 className="text-lg font-semibold mb-4">Items You've Shared</h3>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {requests.map(request => (
+          <BorrowRequestCard key={request.id} request={request} />
         ))}
       </div>
-
-      {requests.length > 5 && (
-        <Button
-          variant="link"
-          className="mt-4 w-full"
-          onClick={() => setShowAll(!showAll)}
-        >
-          {showAll ? "Show Less" : `Show All (${requests.length})`}
-        </Button>
-      )}
     </div>
   );
 };
