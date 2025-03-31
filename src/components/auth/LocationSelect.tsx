@@ -1,94 +1,79 @@
-import React, { useState, useEffect } from 'react';
-import { LocationSelectProps } from './types';
-import { Controller } from 'react-hook-form';
-import { supabase } from '@/integrations/supabase/client';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
 
-const LocationSelect: React.FC<LocationSelectProps> = ({ 
-  value, 
-  onChange, 
-  className, 
-  control, 
-  defaultValue, 
-  name 
-}) => {
-  const [locations, setLocations] = useState<{id: string, name: string}[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+import React, { useEffect, useState } from "react";
+import { Control } from "react-hook-form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+
+interface Location {
+  id: string;
+  name: string;
+  address: string;
+}
+
+interface LocationSelectProps {
+  onChange: (value: string) => void;
+  value: string;
+  control: Control<any>;
+  defaultValue?: string;
+  locations?: Location[];
+}
+
+const LocationSelect = ({
+  onChange,
+  value,
+  defaultValue,
+  locations: propLocations,
+}: LocationSelectProps) => {
+  const [locations, setLocations] = useState<Location[]>(propLocations || []);
+  const [loading, setLoading] = useState(!propLocations);
 
   useEffect(() => {
+    if (propLocations) {
+      setLocations(propLocations);
+      return;
+    }
+
     const fetchLocations = async () => {
+      setLoading(true);
       try {
         const { data, error } = await supabase
-          .from('community_locations')
-          .select('id, name')
-          .order('name');
-          
+          .from("community_locations")
+          .select("id, name, address")
+          .order("name", { ascending: true });
+
         if (error) {
-          console.error('Error fetching locations:', error);
-        } else {
-          setLocations(data || []);
+          console.error("Error fetching locations:", error);
+          return;
         }
+
+        setLocations(data || []);
       } catch (err) {
-        console.error('Unexpected error fetching locations:', err);
+        console.error("Failed to fetch locations:", err);
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
-    
+
     fetchLocations();
-  }, []);
+  }, [propLocations]);
 
-  // If control is provided, use react-hook-form Controller with shadcn UI Select
-  if (control) {
-    return (
-      <Controller
-        control={control}
-        name={name || "location"}
-        defaultValue={defaultValue || ""}
-        render={({ field }) => (
-          <Select
-            disabled={isLoading}
-            onValueChange={field.onChange}
-            defaultValue={field.value}
-            value={field.value}
-          >
-            <SelectTrigger className={className}>
-              <SelectValue placeholder="Select a location" />
-            </SelectTrigger>
-            <SelectContent>
-              {locations.map((location) => (
-                <SelectItem key={location.id} value={location.id}>
-                  {location.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
-      />
-    );
-  }
-
-  // Otherwise use standard controlled select
   return (
-    <Select
-      disabled={isLoading}
-      onValueChange={onChange}
-      defaultValue={value || ""}
-      value={value || ""}
-    >
-      <SelectTrigger className={className}>
-        <SelectValue placeholder="Select a location" />
+    <Select onValueChange={onChange} defaultValue={defaultValue} value={value}>
+      <SelectTrigger
+        className={!locations.length && loading ? "animate-pulse" : ""}
+      >
+        <SelectValue placeholder="Select your community location" />
       </SelectTrigger>
       <SelectContent>
-        {locations.map((location) => (
-          <SelectItem key={location.id} value={location.id}>
-            {location.name}
+        {locations.map((loc) => (
+          <SelectItem key={loc.id} value={loc.id}>
+            {loc.name}
           </SelectItem>
         ))}
       </SelectContent>

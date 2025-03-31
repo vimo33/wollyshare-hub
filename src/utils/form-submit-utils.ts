@@ -1,4 +1,3 @@
-
 import { ItemFormValues } from "@/components/my-items/types";
 import { supabase } from "@/integrations/supabase/client";
 import sanitizeHtml from "sanitize-html";
@@ -19,7 +18,9 @@ export const submitItemForm = async (values: ItemFormValues, userId: string): Pr
       condition: values.condition ? sanitizeHtml(values.condition, { allowedTags: [] }) : null
     };
 
-    const { error } = await supabase.from("items").insert({
+    console.log("Submitting item form with values:", sanitizedValues);
+
+    const { data, error } = await supabase.from("items").insert({
       name: sanitizedValues.name,
       category: sanitizedValues.category,
       description: sanitizedValues.description,
@@ -28,13 +29,22 @@ export const submitItemForm = async (values: ItemFormValues, userId: string): Pr
       location: sanitizedValues.location,
       condition: sanitizedValues.condition,
       user_id: userId
-    });
+    }).select();
 
-    if (error) throw error;
+    if (error) {
+      console.error("Supabase error when adding item:", error);
+      throw error;
+    }
+    
+    console.log("Item added successfully:", data);
     return { success: true };
   } catch (error) {
     console.error("Error submitting item form:", error);
-    return { success: false, error, message: "Failed to add item" };
+    return { 
+      success: false, 
+      error, 
+      message: error.message || "Failed to add item" 
+    };
   }
 };
 
@@ -72,7 +82,11 @@ export const updateItemForm = async (itemId: string, values: ItemFormValues, use
     return { success: true };
   } catch (error) {
     console.error("Error updating item:", error);
-    return { success: false, error, message: "Failed to update item" };
+    return { 
+      success: false, 
+      error, 
+      message: error.message || "Failed to update item" 
+    };
   }
 };
 

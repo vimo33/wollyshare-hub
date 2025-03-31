@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import LocationSelect from "./LocationSelect";
 import { 
   Tooltip,
@@ -18,15 +18,46 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { HelpCircle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SignupFormProps {
   invitationToken?: string;
+}
+
+interface Location {
+  id: string;
+  name: string;
+  address: string;
 }
 
 const SignupForm: React.FC<SignupFormProps> = ({ invitationToken }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(false);
+  const [locations, setLocations] = useState<Location[]>([]);
+
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('community_locations')
+          .select('id, name, address')
+          .order('name', { ascending: true });
+          
+        if (error) {
+          console.error("Error fetching locations:", error);
+          return;
+        }
+        
+        setLocations(data || []);
+      } catch (err) {
+        console.error("Failed to fetch locations:", err);
+      }
+    };
+    
+    fetchLocations();
+  }, []);
 
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
@@ -154,6 +185,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ invitationToken }) => {
                   value={field.value}
                   control={form.control}
                   defaultValue={field.value}
+                  locations={locations}
                 />
               </FormControl>
               <FormMessage />
@@ -185,6 +217,9 @@ const SignupForm: React.FC<SignupFormProps> = ({ invitationToken }) => {
               <FormControl>
                 <Input placeholder="123456789" {...field} />
               </FormControl>
+              <FormDescription className="text-xs text-muted-foreground">
+                To get your Telegram ID, open Telegram and message @get_id_bot. The bot will reply with your numeric ID.
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -214,10 +249,10 @@ const SignupForm: React.FC<SignupFormProps> = ({ invitationToken }) => {
               <FormControl>
                 <Input placeholder="johndoe" {...field} />
               </FormControl>
-              <FormMessage />
               <FormDescription className="text-xs text-muted-foreground">
-                This is required for direct messaging in Telegram notifications
+                To set a Telegram username, open Telegram, go to Settings → Username, and create a username without the @ symbol.
               </FormDescription>
+              <FormMessage />
             </FormItem>
           )}
         />

@@ -3,6 +3,9 @@ import React, { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { updateProfile } from "@/services/profileService";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 import { Form } from "@/components/ui/form";
 import {
@@ -24,67 +27,27 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { updateProfile } from "@/services/profileService";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-
-interface ProfileFormProps {
-  profile: {
-    username: string;
-    full_name: string;
-    location: string;
-    telegram_id: string;
-    telegram_username: string;
-  } | null;
-  userEmail: string | null;
-  onProfileUpdate: () => void;
-}
 
 const updateProfileSchema = z.object({
-  username: z.string().min(2).max(50),
-  full_name: z.string().min(2).max(50),
-  location: z.string().min(1, { message: "Location is required" }),
-  telegram_id: z.string().min(1, { message: "Telegram ID is required" }),
-  telegram_username: z.string().min(1, { message: "Telegram username is required" }),
+  username: z.string().min(2, "Username must be at least 2 characters").max(50),
+  full_name: z.string().min(2, "Full name must be at least 2 characters").max(50),
+  location: z.string().min(1, "Location is required"),
+  telegram_id: z.string().min(1, "Telegram ID is required"),
+  telegram_username: z.string().min(1, "Telegram username is required"),
 });
 
 type UpdateProfileSchema = z.infer<typeof updateProfileSchema>;
 
-const ProfileForm = ({ profile, userEmail, onProfileUpdate }: ProfileFormProps) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
-  const [locations, setLocations] = useState<{id: string, name: string, address: string}[]>([]);
-  const [isLoadingLocations, setIsLoadingLocations] = useState(true);
+interface Location {
+  id: string;
+  name: string;
+  address: string;
+}
 
-  // Fetch community locations
-  useEffect(() => {
-    const fetchLocations = async () => {
-      setIsLoadingLocations(true);
-      try {
-        const { data, error } = await supabase
-          .from('community_locations')
-          .select('*')
-          .order('name');
-          
-        if (error) {
-          console.error('Error fetching locations:', error);
-          toast({
-            variant: "destructive",
-            title: "Could not load locations",
-            description: "Please try again later"
-          });
-        } else {
-          setLocations(data || []);
-        }
-      } catch (err) {
-        console.error('Error in location fetch:', err);
-      } finally {
-        setIsLoadingLocations(false);
-      }
-    };
-    
-    fetchLocations();
-  }, [toast]);
+const ProfileForm = ({ profile, userEmail, onProfileUpdate }) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [locations, setLocations] = useState<Location[]>([]);
+  const { toast } = useToast();
 
   const form = useForm<UpdateProfileSchema>({
     resolver: zodResolver(updateProfileSchema),
@@ -97,19 +60,42 @@ const ProfileForm = ({ profile, userEmail, onProfileUpdate }: ProfileFormProps) 
     },
   });
 
+  // Fetch locations from community_locations table
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('community_locations')
+          .select('id, name, address')
+          .order('name', { ascending: true });
+          
+        if (error) {
+          console.error("Error fetching locations:", error);
+          return;
+        }
+        
+        setLocations(data || []);
+      } catch (err) {
+        console.error("Failed to fetch locations:", err);
+      }
+    };
+    
+    fetchLocations();
+  }, []);
+
+  // Get location address for the selected location ID
+  const getLocationAddress = (locationId: string): string => {
+    const location = locations.find(loc => loc.id === locationId);
+    return location ? location.address : "";
+  };
+
+  // Find the current location's address
+  const currentLocationAddress = profile?.location ? getLocationAddress(profile.location) : "";
+
   async function handleSubmit(values: UpdateProfileSchema) {
     setIsSubmitting(true);
-    console.log("Submitting profile update:", values);
-    
     try {
-      // Use the profile service
-      const updatedProfile = await updateProfile({
-        username: values.username,
-        full_name: values.full_name,
-        location: values.location,
-        telegram_id: values.telegram_id,
-        telegram_username: values.telegram_username
-      });
+      const updatedProfile = await updateProfile(values);
       
       if (updatedProfile) {
         toast({
@@ -124,11 +110,11 @@ const ProfileForm = ({ profile, userEmail, onProfileUpdate }: ProfileFormProps) 
         });
       }
     } catch (error) {
-      console.error('Error updating profile:', error);
+      console.error("Error updating profile:", error);
       toast({
         variant: "destructive",
-        title: "Error updating profile",
-        description: "An unexpected error occurred."
+        title: "Error",
+        description: "An unexpected error occurred while updating your profile."
       });
     } finally {
       setIsSubmitting(false);
@@ -138,7 +124,6 @@ const ProfileForm = ({ profile, userEmail, onProfileUpdate }: ProfileFormProps) 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 px-6 py-4">
-        {/* Email Field (non-editable) */}
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <Input id="email" value={userEmail || ""} disabled className="bg-muted" />
@@ -147,7 +132,6 @@ const ProfileForm = ({ profile, userEmail, onProfileUpdate }: ProfileFormProps) 
           </p>
         </div>
 
-        {/* Username Field */}
         <FormField
           control={form.control}
           name="username"
@@ -165,7 +149,6 @@ const ProfileForm = ({ profile, userEmail, onProfileUpdate }: ProfileFormProps) 
           )}
         />
 
-        {/* Full Name Field */}
         <FormField
           control={form.control}
           name="full_name"
@@ -183,7 +166,6 @@ const ProfileForm = ({ profile, userEmail, onProfileUpdate }: ProfileFormProps) 
           )}
         />
 
-        {/* Location Field */}
         <FormField
           control={form.control}
           name="location"
@@ -195,7 +177,6 @@ const ProfileForm = ({ profile, userEmail, onProfileUpdate }: ProfileFormProps) 
                   onValueChange={field.onChange} 
                   defaultValue={field.value}
                   value={field.value}
-                  disabled={isLoadingLocations}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select your community location" />
@@ -209,15 +190,16 @@ const ProfileForm = ({ profile, userEmail, onProfileUpdate }: ProfileFormProps) 
                   </SelectContent>
                 </Select>
               </FormControl>
-              <FormDescription>
-                This helps other members find items near them.
-              </FormDescription>
+              {field.value && (
+                <FormDescription>
+                  Address: {getLocationAddress(field.value)}
+                </FormDescription>
+              )}
               <FormMessage />
             </FormItem>
           )}
         />
 
-        {/* Telegram ID Field */}
         <FormField
           control={form.control}
           name="telegram_id"
@@ -225,7 +207,7 @@ const ProfileForm = ({ profile, userEmail, onProfileUpdate }: ProfileFormProps) 
             <FormItem>
               <FormLabel>Telegram ID</FormLabel>
               <FormControl>
-                <Input placeholder="Your Telegram ID" {...field} />
+                <Input placeholder="123456789" {...field} />
               </FormControl>
               <FormDescription>
                 Your Telegram ID is used for notifications.
@@ -235,7 +217,6 @@ const ProfileForm = ({ profile, userEmail, onProfileUpdate }: ProfileFormProps) 
           )}
         />
 
-        {/* Telegram Username Field */}
         <FormField
           control={form.control}
           name="telegram_username"
@@ -243,7 +224,7 @@ const ProfileForm = ({ profile, userEmail, onProfileUpdate }: ProfileFormProps) 
             <FormItem>
               <FormLabel>Telegram Username</FormLabel>
               <FormControl>
-                <Input placeholder="@your_telegram_username" {...field} />
+                <Input placeholder="your_telegram_username" {...field} />
               </FormControl>
               <FormDescription>
                 Your Telegram username is used for borrow request notifications.

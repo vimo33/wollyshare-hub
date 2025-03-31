@@ -19,12 +19,10 @@ const ItemDetails = ({
   weekdayAvailability, 
   weekendAvailability
 }: ItemDetailsProps) => {
-  // Make sure we display a meaningful location value - location should never be empty
+  // Display location with address if available
   const displayLocation = location && location.trim() !== "" 
-    ? location 
-    : (locationAddress && locationAddress.trim() !== "" 
-      ? locationAddress 
-      : "Location not specified");
+    ? (locationAddress ? `${location} (${locationAddress})` : location)
+    : "Location not specified";
 
   return (
     <div className="p-4">
