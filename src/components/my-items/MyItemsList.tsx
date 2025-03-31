@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Item } from "@/types/supabase";
 import { Button } from "@/components/ui/button";
@@ -21,6 +20,13 @@ interface MyItemsListProps {
   items: Item[];
   isLoading: boolean;
   error: any;
+}
+
+// Define a proper type for the deleteItem response
+interface DeleteItemResponse {
+  success: boolean;
+  hasBorrowRequests?: boolean;
+  message?: string;
 }
 
 const MyItemsList = ({ items, isLoading, error }: MyItemsListProps) => {
@@ -53,7 +59,7 @@ const MyItemsList = ({ items, isLoading, error }: MyItemsListProps) => {
     if (!selectedItem) return;
     
     try {
-      const result = await deleteItem(selectedItem.id);
+      const result = await deleteItem(selectedItem.id) as DeleteItemResponse;
       
       if (result.success) {
         toast({

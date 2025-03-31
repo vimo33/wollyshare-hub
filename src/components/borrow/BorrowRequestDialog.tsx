@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, X, BrandTelegram } from "lucide-react";
+import { Loader2, X, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { createBorrowRequest } from "@/services/borrowRequestService";
 
@@ -133,7 +133,7 @@ const BorrowRequestDialog = ({
               {isSubmitting && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
-              <BrandTelegram className="mr-2 h-4 w-4" />
+              <Send className="mr-2 h-4 w-4" />
               Send Request
             </Button>
           </DialogFooter>

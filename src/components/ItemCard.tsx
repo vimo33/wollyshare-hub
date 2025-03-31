@@ -1,4 +1,3 @@
-
 import { useState, useCallback, memo } from "react";
 import { Item } from "@/types/supabase";
 import { useToast } from "@/hooks/use-toast";
@@ -7,7 +6,7 @@ import BorrowRequestDialog from "./borrow/BorrowRequestDialog";
 import ImageContainer from "./items/ImageContainer";
 import ItemDetails from "./items/ItemDetails";
 import { categoryColors } from "./items/utils/category-utils";
-import { BrandTelegram } from "lucide-react";
+import { Send } from "lucide-react";
 
 type ItemCardProps = {
   id: string;
@@ -109,7 +108,7 @@ const ItemCard = memo(({
             className="w-full mt-4 py-2 rounded-lg bg-secondary hover:bg-secondary/80 text-sm font-medium transition-colors flex items-center justify-center"
             onClick={handleRequestClick}
           >
-            <BrandTelegram className="mr-2 h-4 w-4" />
+            <Send className="mr-2 h-4 w-4" />
             Request to Borrow
           </button>
         </div>
