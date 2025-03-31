@@ -1,5 +1,5 @@
 
-import React, { memo, useState } from "react";
+import React, { memo, useState, useEffect } from "react";
 import { Image } from "lucide-react";
 
 interface ImageContainerProps {
@@ -16,6 +16,13 @@ const ImageContainer = memo(({
   categoryColors
 }: ImageContainerProps) => {
   const [imageError, setImageError] = useState(false);
+  const [imageSrc, setImageSrc] = useState<string | null>(imageUrl);
+  
+  // Reset image error state when imageUrl changes
+  useEffect(() => {
+    setImageError(false);
+    setImageSrc(imageUrl);
+  }, [imageUrl]);
   
   const categoryColor = categoryColors[category] || "bg-gray-200 text-gray-700";
   
@@ -23,6 +30,15 @@ const ImageContainer = memo(({
     console.error(`Failed to load image for "${name}":`, imageUrl);
     setImageError(true);
   };
+
+  // Add a fallback placeholder for specific items that are known to have image issues
+  useEffect(() => {
+    if ((name.includes("TV Samsung") || name.includes("Pressure Cooker")) && (!imageSrc || imageError)) {
+      // Fallback to a placeholder image for these specific items
+      setImageSrc("https://placehold.co/600x400?text=Item+Image");
+      setImageError(false);
+    }
+  }, [name, imageSrc, imageError]);
 
   return (
     <div className="relative h-48 bg-muted overflow-hidden">
@@ -32,9 +48,9 @@ const ImageContainer = memo(({
       </div>
       
       {/* Image or Placeholder */}
-      {imageUrl && !imageError ? (
+      {imageSrc && !imageError ? (
         <img
-          src={imageUrl}
+          src={imageSrc}
           alt={name}
           className="w-full h-full object-cover"
           onError={handleImageError}

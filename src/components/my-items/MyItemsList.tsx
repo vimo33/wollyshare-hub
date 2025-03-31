@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { PlusCircle, Edit, Trash2 } from "lucide-react";
+import { PlusCircle } from "lucide-react";
 import ItemForm from "./ItemForm";
 import { useMyItems } from "./useMyItems";
 import { useToast } from "@/hooks/use-toast";
@@ -53,10 +53,26 @@ const MyItemsList = ({ items, isLoading, error }: MyItemsListProps) => {
     if (!selectedItem) return;
     
     try {
-      await deleteItem(selectedItem.id);
-      toast({
-        title: "Item deleted successfully!",
-      });
+      const result = await deleteItem(selectedItem.id);
+      
+      if (result.success) {
+        toast({
+          title: "Item deleted successfully!",
+        });
+      } else if (result.hasBorrowRequests) {
+        toast({
+          variant: "destructive",
+          title: "Cannot delete item",
+          description: "This item has active borrow requests. Please cancel or resolve them before deleting.",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error deleting item",
+          description: result.message || "An error occurred while deleting the item.",
+        });
+      }
+      
       setIsDeleteDialogOpen(false);
     } catch (error: any) {
       toast({

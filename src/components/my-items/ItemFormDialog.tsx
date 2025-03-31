@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import * as z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -41,7 +41,7 @@ const ItemFormDialog = ({ open, onOpenChange, itemData, onSuccess }: ItemFormDia
   const { user } = useAuth();
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  
   // Set up form with default values
   const form = useForm<ItemFormValues>({
     resolver: zodResolver(formSchema),
@@ -53,6 +53,13 @@ const ItemFormDialog = ({ open, onOpenChange, itemData, onSuccess }: ItemFormDia
       weekendAvailability: "",
     },
   });
+  
+  // Reset form when itemData changes
+  useEffect(() => {
+    if (open && itemData) {
+      form.reset(itemData);
+    }
+  }, [open, itemData, form]);
 
   const onSubmit = async (data: ItemFormValues) => {
     if (!user) {
@@ -131,8 +138,6 @@ const ItemFormDialog = ({ open, onOpenChange, itemData, onSuccess }: ItemFormDia
               form={form} 
               initialImageUrl={itemData?.imageUrl || null}
               onImageChange={setImageFile}
-              showConditionField={false}
-              showLocationField={false}
             />
 
             <DialogFooter>

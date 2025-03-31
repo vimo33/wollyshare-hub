@@ -7,6 +7,7 @@ import BorrowRequestDialog from "./borrow/BorrowRequestDialog";
 import ImageContainer from "./items/ImageContainer";
 import ItemDetails from "./items/ItemDetails";
 import { categoryColors } from "./items/utils/category-utils";
+import { BrandTelegram } from "lucide-react";
 
 type ItemCardProps = {
   id: string;
@@ -91,7 +92,6 @@ const ItemCard = memo(({
           name={name}
           category={category}
           categoryColors={categoryColors}
-          // Removed onLike and isLiked props
         />
         
         <ItemDetails 
@@ -106,9 +106,10 @@ const ItemCard = memo(({
         {/* Action Button */}
         <div className="p-4 pt-0">
           <button 
-            className="w-full mt-4 py-2 rounded-lg bg-secondary hover:bg-secondary/80 text-sm font-medium transition-colors"
+            className="w-full mt-4 py-2 rounded-lg bg-secondary hover:bg-secondary/80 text-sm font-medium transition-colors flex items-center justify-center"
             onClick={handleRequestClick}
           >
+            <BrandTelegram className="mr-2 h-4 w-4" />
             Request to Borrow
           </button>
         </div>

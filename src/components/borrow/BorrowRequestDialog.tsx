@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, X } from "lucide-react";
+import { Loader2, X, BrandTelegram } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { createBorrowRequest } from "@/services/borrowRequestService";
 
@@ -93,7 +93,7 @@ const BorrowRequestDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px] sm:top-[15%] top-0 max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[425px] sm:top-[15%] top-[5%] max-h-[90vh] overflow-y-auto pt-8">
         <div className="absolute right-4 top-4">
           <Button 
             variant="ghost" 
@@ -133,6 +133,7 @@ const BorrowRequestDialog = ({
               {isSubmitting && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
+              <BrandTelegram className="mr-2 h-4 w-4" />
               Send Request
             </Button>
           </DialogFooter>

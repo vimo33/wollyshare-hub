@@ -39,7 +39,7 @@ const DesktopNavigation = () => {
             )}
           >
             <Package className="h-4 w-4" />
-            <span>My Items</span>
+            <span>My WollyShare</span>
           </Link>
         </>
       )}

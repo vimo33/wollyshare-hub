@@ -19,7 +19,7 @@ const MyItems = () => {
       <Tabs defaultValue="my-items" className="w-full mt-6">
         <TabsList className="w-full border-b">
           <TabsTrigger value="my-items">My Items</TabsTrigger>
-          <TabsTrigger value="history">History</TabsTrigger>
+          <TabsTrigger value="history">Shared Items</TabsTrigger>
           <TabsTrigger value="borrowed-items">Borrowed Items</TabsTrigger>
         </TabsList>
         

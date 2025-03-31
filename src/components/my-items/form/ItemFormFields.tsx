@@ -18,33 +18,15 @@ interface ItemFormFieldsProps {
   form: UseFormReturn<ItemFormValues>;
   initialImageUrl: string | null;
   onImageChange: (file: File | null) => void;
-  showConditionField?: boolean;
-  showLocationField?: boolean;
 }
 
 const ItemFormFields = ({ 
   form, 
   initialImageUrl,
-  onImageChange,
-  showConditionField = false,
-  showLocationField = false
+  onImageChange
 }: ItemFormFieldsProps) => {
-  const [previewUrl, setPreviewUrl] = useState<string | null>(initialImageUrl);
-
   const handleImageChange = (file: File | null) => {
     onImageChange(file);
-    
-    // Create preview URL if a file is selected
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
-      
-      // Clean up the object URL when no longer needed
-      return () => URL.revokeObjectURL(url);
-    } else {
-      setPreviewUrl(initialImageUrl);
-      return () => {}; // Return empty function when no cleanup needed
-    }
   };
 
   return (
@@ -54,7 +36,6 @@ const ItemFormFields = ({
         <FormLabel>Item Image</FormLabel>
         <ImageUploadField
           initialImageUrl={initialImageUrl}
-          // Remove previewUrl prop since it's not in the interface
           onImageChange={handleImageChange}
         />
       </div>
@@ -84,6 +65,7 @@ const ItemFormFields = ({
             <Select
               onValueChange={field.onChange}
               defaultValue={field.value}
+              value={field.value}
             >
               <FormControl>
                 <SelectTrigger>
@@ -121,54 +103,6 @@ const ItemFormFields = ({
         )}
       />
 
-      {/* Optional Condition Field */}
-      {showConditionField && (
-        <FormField
-          control={form.control}
-          name="condition"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Condition</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select condition" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="New">New</SelectItem>
-                  <SelectItem value="Like New">Like New</SelectItem>
-                  <SelectItem value="Good">Good</SelectItem>
-                  <SelectItem value="Fair">Fair</SelectItem>
-                  <SelectItem value="Poor">Poor</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      )}
-
-      {/* Optional Location Field */}
-      {showLocationField && (
-        <FormField
-          control={form.control}
-          name="location"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Location</FormLabel>
-              <FormControl>
-                <Input placeholder="Where is the item located?" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      )}
-
       {/* Availability Fields */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <FormField
@@ -180,6 +114,7 @@ const ItemFormFields = ({
               <Select
                 onValueChange={field.onChange}
                 defaultValue={field.value}
+                value={field.value}
               >
                 <FormControl>
                   <SelectTrigger>
@@ -208,6 +143,7 @@ const ItemFormFields = ({
               <Select
                 onValueChange={field.onChange}
                 defaultValue={field.value}
+                value={field.value}
               >
                 <FormControl>
                   <SelectTrigger>

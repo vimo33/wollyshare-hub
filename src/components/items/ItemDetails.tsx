@@ -1,6 +1,5 @@
 
 import { MapPin, Calendar } from "lucide-react";
-import { formatLocationDisplay } from "./utils/item-display-utils";
 import { formatAvailability } from "./utils/availability-utils";
 
 interface ItemDetailsProps {
@@ -20,8 +19,12 @@ const ItemDetails = ({
   weekdayAvailability, 
   weekendAvailability
 }: ItemDetailsProps) => {
-  // Use our utility function to format location display
-  const displayLocation = location || "No location specified";
+  // Make sure we display a meaningful location value - location should never be empty
+  const displayLocation = location && location.trim() !== "" 
+    ? location 
+    : (locationAddress && locationAddress.trim() !== "" 
+      ? locationAddress 
+      : "Location not specified");
 
   return (
     <div className="p-4">

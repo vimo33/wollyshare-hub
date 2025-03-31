@@ -4,12 +4,57 @@ import { Skeleton } from "@/components/ui/skeleton";
 import ItemsGrid from "../items/ItemsGrid";
 import { Item as SupabaseItem } from "@/types/supabase";
 import { Item as ItemType } from "@/types/item";
+import { format } from "date-fns";
+import { User, Calendar } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface BorrowedItemsListProps {
   items: SupabaseItem[];
   isLoading: boolean;
   error: Error | null;
 }
+
+const BorrowedItemCard = ({ item }: { item: SupabaseItem }) => {
+  const formattedDate = item.created_at 
+    ? format(new Date(item.created_at), "MMM d, yyyy")
+    : "Unknown date";
+
+  return (
+    <Card className="overflow-hidden">
+      <div className="h-48 bg-muted">
+        {item.image_url ? (
+          <img 
+            src={item.image_url} 
+            alt={item.name} 
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.currentTarget.src = "https://placehold.co/600x400?text=Item+Image";
+            }}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <span className="text-muted-foreground">No image</span>
+          </div>
+        )}
+      </div>
+      
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg">{item.name}</CardTitle>
+      </CardHeader>
+      
+      <CardContent className="space-y-2">
+        <p className="flex items-center text-sm">
+          <User className="h-4 w-4 mr-2 text-muted-foreground" />
+          <span>Owner: {item.ownerName || "Unknown"}</span>
+        </p>
+        <p className="flex items-center text-sm">
+          <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
+          <span>Borrowed on: {formattedDate}</span>
+        </p>
+      </CardContent>
+    </Card>
+  );
+};
 
 const BorrowedItemsList = ({ items, isLoading, error }: BorrowedItemsListProps) => {
   useEffect(() => {
@@ -49,28 +94,14 @@ const BorrowedItemsList = ({ items, isLoading, error }: BorrowedItemsListProps) 
     );
   }
 
-  // Map Supabase items to ItemType items expected by ItemsGrid
-  const mappedItems: ItemType[] = items.map(item => ({
-    id: item.id,
-    name: item.name,
-    description: item.description,
-    category: item.category,
-    image_url: item.image_url,
-    user_id: item.user_id,
-    weekday_availability: item.weekday_availability,
-    weekend_availability: item.weekend_availability,
-    location: item.location,
-    condition: item.condition,
-    ownerName: item.ownerName,
-    locationAddress: item.locationAddress,
-    created_at: item.created_at,
-    updated_at: item.updated_at
-  }));
-
   return (
     <div>
       <h3 className="text-lg font-semibold mb-4">Items You've Borrowed</h3>
-      <ItemsGrid items={mappedItems} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {items.map(item => (
+          <BorrowedItemCard key={item.id} item={item} />
+        ))}
+      </div>
     </div>
   );
 };
