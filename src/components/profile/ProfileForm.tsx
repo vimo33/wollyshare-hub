@@ -89,8 +89,12 @@ const ProfileForm = ({ profile, userEmail, onProfileUpdate }) => {
     return location ? location.address : "";
   };
 
-  // Find the current location's address
-  const currentLocationAddress = profile?.location ? getLocationAddress(profile.location) : "";
+  // Find the current location's name and address
+  const getLocationWithAddress = (locationId: string): string => {
+    const location = locations.find(loc => loc.id === locationId);
+    if (!location) return "Location not specified";
+    return `${location.name}, ${location.address}`;
+  };
 
   async function handleSubmit(values: UpdateProfileSchema) {
     setIsSubmitting(true);
@@ -192,7 +196,7 @@ const ProfileForm = ({ profile, userEmail, onProfileUpdate }) => {
               </FormControl>
               {field.value && (
                 <FormDescription>
-                  Address: {getLocationAddress(field.value)}
+                  Location: {getLocationWithAddress(field.value)}
                 </FormDescription>
               )}
               <FormMessage />

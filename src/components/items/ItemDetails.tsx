@@ -21,7 +21,7 @@ const ItemDetails = ({
 }: ItemDetailsProps) => {
   // Display location with address if available
   const displayLocation = location && location.trim() !== "" 
-    ? (locationAddress ? `${location} (${locationAddress})` : location)
+    ? (locationAddress ? `${location}, ${locationAddress}` : location)
     : "Location not specified";
 
   return (

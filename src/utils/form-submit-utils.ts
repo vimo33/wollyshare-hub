@@ -1,3 +1,4 @@
+
 import { ItemFormValues } from "@/components/my-items/types";
 import { supabase } from "@/integrations/supabase/client";
 import sanitizeHtml from "sanitize-html";
@@ -104,6 +105,8 @@ export const handleItemSubmit = async ({
   existingImageUrl?: string;
 }): Promise<{ success: boolean; message?: string; itemId?: string }> => {
   try {
+    console.log("handleItemSubmit called with:", { data, userId, itemId });
+    
     // Step 1: Create or update the item record
     let result;
     if (itemId) {
