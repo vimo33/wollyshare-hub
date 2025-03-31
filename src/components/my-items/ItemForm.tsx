@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMyItems } from "./useMyItems";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,6 +16,9 @@ import {
 } from "@/components/ui/select";
 import { Loader2, Upload, X } from "lucide-react";
 import { uploadImage } from "./utils/image-upload-utils";
+import { handleItemSubmit } from "@/utils/form-submit-utils";
+import { supabase } from "@/integrations/supabase/client";
+import { useProfileData } from "@/hooks/useProfileData";
 
 interface ItemFormProps {
   onClose: () => void;
@@ -23,6 +26,7 @@ interface ItemFormProps {
 
 const ItemForm = ({ onClose }: ItemFormProps) => {
   const { user } = useAuth();
+  const { profile } = useProfileData();
   const { refetchItems } = useMyItems();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -35,6 +39,8 @@ const ItemForm = ({ onClose }: ItemFormProps) => {
     description: "",
     weekday_availability: "anytime",
     weekend_availability: "anytime",
+    location: profile?.location || "",
+    condition: "Good",
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -87,29 +93,27 @@ const ItemForm = ({ onClose }: ItemFormProps) => {
     try {
       setIsSubmitting(true);
       
-      // Upload image if selected
-      let image_url = null;
-      if (imageFile && user) {
-        image_url = await uploadImage(imageFile, user.id);
-      }
-      
-      const response = await fetch("/api/items", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      // Using the utility function to handle form submission
+      const result = await handleItemSubmit({
+        data: {
+          name: formData.name,
+          category: formData.category,
+          description: formData.description,
+          weekdayAvailability: formData.weekday_availability,
+          weekendAvailability: formData.weekend_availability,
+          location: formData.location || profile?.location || null,
+          condition: formData.condition,
         },
-        body: JSON.stringify({
-          ...formData,
-          user_id: user.id,
-          condition: "Good", // Default value
-          location: "Home", // Default value
-          image_url
-        }),
+        userId: user.id,
+        imageFile,
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to add item");
+      if (!result.success) {
+        throw new Error(result.message || "Failed to add item");
       }
+
+      // Log the successful result
+      console.log("Item added successfully:", result);
 
       toast({
         title: "Item added successfully!",
@@ -119,6 +123,7 @@ const ItemForm = ({ onClose }: ItemFormProps) => {
       refetchItems();
       onClose();
     } catch (error: any) {
+      console.error("Error adding item:", error);
       toast({
         title: "Error adding item",
         description: error.message,
@@ -218,6 +223,23 @@ const ItemForm = ({ onClose }: ItemFormProps) => {
         />
       </div>
 
+      {/* Location Field - Use the user's profile location */}
+      <div className="space-y-2">
+        <Label htmlFor="location">Location</Label>
+        <Input
+          id="location"
+          name="location"
+          value={formData.location}
+          onChange={handleChange}
+          placeholder="Where is this item located?"
+        />
+        {!formData.location && profile?.location && (
+          <p className="text-xs text-muted-foreground">
+            Default: {profile.location}
+          </p>
+        )}
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="weekday_availability">Weekday Availability</Label>
@@ -256,6 +278,25 @@ const ItemForm = ({ onClose }: ItemFormProps) => {
             </SelectContent>
           </Select>
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="condition">Condition</Label>
+        <Select
+          defaultValue={formData.condition}
+          onValueChange={(value) => handleSelectChange("condition", value)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select condition" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="New">New</SelectItem>
+            <SelectItem value="Excellent">Excellent</SelectItem>
+            <SelectItem value="Good">Good</SelectItem>
+            <SelectItem value="Fair">Fair</SelectItem>
+            <SelectItem value="Poor">Poor</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="flex justify-end space-x-2 pt-4">

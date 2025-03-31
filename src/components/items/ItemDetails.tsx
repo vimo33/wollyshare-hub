@@ -5,8 +5,8 @@ import { formatAvailability } from "./utils/availability-utils";
 interface ItemDetailsProps {
   name: string;
   ownerName: string;
-  location: string;
-  locationAddress?: string;
+  location: string | null;
+  locationAddress?: string | null;
   weekdayAvailability: string;
   weekendAvailability: string;
 }

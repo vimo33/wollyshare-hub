@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,6 +19,8 @@ export const useMyItems = () => {
         throw new Error("User not authenticated");
       }
 
+      console.log("Fetching items for user:", user.id);
+      
       const { data, error: supabaseError } = await supabase
         .from("items")
         .select("*")
@@ -26,6 +29,8 @@ export const useMyItems = () => {
       if (supabaseError) {
         throw supabaseError;
       }
+
+      console.log("Items fetched successfully:", data);
 
       // Transform the data to match the Item type
       const transformedItems: Item[] = data.map((item) => ({
@@ -88,6 +93,8 @@ export const useMyItems = () => {
       if (deleteError) {
         throw deleteError;
       }
+
+      console.log("Item deleted successfully:", itemId);
 
       // Update local state after successful deletion
       setItems((prevItems) => prevItems.filter((item) => item.id !== itemId));

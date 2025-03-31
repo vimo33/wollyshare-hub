@@ -10,7 +10,7 @@ export const transformItemData = (
   // Get location details if available
   const locationData = item.location && locationMap?.get(item.location);
   
-  // Determine location display and address
+  // Determine location display and address - prefer data from the location map
   let locationName = userInfo.location || null;
   let locationAddress = null;
   
@@ -21,6 +21,7 @@ export const transformItemData = (
     locationAddress = locData?.address || null;
   }
   
+  // Ensure we have the basics needed for the item
   return {
     id: item.id,
     name: item.name,

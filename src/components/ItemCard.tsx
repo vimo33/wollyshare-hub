@@ -1,3 +1,4 @@
+
 import { useState, useCallback, memo } from "react";
 import { Item } from "@/types/supabase";
 import { useToast } from "@/hooks/use-toast";
@@ -12,8 +13,8 @@ type ItemCardProps = {
   id: string;
   name: string;
   ownerName: string;
-  location: string;
-  locationAddress?: string;
+  location: string | null;
+  locationAddress?: string | null;
   weekdayAvailability: string;
   weekendAvailability: string;
   category: "tools" | "kitchen" | "electronics" | "sports" | "other";
@@ -96,7 +97,7 @@ const ItemCard = memo(({
         <ItemDetails 
           name={name}
           ownerName={ownerName}
-          location={location}
+          location={location || ""}
           locationAddress={locationAddress}
           weekdayAvailability={weekdayAvailability}
           weekendAvailability={weekendAvailability}

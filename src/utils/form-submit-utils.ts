@@ -5,6 +5,8 @@ import sanitizeHtml from "sanitize-html";
 
 export const submitItemForm = async (values: ItemFormValues, userId: string): Promise<{ success: boolean; message?: string; error?: any; itemId?: string }> => {
   try {
+    console.log("Submitting item form with values:", values);
+    
     // Sanitize user inputs
     const sanitizedValues = {
       ...values,
@@ -19,7 +21,8 @@ export const submitItemForm = async (values: ItemFormValues, userId: string): Pr
       condition: values.condition ? sanitizeHtml(values.condition, { allowedTags: [] }) : null
     };
 
-    console.log("Submitting item form with values:", sanitizedValues);
+    // Log the sanitized values to validate them before insert
+    console.log("Sanitized values for submission:", sanitizedValues);
 
     const { data, error } = await supabase.from("items").insert({
       name: sanitizedValues.name,
@@ -39,7 +42,7 @@ export const submitItemForm = async (values: ItemFormValues, userId: string): Pr
     
     console.log("Item added successfully:", data);
     return { success: true, itemId: data?.[0]?.id };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error submitting item form:", error);
     return { 
       success: false, 
@@ -65,6 +68,8 @@ export const updateItemForm = async (itemId: string, values: ItemFormValues, use
       condition: values.condition ? sanitizeHtml(values.condition, { allowedTags: [] }) : null
     };
 
+    console.log("Updating item with values:", sanitizedValues);
+
     const { error } = await supabase
       .from("items")
       .update({
@@ -81,7 +86,7 @@ export const updateItemForm = async (itemId: string, values: ItemFormValues, use
 
     if (error) throw error;
     return { success: true };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error updating item:", error);
     return { 
       success: false, 
@@ -107,21 +112,50 @@ export const handleItemSubmit = async ({
   try {
     console.log("handleItemSubmit called with:", { data, userId, itemId });
     
-    // Step 1: Create or update the item record
+    // Handle image upload first if needed
+    let image_url = existingImageUrl;
+    if (imageFile) {
+      try {
+        // Create a unique file path
+        const filePath = `items/${userId}/${Date.now()}-${imageFile.name}`;
+        
+        // Upload the file
+        const { error: uploadError } = await supabase.storage
+          .from('items')
+          .upload(filePath, imageFile);
+        
+        if (uploadError) throw uploadError;
+        
+        // Get the public URL
+        const { data: publicUrlData } = supabase.storage
+          .from('items')
+          .getPublicUrl(filePath);
+        
+        image_url = publicUrlData.publicUrl;
+        console.log("Image uploaded successfully:", image_url);
+      } catch (error: any) {
+        console.error("Error uploading image:", error);
+        // Continue with item creation/update even if image upload fails
+      }
+    }
+    
+    // Now create or update the item with the image URL if available
     let result;
     if (itemId) {
-      result = await updateItemForm(itemId, data, userId);
+      result = await updateItemForm(itemId, {
+        ...data,
+        ...(image_url && { image_url })
+      }, userId);
     } else {
-      result = await submitItemForm(data, userId);
+      result = await submitItemForm({
+        ...data,
+        ...(image_url && { image_url })
+      }, userId);
     }
 
     if (!result.success) {
       throw new Error(result.message || "Failed to save item data");
     }
-
-    // For this simplified example, we're not handling image uploads
-    // In a real implementation, you would upload the imageFile to storage
-    // and update the item record with the new image URL
 
     return { 
       success: true, 
