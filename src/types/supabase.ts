@@ -32,7 +32,7 @@ export interface Profile {
   username: string;
   full_name: string;
   avatar_url?: string;
-  location?: string;
+  location: string; // Changed from optional to required
   telegram_id?: string;
   telegram_username?: string;
   created_at: string;

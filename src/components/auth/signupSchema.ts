@@ -1,3 +1,4 @@
+
 import * as z from "zod";
 
 export const signupSchema = z.object({
@@ -14,7 +15,9 @@ export const signupSchema = z.object({
   fullName: z
     .string()
     .min(2, { message: "Full name must be at least 2 characters" }),
-  location: z.string().optional(),
+  location: z
+    .string()
+    .min(1, { message: "Location is required" }),
   telegramId: z.string().optional(),
   telegramUsername: z.string().optional(),
 });

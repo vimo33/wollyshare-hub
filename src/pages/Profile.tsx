@@ -66,8 +66,12 @@ const ProfilePage: React.FC = () => {
     );
   }
 
-  // We're using the profile object directly without transformation
-  // This ensures we use the same type that comes from the database
+  // Ensure the profile has a location value before rendering the form
+  const profileWithDefaults = profile ? {
+    ...profile,
+    location: profile.location || "" // Provide a default empty string if null
+  } : null;
+
   return (
     <div className="container mx-auto py-10">
       <Card className="max-w-2xl mx-auto">
@@ -76,7 +80,7 @@ const ProfilePage: React.FC = () => {
           description="View and update your profile information"
         />
         <ProfileForm 
-          profile={profile}
+          profile={profileWithDefaults}
           userEmail={user.email}
           onProfileUpdate={handleProfileUpdate}
         />

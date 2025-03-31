@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -23,15 +23,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Label } from "@/components/ui/label"; // Add the import for Label
-import { updateProfile } from "@/services/profileService"; // Import updateProfile service
+import { Label } from "@/components/ui/label";
+import { updateProfile } from "@/services/profileService";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ProfileFormProps {
   profile: {
     username: string | null;
     full_name: string | null;
-    location: string | null;
+    location: string;
     telegram_username: string | null;
   } | null;
   userEmail: string | null;
@@ -50,6 +51,38 @@ type UpdateProfileSchema = z.infer<typeof updateProfileSchema>;
 const ProfileForm = ({ profile, userEmail, onProfileUpdate }: ProfileFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const [locations, setLocations] = useState<{id: string, name: string, address: string}[]>([]);
+  const [isLoadingLocations, setIsLoadingLocations] = useState(true);
+
+  // Fetch community locations
+  useEffect(() => {
+    const fetchLocations = async () => {
+      setIsLoadingLocations(true);
+      try {
+        const { data, error } = await supabase
+          .from('community_locations')
+          .select('*')
+          .order('name');
+          
+        if (error) {
+          console.error('Error fetching locations:', error);
+          toast({
+            variant: "destructive",
+            title: "Could not load locations",
+            description: "Please try again later"
+          });
+        } else {
+          setLocations(data || []);
+        }
+      } catch (err) {
+        console.error('Error in location fetch:', err);
+      } finally {
+        setIsLoadingLocations(false);
+      }
+    };
+    
+    fetchLocations();
+  }, [toast]);
 
   const form = useForm<UpdateProfileSchema>({
     resolver: zodResolver(updateProfileSchema),
@@ -66,7 +99,7 @@ const ProfileForm = ({ profile, userEmail, onProfileUpdate }: ProfileFormProps) 
     console.log("Submitting profile update:", values);
     
     try {
-      // Use the profile service instead of direct fetch
+      // Use the profile service
       const updatedProfile = await updateProfile({
         username: values.username,
         full_name: values.full_name,
@@ -158,16 +191,17 @@ const ProfileForm = ({ profile, userEmail, onProfileUpdate }: ProfileFormProps) 
                   onValueChange={field.onChange} 
                   defaultValue={field.value}
                   value={field.value}
+                  disabled={isLoadingLocations}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select your community location" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Wollishofen">Wollishofen</SelectItem>
-                    <SelectItem value="Enge">Enge</SelectItem>
-                    <SelectItem value="Leimbach">Leimbach</SelectItem>
-                    <SelectItem value="Adliswil">Adliswil</SelectItem>
-                    <SelectItem value="Kilchberg">Kilchberg</SelectItem>
+                    {locations.map((loc) => (
+                      <SelectItem key={loc.id} value={loc.id}>
+                        {loc.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </FormControl>
