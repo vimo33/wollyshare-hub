@@ -18,7 +18,14 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { ItemFormValues } from "./types";
 import { handleItemSubmit } from "../../utils/form-submit-utils"; 
-import ItemFormFields from "./form/ItemFormFields";
+
+// Import our form components
+import CategorySelect from "./form/CategorySelect";
+import AvailabilitySelect from "./form/AvailabilitySelect";
+import ConditionSelect from "./form/ConditionSelect";
+import FormSection from "./form/FormSection";
+import FormActions from "./form/FormActions";
+import ImageUploadField from "./form/ImageUploadField";
 
 // Define form schema
 const formSchema = z.object({
@@ -113,6 +120,10 @@ const ItemFormDialog = ({ open, onOpenChange, itemData, onSuccess }: ItemFormDia
     }
   };
 
+  const handleCancel = () => {
+    onOpenChange(false);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
@@ -136,20 +147,77 @@ const ItemFormDialog = ({ open, onOpenChange, itemData, onSuccess }: ItemFormDia
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <ItemFormFields 
-              form={form} 
+            <ImageUploadField 
               initialImageUrl={itemData?.imageUrl || null}
               onImageChange={setImageFile}
             />
 
+            <FormSection>
+              <div className="space-y-2">
+                <label htmlFor="name" className="text-sm font-medium">Item Name</label>
+                <input
+                  id="name"
+                  className="w-full p-2 border rounded-md"
+                  {...form.register("name")}
+                />
+                {form.formState.errors.name && (
+                  <p className="text-red-500 text-xs">{form.formState.errors.name.message}</p>
+                )}
+              </div>
+            </FormSection>
+
+            <CategorySelect
+              value={form.watch("category")}
+              onChange={(value) => form.setValue("category", value)}
+            />
+
+            <FormSection>
+              <div className="space-y-2">
+                <label htmlFor="description" className="text-sm font-medium">Description</label>
+                <textarea
+                  id="description"
+                  className="w-full p-2 border rounded-md min-h-[100px]"
+                  {...form.register("description")}
+                />
+              </div>
+            </FormSection>
+
+            <FormSection>
+              <div className="space-y-2">
+                <label htmlFor="location" className="text-sm font-medium">Location</label>
+                <input
+                  id="location"
+                  className="w-full p-2 border rounded-md"
+                  {...form.register("location")}
+                  placeholder="Where is this item located?"
+                />
+              </div>
+            </FormSection>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <AvailabilitySelect
+                type="weekday"
+                value={form.watch("weekdayAvailability")}
+                onChange={(value) => form.setValue("weekdayAvailability", value)}
+              />
+
+              <AvailabilitySelect
+                type="weekend"
+                value={form.watch("weekendAvailability")}
+                onChange={(value) => form.setValue("weekendAvailability", value)}
+              />
+            </div>
+
+            <ConditionSelect
+              value={form.watch("condition")}
+              onChange={(value) => form.setValue("condition", value)}
+            />
+
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {itemData ? "Save Changes" : "Add Item"}
-              </Button>
+              <FormActions 
+                onCancel={handleCancel}
+                isSubmitting={isSubmitting}
+              />
             </DialogFooter>
           </form>
         </Form>
