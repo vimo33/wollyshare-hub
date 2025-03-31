@@ -23,7 +23,7 @@ serve(async (req) => {
     const requestData = await req.json();
     console.log("Received notification request with data:", JSON.stringify(requestData));
     
-    const { chat_id, text } = requestData;
+    const { chat_id, text, reply_markup } = requestData;
     console.log(`Attempting to send message to chat_id: ${chat_id}, message: ${text}`);
     
     if (!chat_id || !text) {
@@ -34,23 +34,32 @@ serve(async (req) => {
     const telegramApiUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
     console.log(`Making request to Telegram API at: ${telegramApiUrl.split(TELEGRAM_BOT_TOKEN).join("REDACTED")}`);
     
+    // Create the payload, including reply_markup if provided
+    const payload = {
+      chat_id,
+      text,
+      parse_mode: "HTML",  // Allow HTML formatting in messages
+      reply_markup: reply_markup || undefined
+    };
+
+    console.log("Sending payload to Telegram:", JSON.stringify({
+      ...payload,
+      chat_id: payload.chat_id // Keep the original chat_id for logging
+    }));
+    
     const telegramResponse = await fetch(telegramApiUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        chat_id,
-        text,
-        parse_mode: "HTML",  // Allow HTML formatting in messages
-      }),
+      body: JSON.stringify(payload),
     });
     
     const telegramData = await telegramResponse.json();
     
     if (!telegramResponse.ok) {
       console.error("Telegram API error response:", telegramData);
-      console.error("Request details:", { chat_id, text_length: text?.length });
+      console.error("Request details:", { chat_id, text_length: text?.length, has_reply_markup: !!reply_markup });
       throw new Error(`Telegram API error: ${JSON.stringify(telegramData)}`);
     }
     

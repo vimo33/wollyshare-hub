@@ -14,10 +14,10 @@ export const useTelegramChat = () => {
         itemName
       });
 
-      // Get telegram_id for requester and owner
+      // Get telegram_id, telegram_username, and other data for requester and owner
       const [requesterResult, ownerResult] = await Promise.all([
-        supabase.from('profiles').select('telegram_id, username, full_name').eq('id', requesterId).single(),
-        supabase.from('profiles').select('telegram_id, username, full_name').eq('id', ownerId).single()
+        supabase.from('profiles').select('telegram_id, telegram_username, username, full_name').eq('id', requesterId).single(),
+        supabase.from('profiles').select('telegram_id, telegram_username, username, full_name').eq('id', ownerId).single()
       ]);
 
       console.log("Profile fetch results:", {
@@ -29,6 +29,8 @@ export const useTelegramChat = () => {
       const ownerTelegramId = ownerResult.data?.telegram_id;
       const requesterName = requesterResult.data?.full_name || requesterResult.data?.username || 'Someone';
       const ownerName = ownerResult.data?.full_name || ownerResult.data?.username || 'the owner';
+      const requesterUsername = requesterResult.data?.telegram_username;
+      const ownerUsername = ownerResult.data?.telegram_username;
 
       if (!requesterTelegramId && !ownerTelegramId) {
         console.warn('No Telegram IDs found for requester or owner - skipping notifications');
@@ -39,29 +41,47 @@ export const useTelegramChat = () => {
         requester: { 
           id: requesterId, 
           telegramId: requesterTelegramId,
+          telegramUsername: requesterUsername,
           name: requesterName 
         },
         owner: { 
           id: ownerId, 
           telegramId: ownerTelegramId,
+          telegramUsername: ownerUsername,
           name: ownerName
         }
       });
 
-      // Send messages to both users
+      // Send messages to both users with inline keyboard buttons
       const messages = [];
 
       if (requesterTelegramId) {
+        // Create message for requester with button to message owner
+        const replyMarkup = ownerUsername ? {
+          inline_keyboard: [[
+            { text: "Message Owner", url: `https://t.me/${ownerUsername}` }
+          ]]
+        } : undefined;
+
         messages.push({ 
           chat_id: requesterTelegramId, 
-          text: `You requested <b>"${itemName}"</b>.\n\nThe owner, ${ownerName}, has been notified. You can now chat with them directly in Telegram.` 
+          text: `You requested <b>"${itemName}"</b>.\n\nThe owner, ${ownerName}, has been notified. You can now chat with them directly in Telegram.`,
+          reply_markup: replyMarkup
         });
       }
 
       if (ownerTelegramId) {
+        // Create message for owner with button to message requester
+        const replyMarkup = requesterUsername ? {
+          inline_keyboard: [[
+            { text: "Message Requester", url: `https://t.me/${requesterUsername}` }
+          ]]
+        } : undefined;
+
         messages.push({ 
           chat_id: ownerTelegramId, 
-          text: `<b>${requesterName}</b> has requested your item <b>"${itemName}"</b>.\n\nThey've been notified about their request. You can now chat with them directly in Telegram.` 
+          text: `<b>${requesterName}</b> has requested your item <b>"${itemName}"</b>.\n\nThey've been notified about their request. You can now chat with them directly in Telegram.`,
+          reply_markup: replyMarkup
         });
       }
 
@@ -69,7 +89,7 @@ export const useTelegramChat = () => {
 
       // Send all messages and collect results
       const results = await Promise.all(messages.map(async (msg) => {
-        console.log(`Sending notification to chat_id: ${msg.chat_id}`);
+        console.log(`Sending notification to chat_id: ${msg.chat_id} with reply markup: ${msg.reply_markup ? 'yes' : 'no'}`);
         try {
           const result = await supabase.functions.invoke('send-telegram-notification', {
             body: msg

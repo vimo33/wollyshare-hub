@@ -23,10 +23,10 @@ const sendTelegramNotifications = async (
   });
 
   try {
-    // Get telegram_id and username for requester and owner
+    // Get telegram_id, telegram_username and user details for requester and owner
     const [requesterResult, ownerResult] = await Promise.all([
-      supabase.from('profiles').select('telegram_id, username, full_name').eq('id', requesterId).single(),
-      supabase.from('profiles').select('telegram_id, username, full_name').eq('id', ownerId).single()
+      supabase.from('profiles').select('telegram_id, telegram_username, username, full_name').eq('id', requesterId).single(),
+      supabase.from('profiles').select('telegram_id, telegram_username, username, full_name').eq('id', ownerId).single()
     ]);
 
     console.log("Retrieved profile data:", {
@@ -48,6 +48,8 @@ const sendTelegramNotifications = async (
     const ownerTelegramId = ownerResult.data?.telegram_id;
     const requesterName = requesterResult.data?.full_name || requesterResult.data?.username || 'Someone';
     const ownerName = ownerResult.data?.full_name || ownerResult.data?.username || 'the owner';
+    const requesterUsername = requesterResult.data?.telegram_username;
+    const ownerUsername = ownerResult.data?.telegram_username;
 
     if (!requesterTelegramId && !ownerTelegramId) {
       console.warn('No Telegram IDs found for requester or owner - skipping notifications');
@@ -58,37 +60,58 @@ const sendTelegramNotifications = async (
       requester: { 
         id: requesterId, 
         telegramId: requesterTelegramId,
+        telegramUsername: requesterUsername,
         name: requesterName 
       },
       owner: { 
         id: ownerId, 
         telegramId: ownerTelegramId,
+        telegramUsername: ownerUsername,
         name: ownerName 
       }
     });
 
-    // Prepare messages with more detailed information
+    // Prepare messages with direct message buttons
     const messages = [];
 
     if (requesterTelegramId) {
+      // Add reply_markup with inline keyboard if owner has a username
+      const replyMarkup = ownerUsername ? {
+        inline_keyboard: [[
+          { text: "Message Owner", url: `https://t.me/${ownerUsername}` }
+        ]]
+      } : undefined;
+
       messages.push({ 
         chat_id: requesterTelegramId, 
-        text: `You requested <b>"${itemName}"</b>.\n\nThe owner, ${ownerName}, has been notified. You can now chat with them directly in Telegram.`
+        text: `You requested <b>"${itemName}"</b>.\n\nThe owner, ${ownerName}, has been notified. You can now chat with them directly in Telegram.`,
+        reply_markup: replyMarkup
       });
     }
 
     if (ownerTelegramId) {
+      // Add reply_markup with inline keyboard if requester has a username
+      const replyMarkup = requesterUsername ? {
+        inline_keyboard: [[
+          { text: "Message Requester", url: `https://t.me/${requesterUsername}` }
+        ]]
+      } : undefined;
+
       messages.push({ 
         chat_id: ownerTelegramId, 
-        text: `<b>${requesterName}</b> has requested your item <b>"${itemName}"</b>.\n\nThey've been notified about their request. You can now chat with them directly in Telegram.`
+        text: `<b>${requesterName}</b> has requested your item <b>"${itemName}"</b>.\n\nThey've been notified about their request. You can now chat with them directly in Telegram.`,
+        reply_markup: replyMarkup
       });
     }
 
-    console.log('Prepared messages for sending:', JSON.stringify(messages));
+    console.log('Prepared messages for sending:', JSON.stringify(messages.map(m => ({
+      ...m,
+      has_reply_markup: !!m.reply_markup
+    }))));
 
     // Send all messages and collect results
     const results = await Promise.all(messages.map(async (msg) => {
-      console.log(`Sending notification to chat_id: ${msg.chat_id}`);
+      console.log(`Sending notification to chat_id: ${msg.chat_id} with reply markup: ${msg.reply_markup ? 'yes' : 'no'}`);
       try {
         const result = await supabase.functions.invoke('send-telegram-notification', {
           body: msg

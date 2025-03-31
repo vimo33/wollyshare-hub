@@ -28,6 +28,7 @@ const formSchema = z.object({
     message: "Full name must be at least 2 characters.",
   }),
   telegramId: z.string().optional(),
+  telegramUsername: z.string().optional(),
 });
 
 interface ProfileFormProps {
@@ -47,6 +48,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ profile, userEmail, onProfile
       username: "",
       fullName: "",
       telegramId: "",
+      telegramUsername: "",
     },
   });
 
@@ -57,6 +59,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ profile, userEmail, onProfile
         username: profile.username || "",
         fullName: profile.full_name || "",
         telegramId: profile.telegram_id || "",
+        telegramUsername: profile.telegram_username || "",
       });
     }
   }, [profile, form]);
@@ -68,7 +71,10 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ profile, userEmail, onProfile
         throw new Error("User not authenticated");
       }
 
-      console.log("Updating profile with Telegram ID:", values.telegramId);
+      console.log("Updating profile with Telegram data:", {
+        telegramId: values.telegramId,
+        telegramUsername: values.telegramUsername
+      });
 
       const { data, error } = await supabase.from("profiles").upsert(
         {
@@ -76,6 +82,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ profile, userEmail, onProfile
           username: values.username,
           full_name: values.fullName,
           telegram_id: values.telegramId,
+          telegram_username: values.telegramUsername?.replace('@', ''), // Remove @ if included
           updated_at: new Date().toISOString(),
         },
         { onConflict: "id" }
@@ -93,6 +100,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ profile, userEmail, onProfile
           username: values.username,
           full_name: values.fullName,
           telegram_id: values.telegramId,
+          telegram_username: values.telegramUsername?.replace('@', ''), // Remove @ if included
         },
       });
       
@@ -151,6 +159,21 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ profile, userEmail, onProfile
             <li>Message @WollyShareBot with /start to enable notifications</li>
             <li>Find your Telegram ID by messaging @userinfobot on Telegram</li>
             <li>Paste the numeric ID here (e.g., 123456789)</li>
+          </ol>
+        </FormItem>
+        <FormItem>
+          <FormLabel>Telegram Username</FormLabel>
+          <FormControl>
+            <Input placeholder="your_username" {...form.register("telegramUsername")} disabled={isSubmitting} />
+          </FormControl>
+          <FormDescription>
+            Enter your Telegram username to enable direct messaging. This is required for the "Message" button in notifications.
+          </FormDescription>
+          <FormMessage />
+          <ol className="text-sm text-muted-foreground mt-1 list-decimal pl-5 space-y-1">
+            <li>In Telegram, go to Settings → Username</li>
+            <li>Enter your username without the @ symbol</li>
+            <li>Paste it here (e.g., johndoe)</li>
           </ol>
         </FormItem>
         <Button type="submit" disabled={isSubmitting}>

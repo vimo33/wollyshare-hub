@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -36,6 +37,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ invitationToken }) => {
       fullName: "",
       location: undefined,
       telegramId: "",
+      telegramUsername: "",
     },
   });
 
@@ -50,7 +52,8 @@ const SignupForm: React.FC<SignupFormProps> = ({ invitationToken }) => {
         invitationToken,
         metadata: {
           location: data.location,
-          telegram_id: data.telegramId
+          telegram_id: data.telegramId,
+          telegram_username: data.telegramUsername?.replace('@', '') // Remove @ if included
         }
       });
 
@@ -183,6 +186,38 @@ const SignupForm: React.FC<SignupFormProps> = ({ invitationToken }) => {
                 <Input placeholder="123456789" {...field} />
               </FormControl>
               <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="telegramUsername"
+          render={({ field }) => (
+            <FormItem>
+              <div className="flex items-center gap-2">
+                <FormLabel>Telegram Username (Optional)</FormLabel>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-4 w-4 p-0">
+                        <HelpCircle className="h-4 w-4" />
+                        <span className="sr-only">Telegram Username Help</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Set a username in Telegram under Settings → Username</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <FormControl>
+                <Input placeholder="johndoe" {...field} />
+              </FormControl>
+              <FormMessage />
+              <FormDescription className="text-xs text-muted-foreground">
+                This is required for direct messaging in Telegram notifications
+              </FormDescription>
             </FormItem>
           )}
         />

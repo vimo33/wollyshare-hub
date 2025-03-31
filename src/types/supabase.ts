@@ -34,6 +34,7 @@ export interface Profile {
   avatar_url?: string;
   location?: string;
   telegram_id?: string;
+  telegram_username?: string;
   created_at: string;
   updated_at: string;
   email?: string;
