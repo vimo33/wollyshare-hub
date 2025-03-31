@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { getProfile } from "@/services/profileService";
@@ -14,7 +14,7 @@ export const useProfileData = () => {
   const [loading, setLoading] = useState(true);
 
   // Fetch the latest profile data
-  const fetchLatestProfile = async () => {
+  const fetchLatestProfile = useCallback(async () => {
     if (user) {
       setLoading(true);
       try {
@@ -31,7 +31,7 @@ export const useProfileData = () => {
         setLoading(false);
       }
     }
-  };
+  }, [user, toast]);
 
   // Redirect if not logged in and fetch profile data
   useEffect(() => {
@@ -40,7 +40,7 @@ export const useProfileData = () => {
     } else {
       fetchLatestProfile();
     }
-  }, [user, navigate]);
+  }, [user, navigate, fetchLatestProfile]);
 
   // Function to handle profile updates
   const handleProfileUpdate = async () => {

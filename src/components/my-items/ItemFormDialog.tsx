@@ -14,10 +14,10 @@ import {
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Loader2, X } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { ItemFormValues } from "./types";
-import { submitItemForm, updateItemForm } from "../../utils/form-submit-utils"; 
+import { handleItemSubmit } from "../../utils/form-submit-utils"; 
 import ItemFormFields from "./form/ItemFormFields";
 
 // Define form schema
@@ -27,6 +27,8 @@ const formSchema = z.object({
   description: z.string().optional(),
   weekdayAvailability: z.string().min(1, { message: "Please select weekday availability" }),
   weekendAvailability: z.string().min(1, { message: "Please select weekend availability" }),
+  location: z.string().optional(),
+  condition: z.string().optional(),
 });
 
 interface ItemFormDialogProps {
@@ -51,6 +53,8 @@ const ItemFormDialog = ({ open, onOpenChange, itemData, onSuccess }: ItemFormDia
       description: "",
       weekdayAvailability: "",
       weekendAvailability: "",
+      location: "",
+      condition: ""
     },
   });
   
@@ -74,15 +78,13 @@ const ItemFormDialog = ({ open, onOpenChange, itemData, onSuccess }: ItemFormDia
     setIsSubmitting(true);
 
     try {
-      let result;
-      
-      if (itemData?.id) {
-        // Update existing item
-        result = await updateItemForm(itemData.id, data, user.id);
-      } else {
-        // Create new item
-        result = await submitItemForm(data, user.id);
-      }
+      const result = await handleItemSubmit({
+        data,
+        userId: user.id,
+        imageFile,
+        itemId: itemData?.id,
+        existingImageUrl: itemData?.imageUrl
+      });
 
       if (result.success) {
         toast({

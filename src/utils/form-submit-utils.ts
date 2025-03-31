@@ -3,7 +3,7 @@ import { ItemFormValues } from "@/components/my-items/types";
 import { supabase } from "@/integrations/supabase/client";
 import sanitizeHtml from "sanitize-html";
 
-export const submitItemForm = async (values: ItemFormValues, userId: string): Promise<{ success: boolean; message?: string; error?: any }> => {
+export const submitItemForm = async (values: ItemFormValues, userId: string): Promise<{ success: boolean; message?: string; error?: any; itemId?: string }> => {
   try {
     // Sanitize user inputs
     const sanitizedValues = {
@@ -38,7 +38,7 @@ export const submitItemForm = async (values: ItemFormValues, userId: string): Pr
     }
     
     console.log("Item added successfully:", data);
-    return { success: true };
+    return { success: true, itemId: data?.[0]?.id };
   } catch (error) {
     console.error("Error submitting item form:", error);
     return { 
@@ -125,7 +125,7 @@ export const handleItemSubmit = async ({
 
     return { 
       success: true, 
-      itemId: itemId 
+      itemId: itemId || result.itemId
     };
   } catch (error: any) {
     console.error("Error in handleItemSubmit:", error);

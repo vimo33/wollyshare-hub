@@ -19,7 +19,7 @@ const ItemDetails = ({
   weekdayAvailability, 
   weekendAvailability
 }: ItemDetailsProps) => {
-  // Display location with address if available
+  // Display location with address if available, with proper fallback
   const displayLocation = location && location.trim() !== "" 
     ? (locationAddress ? `${location}, ${locationAddress}` : location)
     : "Location not specified";
