@@ -18,8 +18,12 @@ export const signupSchema = z.object({
   location: z
     .string()
     .min(1, { message: "Location is required" }),
-  telegramId: z.string().optional(),
-  telegramUsername: z.string().optional(),
+  telegramId: z
+    .string()
+    .min(1, { message: "Telegram ID is required" }),
+  telegramUsername: z
+    .string()
+    .min(1, { message: "Telegram username is required" }),
 });
 
 export type SignupFormValues = z.infer<typeof signupSchema>;

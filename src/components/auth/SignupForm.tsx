@@ -35,7 +35,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ invitationToken }) => {
       password: "",
       username: "",
       fullName: "",
-      location: undefined,
+      location: "",
       telegramId: "",
       telegramUsername: "",
     },
@@ -147,7 +147,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ invitationToken }) => {
           name="location"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Location (Optional)</FormLabel>
+              <FormLabel>Location</FormLabel>
               <FormControl>
                 <LocationSelect 
                   onChange={field.onChange}
@@ -167,7 +167,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ invitationToken }) => {
           render={({ field }) => (
             <FormItem>
               <div className="flex items-center gap-2">
-                <FormLabel>Telegram ID (Optional)</FormLabel>
+                <FormLabel>Telegram ID</FormLabel>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -196,7 +196,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ invitationToken }) => {
           render={({ field }) => (
             <FormItem>
               <div className="flex items-center gap-2">
-                <FormLabel>Telegram Username (Optional)</FormLabel>
+                <FormLabel>Telegram Username</FormLabel>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>

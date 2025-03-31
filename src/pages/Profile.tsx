@@ -66,10 +66,14 @@ const ProfilePage: React.FC = () => {
     );
   }
 
-  // Ensure the profile has a location value before rendering the form
+  // Ensure the profile has the required values before rendering the form
   const profileWithDefaults = profile ? {
     ...profile,
-    location: profile.location || "" // Provide a default empty string if null
+    username: profile.username || "",
+    full_name: profile.full_name || "",
+    location: profile.location || "",
+    telegram_id: profile.telegram_id || "",
+    telegram_username: profile.telegram_username || ""
   } : null;
 
   return (

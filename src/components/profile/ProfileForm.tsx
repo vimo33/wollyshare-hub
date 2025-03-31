@@ -30,10 +30,11 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface ProfileFormProps {
   profile: {
-    username: string | null;
-    full_name: string | null;
+    username: string;
+    full_name: string;
     location: string;
-    telegram_username: string | null;
+    telegram_id: string;
+    telegram_username: string;
   } | null;
   userEmail: string | null;
   onProfileUpdate: () => void;
@@ -42,8 +43,9 @@ interface ProfileFormProps {
 const updateProfileSchema = z.object({
   username: z.string().min(2).max(50),
   full_name: z.string().min(2).max(50),
-  location: z.string().min(2).max(50),
-  telegram_username: z.string().min(2).max(50),
+  location: z.string().min(1, { message: "Location is required" }),
+  telegram_id: z.string().min(1, { message: "Telegram ID is required" }),
+  telegram_username: z.string().min(1, { message: "Telegram username is required" }),
 });
 
 type UpdateProfileSchema = z.infer<typeof updateProfileSchema>;
@@ -90,6 +92,7 @@ const ProfileForm = ({ profile, userEmail, onProfileUpdate }: ProfileFormProps) 
       username: profile?.username || "",
       full_name: profile?.full_name || "",
       location: profile?.location || "",
+      telegram_id: profile?.telegram_id || "",
       telegram_username: profile?.telegram_username || "",
     },
   });
@@ -104,6 +107,7 @@ const ProfileForm = ({ profile, userEmail, onProfileUpdate }: ProfileFormProps) 
         username: values.username,
         full_name: values.full_name,
         location: values.location,
+        telegram_id: values.telegram_id,
         telegram_username: values.telegram_username
       });
       
@@ -207,6 +211,24 @@ const ProfileForm = ({ profile, userEmail, onProfileUpdate }: ProfileFormProps) 
               </FormControl>
               <FormDescription>
                 This helps other members find items near them.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Telegram ID Field */}
+        <FormField
+          control={form.control}
+          name="telegram_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Telegram ID</FormLabel>
+              <FormControl>
+                <Input placeholder="Your Telegram ID" {...field} />
+              </FormControl>
+              <FormDescription>
+                Your Telegram ID is used for notifications.
               </FormDescription>
               <FormMessage />
             </FormItem>

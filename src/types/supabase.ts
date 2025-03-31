@@ -32,9 +32,9 @@ export interface Profile {
   username: string;
   full_name: string;
   avatar_url?: string;
-  location: string; // Changed from optional to required
-  telegram_id?: string;
-  telegram_username?: string;
+  location: string; // Required field
+  telegram_id: string; // Required field 
+  telegram_username: string; // Required field
   created_at: string;
   updated_at: string;
   email?: string;
