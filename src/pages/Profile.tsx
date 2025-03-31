@@ -66,6 +66,8 @@ const ProfilePage: React.FC = () => {
     );
   }
 
+  // We're using the profile object directly without transformation
+  // This ensures we use the same type that comes from the database
   return (
     <div className="container mx-auto py-10">
       <Card className="max-w-2xl mx-auto">

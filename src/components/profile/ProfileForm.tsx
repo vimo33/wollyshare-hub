@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -22,6 +23,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Label } from "@/components/ui/label"; // Add the import for Label
+import { updateProfile } from "@/services/profileService"; // Import updateProfile service
+import { useToast } from "@/hooks/use-toast";
 
 interface ProfileFormProps {
   profile: {
@@ -45,6 +49,7 @@ type UpdateProfileSchema = z.infer<typeof updateProfileSchema>;
 
 const ProfileForm = ({ profile, userEmail, onProfileUpdate }: ProfileFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
   const form = useForm<UpdateProfileSchema>({
     resolver: zodResolver(updateProfileSchema),
@@ -58,27 +63,36 @@ const ProfileForm = ({ profile, userEmail, onProfileUpdate }: ProfileFormProps) 
 
   async function handleSubmit(values: UpdateProfileSchema) {
     setIsSubmitting(true);
-    // Simulate successful submission
-    console.log(values);
+    console.log("Submitting profile update:", values);
+    
     try {
-      // Make API request to update profile
-      const response = await fetch('/api/profile', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(values),
+      // Use the profile service instead of direct fetch
+      const updatedProfile = await updateProfile({
+        username: values.username,
+        full_name: values.full_name,
+        location: values.location,
+        telegram_username: values.telegram_username
       });
-
-      if (response.ok) {
-        // Call the onProfileUpdate callback
+      
+      if (updatedProfile) {
+        toast({
+          title: "Profile updated successfully!"
+        });
         onProfileUpdate();
       } else {
-        // Handle error case
-        console.error('Profile update failed');
+        toast({
+          variant: "destructive",
+          title: "Failed to update profile",
+          description: "Please try again later."
+        });
       }
     } catch (error) {
       console.error('Error updating profile:', error);
+      toast({
+        variant: "destructive",
+        title: "Error updating profile",
+        description: "An unexpected error occurred."
+      });
     } finally {
       setIsSubmitting(false);
     }
