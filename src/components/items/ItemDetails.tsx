@@ -21,7 +21,7 @@ const ItemDetails = ({
   weekendAvailability
 }: ItemDetailsProps) => {
   // Use our utility function to format location display
-  const displayLocation = formatLocationDisplay(location, locationAddress);
+  const displayLocation = location || "No location specified";
 
   return (
     <div className="p-4">

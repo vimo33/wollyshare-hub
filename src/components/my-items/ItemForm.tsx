@@ -30,8 +30,6 @@ const ItemForm = ({ onClose }: ItemFormProps) => {
     name: "",
     category: "tools",
     description: "",
-    condition: "Good",
-    location: "Home",
     weekday_availability: "anytime",
     weekend_availability: "anytime",
   });
@@ -77,6 +75,8 @@ const ItemForm = ({ onClose }: ItemFormProps) => {
         body: JSON.stringify({
           ...formData,
           user_id: user.id,
+          condition: "Good", // Default value
+          location: "Home" // Default value
         }),
       });
 
@@ -143,36 +143,6 @@ const ItemForm = ({ onClose }: ItemFormProps) => {
           value={formData.description}
           onChange={handleChange}
           placeholder="Describe your item"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="condition">Condition</Label>
-        <Select
-          defaultValue={formData.condition}
-          onValueChange={(value) => handleSelectChange("condition", value)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select condition" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="New">New</SelectItem>
-            <SelectItem value="Like New">Like New</SelectItem>
-            <SelectItem value="Good">Good</SelectItem>
-            <SelectItem value="Fair">Fair</SelectItem>
-            <SelectItem value="Poor">Poor</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="location">Location</Label>
-        <Input
-          id="location"
-          name="location"
-          value={formData.location}
-          onChange={handleChange}
-          placeholder="Where is the item located?"
         />
       </div>
 

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import * as z from "zod";
 import { useForm } from "react-hook-form";
@@ -12,11 +13,11 @@ import {
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { ItemFormValues } from "./types";
-import { submitItemForm, updateItemForm } from "../../utils/form-submit-utils"; // Using relative path
+import { submitItemForm, updateItemForm } from "../../utils/form-submit-utils"; 
 import ItemFormFields from "./form/ItemFormFields";
 
 // Define form schema
@@ -105,12 +106,23 @@ const ItemFormDialog = ({ open, onOpenChange, itemData, onSuccess }: ItemFormDia
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[550px]">
-        <DialogHeader>
-          <DialogTitle>{itemData ? "Edit Item" : "Add New Item"}</DialogTitle>
-          <DialogDescription>
-            Enter the details about the item you want to share with your community.
-          </DialogDescription>
+      <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="flex items-center justify-between">
+          <div>
+            <DialogTitle>{itemData ? "Edit Item" : "Add New Item"}</DialogTitle>
+            <DialogDescription>
+              Enter the details about the item you want to share with your community.
+            </DialogDescription>
+          </div>
+          <Button 
+            variant="ghost" 
+            size="icon"
+            className="rounded-full h-8 w-8 absolute right-4 top-4"
+            onClick={() => onOpenChange(false)}
+          >
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </Button>
         </DialogHeader>
 
         <Form {...form}>
@@ -119,6 +131,8 @@ const ItemFormDialog = ({ open, onOpenChange, itemData, onSuccess }: ItemFormDia
               form={form} 
               initialImageUrl={itemData?.imageUrl || null}
               onImageChange={setImageFile}
+              showConditionField={false}
+              showLocationField={false}
             />
 
             <DialogFooter>

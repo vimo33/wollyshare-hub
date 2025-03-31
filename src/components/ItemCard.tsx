@@ -37,15 +37,9 @@ const ItemCard = memo(({
   condition,
   onClick,
 }: ItemCardProps) => {
-  const [isLiked, setIsLiked] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
-
-  const handleLike = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsLiked(prev => !prev);
-  }, []);
 
   const handleRequestClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -97,8 +91,7 @@ const ItemCard = memo(({
           name={name}
           category={category}
           categoryColors={categoryColors}
-          onLike={handleLike}
-          isLiked={isLiked}
+          // Removed onLike and isLiked props
         />
         
         <ItemDetails 

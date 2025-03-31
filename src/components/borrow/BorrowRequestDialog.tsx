@@ -1,21 +1,14 @@
 
-import React, { useState } from "react";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Item } from "@/types/supabase";
-import { createBorrowRequest } from "@/services/borrowRequestService";
-import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { Item } from "@/types/supabase";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Loader2, X } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { createBorrowRequest } from "@/services/borrowRequestService";
 
 interface BorrowRequestDialogProps {
   item: Item;
@@ -30,55 +23,53 @@ const BorrowRequestDialog = ({
   onClose,
   onSuccess,
 }: BorrowRequestDialogProps) => {
+  const { user } = useAuth();
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-  const { user } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!user) {
-      console.error("User not authenticated when submitting request");
       toast({
+        title: "Authentication required",
+        description: "Please sign in to send a borrow request",
         variant: "destructive",
-        title: "Error",
-        description: "You must be logged in to request items",
       });
       return;
     }
 
-    console.log("Submit request clicked for item:", item.name);
-    console.log("Current user from AuthContext:", user);
-    console.log("User telegram data: Check profiles table for", user.id);
-    
     setIsSubmitting(true);
 
     try {
-      const requestData = {
+      const result = await createBorrowRequest({
         item_id: item.id,
         owner_id: item.user_id,
         message,
-      };
-
-      console.log("Sending borrow request with data:", requestData);
-      
-      // This now handles both creating the request and sending notifications
-      await createBorrowRequest(requestData, user.id);
-
-      toast({
-        title: "Request sent!",
-        description: "The owner has been notified of your request.",
       });
 
-      if (onSuccess) onSuccess();
-      onClose();
+      if (result.success) {
+        toast({
+          title: "Request sent",
+          description: `Your request to borrow ${item.name} has been sent.`,
+        });
+        setMessage("");
+        onClose();
+        if (onSuccess) {
+          onSuccess();
+        }
+      } else {
+        toast({
+          title: "Error sending request",
+          description: result.message || "There was a problem sending your request.",
+          variant: "destructive",
+        });
+      }
     } catch (error: any) {
-      console.error("Error submitting request:", error);
       toast({
+        title: "Error",
+        description: error.message || "An unexpected error occurred.",
         variant: "destructive",
-        title: "Failed to send request",
-        description: error.message,
       });
     } finally {
       setIsSubmitting(false);
@@ -87,33 +78,50 @@ const BorrowRequestDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] sm:top-[15%] top-0 max-h-[90vh] overflow-y-auto">
+        <div className="absolute right-4 top-4">
+          <Button 
+            variant="ghost" 
+            size="icon"
+            className="rounded-full h-8 w-8 bg-gray-100 hover:bg-gray-200"
+            onClick={onClose}
+          >
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </Button>
+        </div>
         <DialogHeader>
           <DialogTitle>Request to Borrow</DialogTitle>
-          <DialogDescription>
-            Send a borrow request to the owner of {item.name}.
-          </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="message">Message</Label>
-            <Input
+        
+        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+          <div className="space-y-1">
+            <h3 className="font-semibold">{item.name}</h3>
+            <p className="text-sm text-muted-foreground">Owned by {item.ownerName || "Unknown"}</p>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="message">Message to Owner (Optional)</Label>
+            <Textarea
               id="message"
+              placeholder="Hi! I'd like to borrow this item..."
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="Enter a message for the owner"
-              type="text"
             />
           </div>
-        </div>
-        <DialogFooter>
-          <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="submit" onClick={handleSubmit} disabled={isSubmitting}>
-            {isSubmitting ? "Submitting..." : "Submit Request"}
-          </Button>
-        </DialogFooter>
+          
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Send Request
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

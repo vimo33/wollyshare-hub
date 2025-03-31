@@ -4,7 +4,6 @@ import PageHeader from "@/components/ui/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useMyItems } from "@/hooks/useMyItems";
 import MyItemsList from "@/components/my-items/MyItemsList";
-import IncomingRequestsSection from "@/components/my-items/IncomingRequestsSection";
 import BorrowRequestHistory from "@/components/my-items/BorrowRequestHistory";
 import BorrowedItemsList from "@/components/my-items/BorrowedItemsList";
 import { useBorrowedItems } from "@/hooks/useBorrowedItems";
@@ -15,12 +14,11 @@ const MyItems = () => {
 
   return (
     <div className="container py-6">
-      <PageHeader title="My Items" description="Manage your shared items and borrow requests." />
+      <PageHeader title="My WollyShare" description="Manage your shared items and borrow requests." />
       
       <Tabs defaultValue="my-items" className="w-full mt-6">
         <TabsList className="w-full border-b">
           <TabsTrigger value="my-items">My Items</TabsTrigger>
-          <TabsTrigger value="incoming-requests">Incoming Requests</TabsTrigger>
           <TabsTrigger value="history">History</TabsTrigger>
           <TabsTrigger value="borrowed-items">Borrowed Items</TabsTrigger>
         </TabsList>
@@ -31,10 +29,6 @@ const MyItems = () => {
             isLoading={isLoading} 
             error={error}
           />
-        </TabsContent>
-        
-        <TabsContent value="incoming-requests">
-          <IncomingRequestsSection />
         </TabsContent>
         
         <TabsContent value="history">

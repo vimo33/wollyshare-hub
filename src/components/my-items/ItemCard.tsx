@@ -12,12 +12,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { getAvailabilityText } from "./utils/availability-utils";
 import { getCategoryColor } from "./utils/category-utils";
-import { Item } from "./types";
+import { Item } from "@/types/supabase";
 
 interface ItemCardProps {
   item: Item;
   onEdit: (item: Item) => void;
-  onDelete: (itemId: string) => void;
+  onDelete: (item: Item) => void;
 }
 
 const ItemCard = ({ item, onEdit, onDelete }: ItemCardProps) => {
@@ -27,13 +27,6 @@ const ItemCard = ({ item, onEdit, onDelete }: ItemCardProps) => {
     console.error(`Failed to load image for "${item.name}":`, item.image_url);
     setImageError(true);
   };
-
-  // Debug logging for image URLs in development
-  React.useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`ItemCard rendering for ${item.name}:`, { imageUrl: item.image_url });
-    }
-  }, [item.name, item.image_url]);
 
   return (
     <Card className="overflow-hidden w-full max-w-md mx-auto">
@@ -64,18 +57,6 @@ const ItemCard = ({ item, onEdit, onDelete }: ItemCardProps) => {
       
       <CardContent>
         <div className="space-y-2">
-          {item.location && (
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Location:</span>
-              <span className="font-medium">{item.location}</span>
-            </div>
-          )}
-          {item.condition && (
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Condition:</span>
-              <span className="font-medium">{item.condition}</span>
-            </div>
-          )}
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Weekdays:</span>
             <span className="font-medium">{getAvailabilityText(item.weekday_availability)}</span>
@@ -100,7 +81,7 @@ const ItemCard = ({ item, onEdit, onDelete }: ItemCardProps) => {
           variant="outline"
           size="sm"
           className="text-destructive hover:text-destructive"
-          onClick={() => onDelete(item.id)}
+          onClick={() => onDelete(item)}
         >
           <Trash2 className="h-4 w-4 mr-2" />
           Delete

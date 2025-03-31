@@ -8,29 +8,27 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Edit, Trash2 } from "lucide-react";
 import ItemForm from "./ItemForm";
 import { useMyItems } from "./useMyItems";
-import ItemCard from "@/components/ItemCard";
 import { useToast } from "@/hooks/use-toast";
+import ItemFormDialog from "./ItemFormDialog";
+import DeleteConfirmDialog from "./DeleteConfirmDialog";
+import ItemCard from "../my-items/ItemCard";
 
 interface MyItemsListProps {
   items: Item[];
   isLoading: boolean;
   error: any;
-  onRequestSent?: () => void;
 }
 
-const MyItemsList = ({ 
-  items, 
-  isLoading, 
-  error,
-  onRequestSent,
-}: MyItemsListProps) => {
+const MyItemsList = ({ items, isLoading, error }: MyItemsListProps) => {
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
+  const [selectedItem, setSelectedItem] = React.useState<Item | null>(null);
   const { deleteItem } = useMyItems();
 
   const handleOpenDialog = () => {
@@ -41,12 +39,25 @@ const MyItemsList = ({
     setIsDialogOpen(false);
   };
 
-  const handleDeleteItem = async (itemId: string) => {
+  const handleEditItem = (item: Item) => {
+    setSelectedItem(item);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleDeleteItem = (item: Item) => {
+    setSelectedItem(item);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteItem = async () => {
+    if (!selectedItem) return;
+    
     try {
-      await deleteItem(itemId);
+      await deleteItem(selectedItem.id);
       toast({
         title: "Item deleted successfully!",
       });
+      setIsDeleteDialogOpen(false);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -60,23 +71,10 @@ const MyItemsList = ({
     <div className="bg-white rounded-lg shadow-md p-4">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-semibold">My Items</h2>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button variant="outline" onClick={handleOpenDialog}>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add Item
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Add a new item</DialogTitle>
-              <DialogDescription>
-                Make sure to add all the details of your item.
-              </DialogDescription>
-            </DialogHeader>
-            <ItemForm onClose={handleCloseDialog} />
-          </DialogContent>
-        </Dialog>
+        <Button variant="outline" onClick={handleOpenDialog}>
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Add Item
+        </Button>
       </div>
       
       {isLoading ? (
@@ -90,23 +88,15 @@ const MyItemsList = ({
           {items.map((item) => (
             <ItemCard
               key={item.id}
-              id={item.id}
-              name={item.name}
-              ownerName={"You"}
-              location={item.location || "Not specified"}
-              locationAddress={undefined}
-              weekdayAvailability={item.weekday_availability || "anytime"}
-              weekendAvailability={item.weekend_availability || "anytime"}
-              category={item.category as any}
-              imageUrl={item.image_url}
-              user_id={item.user_id}
-              condition={item.condition || "Good"}
-              onClick={() => {}}
+              item={item}
+              onEdit={() => handleEditItem(item)}
+              onDelete={() => handleDeleteItem(item)}
             />
           ))}
         </div>
       )}
       
+      {/* Add Item Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
@@ -118,6 +108,28 @@ const MyItemsList = ({
           <ItemForm onClose={handleCloseDialog} />
         </DialogContent>
       </Dialog>
+
+      {/* Edit Item Dialog */}
+      <ItemFormDialog 
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        itemData={selectedItem ? {
+          id: selectedItem.id,
+          name: selectedItem.name,
+          category: selectedItem.category,
+          description: selectedItem.description || "",
+          weekdayAvailability: selectedItem.weekday_availability,
+          weekendAvailability: selectedItem.weekend_availability,
+          imageUrl: selectedItem.image_url || undefined
+        } : undefined}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmDialog 
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={confirmDeleteItem}
+      />
     </div>
   );
 };
