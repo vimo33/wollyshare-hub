@@ -73,7 +73,7 @@ const LocationSelect = ({
       <SelectContent>
         {locations.map((loc) => (
           <SelectItem key={loc.id} value={loc.id}>
-            {loc.name}
+            {`${loc.name}, ${loc.address}`}
           </SelectItem>
         ))}
       </SelectContent>
