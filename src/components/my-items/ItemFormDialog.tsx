@@ -25,7 +25,7 @@ import AvailabilitySelect from "./form/AvailabilitySelect";
 import ConditionSelect from "./form/ConditionSelect";
 import FormSection from "./form/FormSection";
 import FormActions from "./form/FormActions";
-import ImageUploadField from "./form/ImageUploadField";
+import ImageUploadComponent from "./form/ImageUploadComponent";
 
 // Define form schema
 const formSchema = z.object({
@@ -147,7 +147,7 @@ const ItemFormDialog = ({ open, onOpenChange, itemData, onSuccess }: ItemFormDia
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <ImageUploadField 
+            <ImageUploadComponent 
               initialImageUrl={itemData?.imageUrl || null}
               onImageChange={setImageFile}
             />

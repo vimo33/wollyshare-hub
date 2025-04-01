@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import ImageUploadField from "./ImageUploadField";
+import ImageUploadComponent from "./ImageUploadComponent";
 
 interface ItemFormFieldsProps {
   form: UseFormReturn<ItemFormValues>;
@@ -33,10 +33,10 @@ const ItemFormFields = ({
     <div className="space-y-6">
       {/* Image Upload Section */}
       <div className="space-y-2">
-        <FormLabel>Item Image</FormLabel>
-        <ImageUploadField
+        <ImageUploadComponent
           initialImageUrl={initialImageUrl}
           onImageChange={handleImageChange}
+          label="Item Image"
         />
       </div>
 

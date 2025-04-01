@@ -8,8 +8,8 @@ import { Label } from "@/components/ui/label";
 import { handleItemSubmit } from "@/utils/form-submit-utils";
 import { useProfileData } from "@/hooks/useProfileData";
 
-// Import our new components
-import ImageUpload from "./form/ImageUpload";
+// Import our components
+import ImageUploadComponent from "./form/ImageUploadComponent";
 import CategorySelect from "./form/CategorySelect";
 import AvailabilitySelect from "./form/AvailabilitySelect";
 import ConditionSelect from "./form/ConditionSelect";
@@ -115,7 +115,7 @@ const ItemForm = ({ onClose, onItemAdded }: ItemFormProps) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <ImageUpload onImageChange={handleImageChange} />
+      <ImageUploadComponent onImageChange={handleImageChange} />
 
       <FormSection>
         <Label htmlFor="name">Item Name</Label>
