@@ -60,7 +60,7 @@ const ImageUploadComponent = ({
 
   return (
     <div className="space-y-2">
-      <FormLabel>{label}</FormLabel>
+      <div className="font-medium text-sm">{label}</div>
       
       {imagePreview ? (
         <div className="relative w-full h-48 bg-gray-100 rounded-md overflow-hidden">
