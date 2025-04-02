@@ -25,7 +25,7 @@ const PageHeader = ({
         </div>
       )}
       
-      <h1 className="text-4xl font-bold mb-4">{title}</h1>
+      <h1 className="text-4xl font-bold mb-4">LendTogether</h1>
       
       {description && (
         <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
