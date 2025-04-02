@@ -1,7 +1,7 @@
 
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { X, Home, Package, Info, User } from "lucide-react";
+import { X, Home, Package, Info, User, HelpCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import LogoutButton from "@/components/auth/LogoutButton";
@@ -88,6 +88,16 @@ const MobileMenu = ({ open, setOpen }: MobileMenuProps) => {
                 <span>My Items</span>
               </button>
               <button 
+                onClick={() => handleNavigation("/about")}
+                className={cn(
+                  "text-base font-medium py-2 flex items-center gap-2 text-left",
+                  isActive("/about") ? "text-primary" : ""
+                )}
+              >
+                <HelpCircle className="h-5 w-5" />
+                <span>About</span>
+              </button>
+              <button 
                 onClick={() => handleNavigation("/how-it-works")}
                 className={cn(
                   "text-base font-medium py-2 flex items-center gap-2 text-left",
@@ -124,6 +134,16 @@ const MobileMenu = ({ open, setOpen }: MobileMenuProps) => {
             </>
           ) : (
             <>
+              <button
+                onClick={() => handleNavigation("/about")}
+                className={cn(
+                  "text-base font-medium py-2 flex items-center gap-2 text-left",
+                  isActive("/about") ? "text-primary" : ""
+                )}
+              >
+                <HelpCircle className="h-5 w-5" />
+                <span>About</span>
+              </button>
               <button
                 onClick={() => handleNavigation("/how-it-works")}
                 className={cn(

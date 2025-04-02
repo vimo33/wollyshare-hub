@@ -16,6 +16,7 @@ import AdminCommunitySettings from "./pages/AdminCommunitySettings";
 import HowItWorks from "./pages/HowItWorks";
 import MyItems from "./pages/MyItems";
 import Profile from "./pages/Profile";
+import About from "./pages/About";
 import { useAuth } from "@/contexts/AuthContext";
 import MobileBottomNav from "@/components/mobile/MobileBottomNav";
 
@@ -32,6 +33,7 @@ const AppRoutes = () => (
     <Route path="/auth" element={<Auth />} />
     <Route path="/admin/auth" element={<AdminAuth />} />
     <Route path="/how-it-works" element={<HowItWorks />} />
+    <Route path="/about" element={<About />} />
     <Route path="/my-items" element={<MyItems />} />
     <Route path="/profile" element={<Profile />} />
     <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />

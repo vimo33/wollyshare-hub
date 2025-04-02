@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Package, Info } from "lucide-react";
+import { Home, Package, Info, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -43,6 +43,19 @@ const DesktopNavigation = () => {
           </Link>
         </>
       )}
+      
+      <Link 
+        to="/about" 
+        className={cn(
+          "text-sm font-medium transition-colors flex items-center gap-1",
+          isActive("/about") 
+            ? "text-primary" 
+            : "hover:text-primary/80"
+        )}
+      >
+        <HelpCircle className="h-4 w-4" />
+        <span>About</span>
+      </Link>
       
       <Link 
         to="/how-it-works" 
