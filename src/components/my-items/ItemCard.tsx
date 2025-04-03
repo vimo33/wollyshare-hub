@@ -1,17 +1,17 @@
 
 import React from "react";
-import { Edit, Trash2, Image } from "lucide-react";
+import { Edit, Trash2 } from "lucide-react";
 import { 
   Card, 
   CardContent, 
   CardHeader, 
   CardTitle, 
-  CardDescription, 
   CardFooter 
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getAvailabilityText } from "./utils/availability-utils";
 import { getCategoryColor } from "./utils/category-utils";
+import { getCategoryIcon, getCategoryIconBackground, getCategoryIconColor } from "../items/utils/category-icon-utils";
 import { Item } from "@/types/supabase";
 
 interface ItemCardProps {
@@ -21,30 +21,19 @@ interface ItemCardProps {
 }
 
 const ItemCard = ({ item, onEdit, onDelete }: ItemCardProps) => {
-  const [imageError, setImageError] = React.useState(false);
-
-  const handleImageError = () => {
-    console.error(`Failed to load image for "${item.name}":`, item.image_url);
-    setImageError(true);
-  };
-
   return (
     <Card className="overflow-hidden w-full max-w-md mx-auto flex flex-col h-full">
       <div className="relative h-[12rem] sm:h-[16rem] bg-muted">
-        {item.image_url && !imageError ? (
-          <img
-            src={item.image_url}
-            alt={item.name}
-            className="w-full h-full object-cover"
-            onError={handleImageError}
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-muted">
-            <Image className="h-12 w-12 text-muted-foreground/50" />
-          </div>
-        )}
+        {/* Category badge */}
         <div className={`absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-medium ${getCategoryColor(item.category)}`}>
           {item.category.charAt(0).toUpperCase() + item.category.slice(1)}
+        </div>
+        
+        {/* Category icon */}
+        <div className={`w-full h-full flex items-center justify-center ${getCategoryIconBackground(item.category)}`}>
+          <div className={`p-6 rounded-full ${getCategoryIconColor(item.category)}`}>
+            {getCategoryIcon(item.category, 64)}
+          </div>
         </div>
       </div>
       
@@ -55,9 +44,6 @@ const ItemCard = ({ item, onEdit, onDelete }: ItemCardProps) => {
           <div className="description-container mt-2">
             <p className="text-sm text-gray-600 line-clamp-3">{item.description}</p>
           </div>
-        )}
-        {!item.description && (
-          <p className="text-xs text-gray-400 italic mt-2">No description provided</p>
         )}
       </CardHeader>
       

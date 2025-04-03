@@ -90,23 +90,20 @@ const ItemCard = memo(({
         onClick={onClick}
       >
         <ImageContainer 
-          imageUrl={imageUrl}
-          name={name}
           category={category}
+          name={name}
           categoryColors={categoryColors}
         />
         
         <div className="p-4 flex flex-col flex-grow">
           <h3 className="font-semibold text-lg">{name}</h3>
           
-          {/* Add description with ellipsis */}
-          <div className="description-container mt-1 mb-3 h-12">
-            {description ? (
+          {/* Description - only show if there is one, no "no description" message */}
+          {description && (
+            <div className="mt-1 mb-3">
               <p className="text-sm text-gray-600 line-clamp-2">{description}</p>
-            ) : (
-              <p className="text-xs text-gray-400 italic">No description provided</p>
-            )}
-          </div>
+            </div>
+          )}
           
           <ItemDetails 
             name={name}

@@ -28,15 +28,8 @@ const ItemFormFields = ({
 }: ItemFormFieldsProps) => {
   return (
     <div className="space-y-6">
-      {/* Image Upload Section */}
-      <div className="space-y-2">
-        <ImageUploadComponent
-          initialImageUrl={initialImageUrl}
-          onImageChange={onImageChange}
-          label="Item Image (Optional)"
-        />
-      </div>
-
+      {/* Image Upload Section - Removed as per requirements */}
+      
       {/* Name Field */}
       <FormField
         control={form.control}
@@ -104,23 +97,10 @@ const ItemFormFields = ({
         )}
       />
 
-      {/* Location Field */}
-      <FormField
-        control={form.control}
-        name="location"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Location</FormLabel>
-            <FormControl>
-              <Input
-                placeholder="Where is this item located?"
-                {...field}
-                value={field.value || ""}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
+      {/* Location Field - Hidden as per requirements */}
+      <input 
+        type="hidden" 
+        {...form.register("location")} 
       />
 
       {/* Availability Fields */}

@@ -52,7 +52,8 @@ const ItemsGrid = memo(({ items }: ItemsGridProps) => {
             category={item.category as any}
             imageUrl={item.image_url}
             user_id={item.user_id}
-            condition={item.condition || "Good"} // Add default condition
+            condition={item.condition || "Good"}
+            description={item.description}
             onClick={() => console.log(`Clicked on item: ${item.id}`)}
           />
         </div>
