@@ -1,5 +1,4 @@
 
-import { useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { ItemFormValues } from "../types";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
@@ -18,25 +17,23 @@ interface ItemFormFieldsProps {
   form: UseFormReturn<ItemFormValues>;
   initialImageUrl: string | null;
   onImageChange: (file: File | null) => void;
+  showCondition?: boolean;
 }
 
 const ItemFormFields = ({ 
   form, 
   initialImageUrl,
-  onImageChange
+  onImageChange,
+  showCondition = false
 }: ItemFormFieldsProps) => {
-  const handleImageChange = (file: File | null) => {
-    onImageChange(file);
-  };
-
   return (
     <div className="space-y-6">
       {/* Image Upload Section */}
       <div className="space-y-2">
         <ImageUploadComponent
           initialImageUrl={initialImageUrl}
-          onImageChange={handleImageChange}
-          label="Item Image"
+          onImageChange={onImageChange}
+          label="Item Image (Optional)"
         />
       </div>
 
@@ -77,6 +74,9 @@ const ItemFormFields = ({
                 <SelectItem value="kitchen">Kitchen</SelectItem>
                 <SelectItem value="electronics">Electronics</SelectItem>
                 <SelectItem value="sports">Sports</SelectItem>
+                <SelectItem value="books">Books</SelectItem>
+                <SelectItem value="games">Games</SelectItem>
+                <SelectItem value="diy-craft">DIY & Craft</SelectItem>
                 <SelectItem value="other">Other</SelectItem>
               </SelectContent>
             </Select>
@@ -96,6 +96,26 @@ const ItemFormFields = ({
               <Textarea
                 placeholder="Provide a brief description of the item"
                 {...field}
+                value={field.value || ""}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      {/* Location Field */}
+      <FormField
+        control={form.control}
+        name="location"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Location</FormLabel>
+            <FormControl>
+              <Input
+                placeholder="Where is this item located?"
+                {...field}
+                value={field.value || ""}
               />
             </FormControl>
             <FormMessage />
@@ -163,6 +183,38 @@ const ItemFormFields = ({
           )}
         />
       </div>
+
+      {/* Condition Field - Optional */}
+      {showCondition && (
+        <FormField
+          control={form.control}
+          name="condition"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Condition</FormLabel>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+                value={field.value || "Good"}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select condition" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="New">New</SelectItem>
+                  <SelectItem value="Excellent">Excellent</SelectItem>
+                  <SelectItem value="Good">Good</SelectItem>
+                  <SelectItem value="Fair">Fair</SelectItem>
+                  <SelectItem value="Poor">Poor</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
     </div>
   );
 };

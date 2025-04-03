@@ -20,12 +20,8 @@ import { ItemFormValues } from "./types";
 import { handleItemSubmit } from "../../utils/form-submit-utils"; 
 
 // Import our form components
-import CategorySelect from "./form/CategorySelect";
-import AvailabilitySelect from "./form/AvailabilitySelect";
-import ConditionSelect from "./form/ConditionSelect";
-import FormSection from "./form/FormSection";
+import ItemFormFields from "./form/ItemFormFields";
 import FormActions from "./form/FormActions";
-import ImageUploadComponent from "./form/ImageUploadComponent";
 
 // Define form schema
 const formSchema = z.object({
@@ -51,24 +47,47 @@ const ItemFormDialog = ({ open, onOpenChange, itemData, onSuccess }: ItemFormDia
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  console.log("ItemFormDialog rendered with itemData:", itemData);
+  
   // Set up form with default values
   const form = useForm<ItemFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: itemData || {
+    defaultValues: {
       name: "",
-      category: "",
+      category: "tools",
       description: "",
-      weekdayAvailability: "",
-      weekendAvailability: "",
+      weekdayAvailability: "anytime",
+      weekendAvailability: "anytime",
       location: "",
-      condition: ""
+      condition: "Good"
     },
   });
   
-  // Reset form when itemData changes
+  // Reset form when itemData changes or dialog opens
   useEffect(() => {
-    if (open && itemData) {
-      form.reset(itemData);
+    if (open) {
+      if (itemData) {
+        console.log("Setting form values from itemData:", itemData);
+        form.reset({
+          name: itemData.name || "",
+          category: itemData.category || "tools",
+          description: itemData.description || "",
+          weekdayAvailability: itemData.weekdayAvailability || "anytime",
+          weekendAvailability: itemData.weekendAvailability || "anytime",
+          location: itemData.location || "",
+          condition: itemData.condition || "Good"
+        });
+      } else {
+        form.reset({
+          name: "",
+          category: "tools",
+          description: "",
+          weekdayAvailability: "anytime",
+          weekendAvailability: "anytime",
+          location: "",
+          condition: "Good"
+        });
+      }
     }
   }, [open, itemData, form]);
 
@@ -115,6 +134,12 @@ const ItemFormDialog = ({ open, onOpenChange, itemData, onSuccess }: ItemFormDia
           variant: "destructive",
         });
       }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "An unexpected error occurred",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -122,14 +147,22 @@ const ItemFormDialog = ({ open, onOpenChange, itemData, onSuccess }: ItemFormDia
 
   const handleCancel = () => {
     onOpenChange(false);
+    form.reset();
+    setImageFile(null);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(open) => {
+      if (!open) {
+        form.reset();
+        setImageFile(null);
+      }
+      onOpenChange(open);
+    }}>
       <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
         <DialogHeader className="flex items-center justify-between">
           <div>
-            <DialogTitle>{itemData ? "Edit Item" : "Add New Item"}</DialogTitle>
+            <DialogTitle>{itemData?.id ? "Edit Item" : "Add New Item"}</DialogTitle>
             <DialogDescription>
               Enter the details about the item you want to share with your community.
             </DialogDescription>
@@ -147,77 +180,28 @@ const ItemFormDialog = ({ open, onOpenChange, itemData, onSuccess }: ItemFormDia
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <ImageUploadComponent 
-              initialImageUrl={itemData?.imageUrl || null}
+            <ItemFormFields 
+              form={form} 
+              initialImageUrl={itemData?.imageUrl || null} 
               onImageChange={setImageFile}
             />
 
-            <FormSection>
-              <div className="space-y-2">
-                <label htmlFor="name" className="text-sm font-medium">Item Name</label>
-                <input
-                  id="name"
-                  className="w-full p-2 border rounded-md"
-                  {...form.register("name")}
-                />
-                {form.formState.errors.name && (
-                  <p className="text-red-500 text-xs">{form.formState.errors.name.message}</p>
-                )}
-              </div>
-            </FormSection>
-
-            <CategorySelect
-              value={form.watch("category")}
-              onChange={(value) => form.setValue("category", value)}
-            />
-
-            <FormSection>
-              <div className="space-y-2">
-                <label htmlFor="description" className="text-sm font-medium">Description</label>
-                <textarea
-                  id="description"
-                  className="w-full p-2 border rounded-md min-h-[100px]"
-                  {...form.register("description")}
-                />
-              </div>
-            </FormSection>
-
-            <FormSection>
-              <div className="space-y-2">
-                <label htmlFor="location" className="text-sm font-medium">Location</label>
-                <input
-                  id="location"
-                  className="w-full p-2 border rounded-md"
-                  {...form.register("location")}
-                  placeholder="Where is this item located?"
-                />
-              </div>
-            </FormSection>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <AvailabilitySelect
-                type="weekday"
-                value={form.watch("weekdayAvailability")}
-                onChange={(value) => form.setValue("weekdayAvailability", value)}
-              />
-
-              <AvailabilitySelect
-                type="weekend"
-                value={form.watch("weekendAvailability")}
-                onChange={(value) => form.setValue("weekendAvailability", value)}
-              />
-            </div>
-
-            <ConditionSelect
-              value={form.watch("condition")}
-              onChange={(value) => form.setValue("condition", value)}
-            />
-
             <DialogFooter>
-              <FormActions 
-                onCancel={handleCancel}
-                isSubmitting={isSubmitting}
-              />
+              <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : itemData?.id ? (
+                  "Update Item"
+                ) : (
+                  "Add Item"
+                )}
+              </Button>
             </DialogFooter>
           </form>
         </Form>

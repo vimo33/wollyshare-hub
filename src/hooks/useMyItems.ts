@@ -3,12 +3,14 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Item } from "@/types/supabase";
+import { useToast } from "@/hooks/use-toast";
 
 export const useMyItems = () => {
   const [items, setItems] = useState<Item[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const { user } = useAuth();
+  const { toast } = useToast();
 
   const fetchItems = useCallback(async () => {
     try {
@@ -16,7 +18,9 @@ export const useMyItems = () => {
       setError(null);
 
       if (!user) {
-        throw new Error("User not authenticated");
+        console.log("useMyItems: No user authenticated, skipping fetch");
+        setItems([]);
+        return;
       }
 
       console.log("Fetching items for user:", user.id);
@@ -53,10 +57,15 @@ export const useMyItems = () => {
     } catch (err: any) {
       console.error("Error fetching items:", err);
       setError(err);
+      toast({
+        title: "Error fetching items",
+        description: err.message,
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
-  }, [user]);
+  }, [user, toast]);
 
   const deleteItem = useCallback(async (itemId: string) => {
     try {
@@ -108,10 +117,36 @@ export const useMyItems = () => {
     }
   }, [user]);
 
+  // Call fetchItems whenever auth state changes
   useEffect(() => {
-    if (user) {
-      fetchItems();
-    }
+    fetchItems();
+  }, [fetchItems]);
+
+  // Add subscription to refresh data when there are changes
+  useEffect(() => {
+    if (!user) return;
+    
+    // Subscribe to changes on the items table
+    const channel = supabase
+      .channel('items-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'items',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('Real-time update received:', payload);
+          fetchItems();
+        }
+      )
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user, fetchItems]);
 
   return { 

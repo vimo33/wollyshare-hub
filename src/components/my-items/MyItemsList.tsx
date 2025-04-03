@@ -47,6 +47,7 @@ const MyItemsList = ({ items, isLoading, error }: MyItemsListProps) => {
   };
 
   const handleEditItem = (item: Item) => {
+    console.log("Edit item:", item);
     setSelectedItem(item);
     setIsEditDialogOpen(true);
   };
@@ -147,8 +148,8 @@ const MyItemsList = ({ items, isLoading, error }: MyItemsListProps) => {
           weekdayAvailability: selectedItem.weekday_availability,
           weekendAvailability: selectedItem.weekend_availability,
           location: selectedItem.location || "",
-          condition: selectedItem.condition || "",
-          imageUrl: selectedItem.image_url || undefined
+          condition: selectedItem.condition || "Good",
+          imageUrl: selectedItem.image_url
         } : undefined}
         onSuccess={refetchItems}
       />

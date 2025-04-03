@@ -24,6 +24,7 @@ export const isValidCategory = (category: string): category is ValidCategory => 
 export interface UseItemsQueryOptions {
   userId?: string;
   enabled?: boolean;
+  queryKey?: any[];
 }
 
 export interface LocationInfo {
@@ -98,7 +99,7 @@ export const useProfilesQuery = () => {
   });
 };
 
-export const useItemsQuery = ({ userId, enabled = true }: UseItemsQueryOptions = {}): ItemsQueryResult => {
+export const useItemsQuery = ({ userId, enabled = true, queryKey }: UseItemsQueryOptions = {}): ItemsQueryResult => {
   // Use the locations query
   const { 
     data: locationData = new Map(), 
@@ -113,9 +114,9 @@ export const useItemsQuery = ({ userId, enabled = true }: UseItemsQueryOptions =
     error: profilesError
   } = useProfilesQuery();
 
-  // Use React Query to fetch items - always enabled by default
+  // Use React Query to fetch items
   const itemsQuery = useQuery({
-    queryKey: userId ? itemsQueryKeys.byUser(userId) : itemsQueryKeys.all,
+    queryKey: queryKey || (userId ? itemsQueryKeys.byUser(userId) : itemsQueryKeys.all),
     queryFn: async () => {
       console.log(`useItemsQuery: ${userId ? `Fetching items for user ${userId}` : 'Fetching all items'}`);
       
@@ -134,8 +135,11 @@ export const useItemsQuery = ({ userId, enabled = true }: UseItemsQueryOptions =
       }
 
       if (itemsData.length === 0) {
+        console.log('No items found');
         return [];
       }
+
+      console.log(`Found ${itemsData.length} items`);
 
       // Combine items with owner names and locations directly from userMap
       return itemsData.map(item => {
@@ -147,6 +151,10 @@ export const useItemsQuery = ({ userId, enabled = true }: UseItemsQueryOptions =
     enabled: enabled && !isLocationLoading && !isProfilesLoading,
     // Lower staleTime to ensure fresh data on initial mount
     staleTime: 1000 * 60 * 2, // 2 minutes
+    // Set retry on error
+    retry: 2,
+    // Set refetch on window focus
+    refetchOnWindowFocus: true
   });
 
   return {
