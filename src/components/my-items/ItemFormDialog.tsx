@@ -22,7 +22,8 @@ const formSchema = z.object({
   weekdayAvailability: z.string().min(1, { message: "Please select weekday availability" }),
   weekendAvailability: z.string().min(1, { message: "Please select weekend availability" }),
   location: z.string().optional(),
-  condition: z.string().optional(),
+  condition: z.string().optional(), // Keep condition in schema but make it optional
+  image_url: z.string().optional() // Add image_url to the schema
 });
 
 interface ItemFormDialogProps {
@@ -48,7 +49,8 @@ const ItemFormDialog = ({ open, onOpenChange, itemData, onSuccess }: ItemFormDia
       weekdayAvailability: "anytime",
       weekendAvailability: "anytime",
       location: "",
-      condition: "Good"
+      condition: "Good",
+      image_url: "" // Initialize image_url in the form
     },
   });
   
@@ -63,7 +65,8 @@ const ItemFormDialog = ({ open, onOpenChange, itemData, onSuccess }: ItemFormDia
           weekdayAvailability: itemData.weekdayAvailability || "anytime",
           weekendAvailability: itemData.weekendAvailability || "anytime",
           location: itemData.location || "",
-          condition: itemData.condition || "Good"
+          condition: itemData.condition || "Good",
+          image_url: itemData.imageUrl || "" // Set the image URL from itemData
         });
       } else {
         form.reset({
@@ -73,7 +76,8 @@ const ItemFormDialog = ({ open, onOpenChange, itemData, onSuccess }: ItemFormDia
           weekdayAvailability: "anytime",
           weekendAvailability: "anytime",
           location: "",
-          condition: "Good"
+          condition: "Good",
+          image_url: ""
         });
       }
     }
@@ -92,6 +96,11 @@ const ItemFormDialog = ({ open, onOpenChange, itemData, onSuccess }: ItemFormDia
     setIsSubmitting(true);
 
     try {
+      // Include the existing image URL if we're editing and no new image was uploaded
+      if (itemData?.imageUrl && !imageFile) {
+        data.image_url = itemData.imageUrl;
+      }
+
       const result = await handleItemSubmit({
         data,
         userId: user.id,

@@ -29,7 +29,7 @@ const ItemCard = ({ item, onEdit, onDelete }: ItemCardProps) => {
   };
 
   return (
-    <Card className="overflow-hidden w-full max-w-md mx-auto">
+    <Card className="overflow-hidden w-full max-w-md mx-auto flex flex-col h-full">
       <div className="relative h-[12rem] sm:h-[16rem] bg-muted">
         {item.image_url && !imageError ? (
           <img
@@ -50,12 +50,18 @@ const ItemCard = ({ item, onEdit, onDelete }: ItemCardProps) => {
       
       <CardHeader>
         <CardTitle>{item.name}</CardTitle>
+        {/* Add description with ellipsis for overflow */}
         {item.description && (
-          <CardDescription>{item.description}</CardDescription>
+          <div className="description-container mt-2">
+            <p className="text-sm text-gray-600 line-clamp-3">{item.description}</p>
+          </div>
+        )}
+        {!item.description && (
+          <p className="text-xs text-gray-400 italic mt-2">No description provided</p>
         )}
       </CardHeader>
       
-      <CardContent>
+      <CardContent className="flex-grow">
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Weekdays:</span>
@@ -68,7 +74,7 @@ const ItemCard = ({ item, onEdit, onDelete }: ItemCardProps) => {
         </div>
       </CardContent>
       
-      <CardFooter className="flex justify-between">
+      <CardFooter className="flex justify-between mt-auto">
         <Button
           variant="outline"
           size="sm"

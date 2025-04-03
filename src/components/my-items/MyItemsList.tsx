@@ -2,15 +2,7 @@
 import React from "react";
 import { Item } from "@/types/supabase";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { PlusCircle } from "lucide-react";
-import ItemForm from "./ItemForm";
 import { useMyItems } from "@/hooks/useMyItems";
 import { useToast } from "@/hooks/use-toast";
 import ItemFormDialog from "./ItemFormDialog";
@@ -40,10 +32,6 @@ const MyItemsList = ({ items, isLoading, error }: MyItemsListProps) => {
 
   const handleOpenDialog = () => {
     setIsDialogOpen(true);
-  };
-
-  const handleCloseDialog = () => {
-    setIsDialogOpen(false);
   };
 
   const handleEditItem = (item: Item) => {
@@ -120,21 +108,12 @@ const MyItemsList = ({ items, isLoading, error }: MyItemsListProps) => {
         </div>
       )}
       
-      {/* Add Item Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Add a new item</DialogTitle>
-            <DialogDescription>
-              Make sure to add all the details of your item.
-            </DialogDescription>
-          </DialogHeader>
-          <ItemForm 
-            onClose={handleCloseDialog} 
-            onItemAdded={refetchItems} 
-          />
-        </DialogContent>
-      </Dialog>
+      {/* Add Item Dialog - using the ItemFormDialog component instead of the duplicate form */}
+      <ItemFormDialog 
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        onSuccess={refetchItems}
+      />
 
       {/* Edit Item Dialog */}
       <ItemFormDialog 

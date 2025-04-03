@@ -1,56 +1,61 @@
 
-import { MapPin, Calendar } from "lucide-react";
-import { formatAvailability } from "./utils/availability-utils";
+import React, { memo } from "react";
+import { getAvailabilityText } from "./utils/availability-utils";
+import { MapPin, Clock, User } from "lucide-react";
 
 interface ItemDetailsProps {
   name: string;
   ownerName: string;
-  location: string | null;
+  location: string;
   locationAddress?: string | null;
   weekdayAvailability: string;
   weekendAvailability: string;
 }
 
-const ItemDetails = ({ 
-  name, 
-  ownerName, 
-  location, 
+const ItemDetails = memo(({
+  ownerName,
+  location,
   locationAddress,
-  weekdayAvailability, 
+  weekdayAvailability,
   weekendAvailability
 }: ItemDetailsProps) => {
-  // Display location with address if available, with proper fallback
-  const displayLocation = location && location.trim() !== "" 
-    ? (locationAddress ? `${location}, ${locationAddress}` : location)
-    : "Location not specified";
-
   return (
-    <div className="p-4">
-      <h3 className="font-semibold text-lg mb-1 truncate">{name}</h3>
-      <p className="text-sm text-muted-foreground mb-3">Owned by {ownerName}</p>
+    <div className="space-y-2 text-sm mt-2">
+      {/* Owner Info */}
+      <div className="flex items-start">
+        <User className="h-4 w-4 mr-2 text-gray-500 mt-0.5" />
+        <span className="text-gray-700">{ownerName}</span>
+      </div>
       
-      {/* Item Details */}
-      <div className="flex flex-col space-y-2">
-        <div className="flex items-center text-sm text-gray-600">
-          <MapPin className="h-4 w-4 mr-2 text-gray-400" />
-          <span>{displayLocation}</span>
+      {/* Location Info */}
+      <div className="flex items-start">
+        <MapPin className="h-4 w-4 mr-2 text-gray-500 mt-0.5" />
+        <div>
+          <span className="text-gray-700">{location}</span>
+          {locationAddress && (
+            <p className="text-xs text-gray-500 mt-0.5">{locationAddress}</p>
+          )}
         </div>
-        <div className="flex flex-col space-y-1 text-sm text-gray-600">
-          <div className="flex items-center">
-            <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-            <span>
-              <strong>Weekdays:</strong> {formatAvailability(weekdayAvailability)}
-            </span>
+      </div>
+      
+      {/* Availability Info */}
+      <div className="flex items-start">
+        <Clock className="h-4 w-4 mr-2 text-gray-500 mt-0.5" />
+        <div>
+          <div className="flex flex-wrap items-center gap-x-1">
+            <span className="text-gray-500">Weekdays:</span>
+            <span className="text-gray-700">{getAvailabilityText(weekdayAvailability)}</span>
           </div>
-          <div className="flex items-center ml-6">
-            <span>
-              <strong>Weekends:</strong> {formatAvailability(weekendAvailability)}
-            </span>
+          <div className="flex flex-wrap items-center gap-x-1">
+            <span className="text-gray-500">Weekends:</span>
+            <span className="text-gray-700">{getAvailabilityText(weekendAvailability)}</span>
           </div>
         </div>
       </div>
     </div>
   );
-};
+});
+
+ItemDetails.displayName = 'ItemDetails';
 
 export default ItemDetails;

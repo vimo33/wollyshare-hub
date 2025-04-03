@@ -47,7 +47,7 @@ export const useMyItems = () => {
         weekend_availability: item.weekend_availability || 'anytime',
         user_id: item.user_id,
         location: item.location,
-        condition: item.condition,
+        condition: item.condition || "Good", // Default to "Good" if not provided
         created_at: item.created_at,
         updated_at: item.updated_at,
         locationAddress: undefined
@@ -66,6 +66,41 @@ export const useMyItems = () => {
       setIsLoading(false);
     }
   }, [user, toast]);
+
+  // Function to manually update local state with a new item without fetching
+  const updateLocalItem = useCallback((itemData: any) => {
+    console.log("Manually updating local item state:", itemData);
+    
+    const transformedItem: Item = {
+      id: itemData.id,
+      name: itemData.name,
+      category: itemData.category as Item['category'],
+      description: itemData.description || null,
+      image_url: itemData.image_url || null,
+      weekday_availability: itemData.weekday_availability || 'anytime',
+      weekend_availability: itemData.weekend_availability || 'anytime',
+      user_id: itemData.user_id,
+      location: itemData.location,
+      condition: itemData.condition || "Good",
+      created_at: itemData.created_at,
+      updated_at: itemData.updated_at,
+      locationAddress: undefined
+    };
+    
+    setItems(prev => {
+      // Check if the item already exists in the local state
+      const index = prev.findIndex(item => item.id === transformedItem.id);
+      if (index >= 0) {
+        // Update existing item
+        const updatedItems = [...prev];
+        updatedItems[index] = transformedItem;
+        return updatedItems;
+      } else {
+        // Add new item
+        return [...prev, transformedItem];
+      }
+    });
+  }, []);
 
   const deleteItem = useCallback(async (itemId: string) => {
     try {
@@ -139,7 +174,17 @@ export const useMyItems = () => {
         },
         (payload) => {
           console.log('Real-time update received:', payload);
-          fetchItems();
+          
+          // For insert and update events, we can update the local state immediately
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            updateLocalItem(payload.new);
+          } else if (payload.eventType === 'DELETE') {
+            // For delete events, remove the item from local state
+            setItems(prev => prev.filter(item => item.id !== payload.old.id));
+          } else {
+            // For other events, just refetch to be safe
+            fetchItems();
+          }
         }
       )
       .subscribe();
@@ -147,13 +192,14 @@ export const useMyItems = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, fetchItems]);
+  }, [user, fetchItems, updateLocalItem]);
 
   return { 
     items, 
     isLoading, 
     error, 
     refetchItems: fetchItems, 
-    deleteItem 
+    deleteItem,
+    updateLocalItem 
   };
 };

@@ -18,7 +18,7 @@ export const submitItemForm = async (values: ItemFormValues, userId: string): Pr
         }
       }) : null,
       location: values.location ? sanitizeHtml(values.location, { allowedTags: [] }) : null,
-      condition: values.condition ? sanitizeHtml(values.condition, { allowedTags: [] }) : null
+      condition: values.condition ? sanitizeHtml(values.condition, { allowedTags: [] }) : "Good" // Default to "Good" if not provided
     };
 
     // Log the sanitized values to validate them before insert
@@ -32,7 +32,8 @@ export const submitItemForm = async (values: ItemFormValues, userId: string): Pr
       weekend_availability: sanitizedValues.weekendAvailability,
       location: sanitizedValues.location,
       condition: sanitizedValues.condition,
-      user_id: userId
+      user_id: userId,
+      image_url: values.image_url // Make sure to include the image URL in the data
     }).select();
 
     if (error) {
@@ -65,7 +66,7 @@ export const updateItemForm = async (itemId: string, values: ItemFormValues, use
         }
       }) : null,
       location: values.location ? sanitizeHtml(values.location, { allowedTags: [] }) : null,
-      condition: values.condition ? sanitizeHtml(values.condition, { allowedTags: [] }) : null
+      condition: values.condition ? sanitizeHtml(values.condition, { allowedTags: [] }) : "Good" // Default to "Good" if not provided
     };
 
     console.log("Updating item with values:", sanitizedValues);
@@ -79,7 +80,8 @@ export const updateItemForm = async (itemId: string, values: ItemFormValues, use
         weekday_availability: sanitizedValues.weekdayAvailability,
         weekend_availability: sanitizedValues.weekendAvailability,
         location: sanitizedValues.location,
-        condition: sanitizedValues.condition
+        condition: sanitizedValues.condition,
+        image_url: values.image_url // Make sure to include the image URL in the update
       })
       .eq("id", itemId)
       .eq("user_id", userId);
@@ -113,48 +115,82 @@ export const handleItemSubmit = async ({
     console.log("handleItemSubmit called with:", { data, userId, itemId });
     
     // Handle image upload first if needed
-    let image_url = existingImageUrl;
+    let imageUrl = existingImageUrl;
+    
+    // If there's a new image file, upload it
     if (imageFile) {
+      console.log("Uploading new image file");
+      
+      // Generate a unique file name
+      const fileExt = imageFile.name.split('.').pop();
+      const fileName = `${userId}-${Date.now()}.${fileExt}`;
+      const filePath = `item-images/${fileName}`;
+      
       try {
-        // Create a unique file path
-        const filePath = `items/${userId}/${Date.now()}-${imageFile.name}`;
-        
-        // Upload the file
+        // Upload the file to Supabase Storage
         const { error: uploadError } = await supabase.storage
           .from('items')
-          .upload(filePath, imageFile);
-        
-        if (uploadError) throw uploadError;
+          .upload(filePath, imageFile, {
+            upsert: true,
+            contentType: imageFile.type,
+          });
+          
+        if (uploadError) {
+          console.error("Error uploading image:", uploadError);
+          throw uploadError;
+        }
         
         // Get the public URL
         const { data: publicUrlData } = supabase.storage
           .from('items')
           .getPublicUrl(filePath);
-        
-        image_url = publicUrlData.publicUrl;
-        console.log("Image uploaded successfully:", image_url);
+          
+        imageUrl = publicUrlData.publicUrl;
+        console.log("Image uploaded successfully, URL:", imageUrl);
       } catch (error: any) {
         console.error("Error uploading image:", error);
         // Continue with item creation/update even if image upload fails
       }
     }
     
+    // Clear the image if explicitly removed (imageFile is null but not undefined)
+    if (imageFile === null && imageUrl !== undefined) {
+      imageUrl = null;
+    }
+    
+    // Add image URL to the data
+    const itemDataWithImage: ItemFormValues = {
+      ...data,
+      image_url: imageUrl,
+    };
+    
     // Now create or update the item with the image URL if available
     let result;
     if (itemId) {
-      result = await updateItemForm(itemId, {
-        ...data,
-        ...(image_url && { image_url })
-      }, userId);
+      result = await updateItemForm(itemId, itemDataWithImage, userId);
     } else {
-      result = await submitItemForm({
-        ...data,
-        ...(image_url && { image_url })
-      }, userId);
+      result = await submitItemForm(itemDataWithImage, userId);
     }
 
     if (!result.success) {
       throw new Error(result.message || "Failed to save item data");
+    }
+
+    // After successful submission, immediately fetch the item to update the local state
+    if (result.success && (itemId || result.itemId)) {
+      const finalItemId = itemId || result.itemId;
+      console.log("Item saved successfully, ID:", finalItemId);
+      
+      // Fetch the item to get the complete data
+      const { data: itemData } = await supabase
+        .from("items")
+        .select("*")
+        .eq("id", finalItemId!)
+        .single();
+      
+      if (itemData) {
+        console.log("Item fetched successfully:", itemData);
+      }
     }
 
     return { 

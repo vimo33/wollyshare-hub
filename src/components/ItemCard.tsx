@@ -21,6 +21,7 @@ type ItemCardProps = {
   imageUrl: string | null;
   user_id: string;
   condition: string;
+  description?: string | null;
   onClick?: () => void;
 };
 
@@ -36,6 +37,7 @@ const ItemCard = memo(({
   imageUrl,
   user_id,
   condition,
+  description,
   onClick,
 }: ItemCardProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -72,7 +74,7 @@ const ItemCard = memo(({
     category,
     user_id,
     image_url: imageUrl,
-    description: null,
+    description,
     weekday_availability: weekdayAvailability,
     weekend_availability: weekendAvailability,
     ownerName,
@@ -84,7 +86,7 @@ const ItemCard = memo(({
   return (
     <>
       <div
-        className="rounded-2xl overflow-hidden bg-white shadow-sm border border-gray-100 transition-all duration-300 hover:shadow-md hover:-translate-y-1 cursor-pointer w-full max-w-md mx-auto"
+        className="rounded-2xl overflow-hidden bg-white shadow-sm border border-gray-100 transition-all duration-300 hover:shadow-md hover:-translate-y-1 cursor-pointer w-full max-w-md mx-auto flex flex-col h-full"
         onClick={onClick}
       >
         <ImageContainer 
@@ -94,24 +96,37 @@ const ItemCard = memo(({
           categoryColors={categoryColors}
         />
         
-        <ItemDetails 
-          name={name}
-          ownerName={ownerName}
-          location={location || ""}
-          locationAddress={locationAddress}
-          weekdayAvailability={weekdayAvailability}
-          weekendAvailability={weekendAvailability}
-        />
-        
-        {/* Action Button */}
-        <div className="p-4 pt-0">
-          <button 
-            className="w-full mt-4 py-2 rounded-lg bg-secondary hover:bg-secondary/80 text-sm font-medium transition-colors flex items-center justify-center"
-            onClick={handleRequestClick}
-          >
-            <Send className="mr-2 h-4 w-4" />
-            Request to Borrow
-          </button>
+        <div className="p-4 flex flex-col flex-grow">
+          <h3 className="font-semibold text-lg">{name}</h3>
+          
+          {/* Add description with ellipsis */}
+          <div className="description-container mt-1 mb-3 h-12">
+            {description ? (
+              <p className="text-sm text-gray-600 line-clamp-2">{description}</p>
+            ) : (
+              <p className="text-xs text-gray-400 italic">No description provided</p>
+            )}
+          </div>
+          
+          <ItemDetails 
+            name={name}
+            ownerName={ownerName}
+            location={location || ""}
+            locationAddress={locationAddress}
+            weekdayAvailability={weekdayAvailability}
+            weekendAvailability={weekendAvailability}
+          />
+          
+          {/* Action Button */}
+          <div className="mt-auto">
+            <button 
+              className="w-full mt-4 py-2 rounded-lg bg-secondary hover:bg-secondary/80 text-sm font-medium transition-colors flex items-center justify-center"
+              onClick={handleRequestClick}
+            >
+              <Send className="mr-2 h-4 w-4" />
+              Request to Borrow
+            </button>
+          </div>
         </div>
       </div>
 
