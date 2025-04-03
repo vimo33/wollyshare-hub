@@ -10,3 +10,6 @@ export const formatAvailability = (availability: string): string => {
     default: return availability;
   }
 };
+
+// Export getAvailabilityText as an alias for formatAvailability for consistency with other modules
+export const getAvailabilityText = formatAvailability;
