@@ -5,23 +5,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { 
   Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle,
-  DialogFooter,
-  DialogDescription
+  DialogContent
 } from "@/components/ui/dialog";
-import { Form } from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
-import { Loader2, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { ItemFormValues } from "./types";
 import { handleItemSubmit } from "../../utils/form-submit-utils"; 
-
-// Import our form components
-import ItemFormFields from "./form/ItemFormFields";
-import FormActions from "./form/FormActions";
+import DialogHeader from "./form/DialogHeader";
+import ItemForm from "./form/ItemForm";
 
 // Define form schema
 const formSchema = z.object({
@@ -47,8 +38,6 @@ const ItemFormDialog = ({ open, onOpenChange, itemData, onSuccess }: ItemFormDia
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  console.log("ItemFormDialog rendered with itemData:", itemData);
-  
   // Set up form with default values
   const form = useForm<ItemFormValues>({
     resolver: zodResolver(formSchema),
@@ -67,7 +56,6 @@ const ItemFormDialog = ({ open, onOpenChange, itemData, onSuccess }: ItemFormDia
   useEffect(() => {
     if (open) {
       if (itemData) {
-        console.log("Setting form values from itemData:", itemData);
         form.reset({
           name: itemData.name || "",
           category: itemData.category || "tools",
@@ -160,51 +148,21 @@ const ItemFormDialog = ({ open, onOpenChange, itemData, onSuccess }: ItemFormDia
       onOpenChange(open);
     }}>
       <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="flex items-center justify-between">
-          <div>
-            <DialogTitle>{itemData?.id ? "Edit Item" : "Add New Item"}</DialogTitle>
-            <DialogDescription>
-              Enter the details about the item you want to share with your community.
-            </DialogDescription>
-          </div>
-          <Button 
-            variant="ghost" 
-            size="icon"
-            className="rounded-full h-8 w-8 absolute right-4 top-4"
-            onClick={() => onOpenChange(false)}
-          >
-            <X className="h-4 w-4" />
-            <span className="sr-only">Close</span>
-          </Button>
-        </DialogHeader>
+        <DialogHeader 
+          title={itemData?.id ? "Edit Item" : "Add New Item"}
+          description="Enter the details about the item you want to share with your community."
+          onClose={() => onOpenChange(false)}
+        />
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <ItemFormFields 
-              form={form} 
-              initialImageUrl={itemData?.imageUrl || null} 
-              onImageChange={setImageFile}
-            />
-
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : itemData?.id ? (
-                  "Update Item"
-                ) : (
-                  "Add Item"
-                )}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+        <ItemForm
+          form={form}
+          onSubmit={onSubmit}
+          onCancel={handleCancel}
+          isSubmitting={isSubmitting}
+          initialImageUrl={itemData?.imageUrl || null}
+          onImageChange={setImageFile}
+          isEditing={!!itemData?.id}
+        />
       </DialogContent>
     </Dialog>
   );
