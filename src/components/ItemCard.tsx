@@ -6,7 +6,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import BorrowRequestDialog from "./borrow/BorrowRequestDialog";
 import ImageContainer from "./items/ImageContainer";
 import ItemDetails from "./items/ItemDetails";
-import { categoryColors } from "./items/utils/category-utils";
 import { Send } from "lucide-react";
 
 type ItemCardProps = {
@@ -92,13 +91,12 @@ const ItemCard = memo(({
         <ImageContainer 
           category={category}
           name={name}
-          categoryColors={categoryColors}
         />
         
         <div className="p-4 flex flex-col flex-grow">
           <h3 className="font-semibold text-lg">{name}</h3>
           
-          {/* Description - only show if there is one, no "no description" message */}
+          {/* Description - only show if there is one */}
           {description && (
             <div className="mt-1 mb-3">
               <p className="text-sm text-gray-600 line-clamp-2">{description}</p>

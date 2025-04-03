@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getAvailabilityText } from "./utils/availability-utils";
-import { getCategoryColor } from "./utils/category-utils";
 import { getCategoryIcon, getCategoryIconBackground, getCategoryIconColor } from "../items/utils/category-icon-utils";
 import { Item } from "@/types/supabase";
 
@@ -22,16 +21,16 @@ interface ItemCardProps {
 
 const ItemCard = ({ item, onEdit, onDelete }: ItemCardProps) => {
   return (
-    <Card className="overflow-hidden w-full max-w-md mx-auto flex flex-col h-full">
-      <div className="relative h-[12rem] sm:h-[16rem] bg-muted">
+    <Card className="overflow-hidden w-full max-w-md mx-auto flex flex-col h-full hover:shadow-md transition-all duration-300">
+      <div className="relative h-[12rem] sm:h-[16rem] bg-gradient-to-br from-gray-50 to-gray-100">
         {/* Category badge */}
-        <div className={`absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-medium ${getCategoryColor(item.category)}`}>
+        <div className={`absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-medium z-10 ${getCategoryIconColor(item.category)} bg-white shadow-sm`}>
           {item.category.charAt(0).toUpperCase() + item.category.slice(1)}
         </div>
         
         {/* Category icon */}
-        <div className={`w-full h-full flex items-center justify-center ${getCategoryIconBackground(item.category)}`}>
-          <div className={`p-6 rounded-full ${getCategoryIconColor(item.category)}`}>
+        <div className="w-full h-full flex items-center justify-center">
+          <div className={`p-8 rounded-full ${getCategoryIconBackground(item.category)} shadow-inner`}>
             {getCategoryIcon(item.category, 64)}
           </div>
         </div>
@@ -39,7 +38,7 @@ const ItemCard = ({ item, onEdit, onDelete }: ItemCardProps) => {
       
       <CardHeader>
         <CardTitle>{item.name}</CardTitle>
-        {/* Add description with ellipsis for overflow */}
+        {/* Only show description if there is one */}
         {item.description && (
           <div className="description-container mt-2">
             <p className="text-sm text-gray-600 line-clamp-3">{item.description}</p>
