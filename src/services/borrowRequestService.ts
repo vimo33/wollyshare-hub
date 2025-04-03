@@ -213,6 +213,12 @@ export const createBorrowRequest = async (requestData: BorrowRequestData, userId
     
     console.log("Notification process completed:", notificationResults);
     
+    // Explicitly update the borrow_requests table status to trigger realtime updates
+    await supabase
+      .from("borrow_requests")
+      .update({ status: "pending" }) // Redundant update to trigger realtime events
+      .eq("id", data[0].id);
+    
     return data;
   } catch (error) {
     console.error("Error in createBorrowRequest:", error);

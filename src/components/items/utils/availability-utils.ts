@@ -1,15 +1,21 @@
 
-// Format availability text for display
+// Format availability strings into readable text
 export const formatAvailability = (availability: string): string => {
   switch (availability) {
-    case "morning": return "Morning (8AM-12PM)";
-    case "afternoon": return "Afternoon (12PM-5PM)";
-    case "evening": return "Evening (5PM-9PM)";
-    case "anytime": return "Anytime";
-    case "unavailable": return "Unavailable";
-    default: return availability;
+    case 'anytime':
+      return 'Anytime';
+    case 'morning':
+      return 'Mornings';
+    case 'afternoon':
+      return 'Afternoons';
+    case 'evening':
+      return 'Evenings';
+    case 'not_available':
+      return 'Not Available';
+    default:
+      return availability.charAt(0).toUpperCase() + availability.slice(1);
   }
 };
 
-// Export getAvailabilityText as an alias for formatAvailability for consistency with other modules
+// Export as getAvailabilityText for backward compatibility
 export const getAvailabilityText = formatAvailability;

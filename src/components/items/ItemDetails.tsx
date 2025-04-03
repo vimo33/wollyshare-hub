@@ -19,6 +19,22 @@ const ItemDetails = memo(({
   weekdayAvailability,
   weekendAvailability
 }: ItemDetailsProps) => {
+  // Format location display
+  const displayLocation = () => {
+    if (!location || location === "Unknown Location" || location === "Location not specified") {
+      return "Location not specified";
+    }
+    
+    // Check if location is a UUID (likely an ID reference)
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(location);
+    
+    if (isUUID && locationAddress) {
+      return locationAddress;
+    }
+    
+    return location;
+  };
+
   return (
     <div className="space-y-2 text-sm mt-2">
       {/* Owner Info */}
@@ -31,8 +47,8 @@ const ItemDetails = memo(({
       <div className="flex items-start">
         <MapPin className="h-4 w-4 mr-2 text-gray-500 mt-0.5" />
         <div>
-          <span className="text-gray-700">{location}</span>
-          {locationAddress && (
+          <span className="text-gray-700">{displayLocation()}</span>
+          {!isUUID && locationAddress && (
             <p className="text-xs text-gray-500 mt-0.5">{locationAddress}</p>
           )}
         </div>

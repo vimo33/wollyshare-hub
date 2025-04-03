@@ -5,6 +5,7 @@ import { Item as SupabaseItem } from "@/types/supabase";
 import { format } from "date-fns";
 import { User, Calendar } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import ImageContainer from "../items/ImageContainer";
 
 interface BorrowedItemsListProps {
   items: SupabaseItem[];
@@ -18,29 +19,20 @@ const BorrowedItemCard = ({ item }: { item: SupabaseItem }) => {
     : "Unknown date";
 
   return (
-    <Card className="overflow-hidden">
-      <div className="h-48 bg-muted">
-        {item.image_url ? (
-          <img 
-            src={item.image_url} 
-            alt={item.name} 
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              e.currentTarget.src = "https://placehold.co/600x400?text=Item+Image";
-            }}
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <span className="text-muted-foreground">No image</span>
-          </div>
-        )}
-      </div>
+    <Card className="overflow-hidden hover:shadow-md transition-all duration-300 group">
+      <ImageContainer 
+        category={item.category} 
+        name={item.name} 
+      />
       
       <CardHeader className="pb-2">
         <CardTitle className="text-lg">{item.name}</CardTitle>
       </CardHeader>
       
       <CardContent className="space-y-2">
+        {item.description && (
+          <p className="text-sm text-gray-600 line-clamp-3">{item.description}</p>
+        )}
         <p className="flex items-center text-sm">
           <User className="h-4 w-4 mr-2 text-muted-foreground" />
           <span>Owner: {item.ownerName || "Unknown"}</span>

@@ -63,8 +63,11 @@ const ItemCard = memo(({
 
   const handleRequestSuccess = useCallback(() => {
     console.log("Borrow request successfully submitted");
-    // Could add additional logic here after a successful request
-  }, []);
+    toast({
+      title: "Request sent!",
+      description: "Your borrow request has been sent successfully",
+    });
+  }, [toast]);
 
   // Create the item object for the dialog
   const itemForDialog: Item = {
@@ -85,7 +88,7 @@ const ItemCard = memo(({
   return (
     <>
       <div
-        className="rounded-2xl overflow-hidden bg-white shadow-sm border border-gray-100 transition-all duration-300 hover:shadow-md hover:-translate-y-1 cursor-pointer w-full max-w-md mx-auto flex flex-col h-full"
+        className="rounded-2xl overflow-hidden bg-white shadow-sm border border-gray-100 transition-all duration-300 hover:shadow-md hover:-translate-y-1 cursor-pointer w-full max-w-md mx-auto flex flex-col h-full group"
         onClick={onClick}
       >
         <ImageContainer 
@@ -136,6 +139,7 @@ const ItemCard = memo(({
   );
 });
 
+ItemDetails.displayName = 'ItemDetails';
 ItemCard.displayName = 'ItemCard';
 
 export default ItemCard;
