@@ -12,6 +12,12 @@ interface ItemDetailsProps {
   weekendAvailability: string;
 }
 
+// UUID validation function
+const isUUID = (str: string): boolean => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
+};
+
 const ItemDetails = memo(({
   ownerName,
   location,
@@ -26,9 +32,9 @@ const ItemDetails = memo(({
     }
     
     // Check if location is a UUID (likely an ID reference)
-    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(location);
+    const isLocationUUID = isUUID(location);
     
-    if (isUUID && locationAddress) {
+    if (isLocationUUID && locationAddress) {
       return locationAddress;
     }
     
@@ -48,7 +54,7 @@ const ItemDetails = memo(({
         <MapPin className="h-4 w-4 mr-2 text-gray-500 mt-0.5" />
         <div>
           <span className="text-gray-700">{displayLocation()}</span>
-          {!isUUID && locationAddress && (
+          {!isUUID(location) && locationAddress && (
             <p className="text-xs text-gray-500 mt-0.5">{locationAddress}</p>
           )}
         </div>
