@@ -1,4 +1,3 @@
-
 import React, { memo } from "react";
 import { getAvailabilityText } from "./utils/availability-utils";
 import { MapPin, Clock, User } from "lucide-react";
@@ -31,13 +30,12 @@ const ItemDetails = memo(({
       return "Location not specified";
     }
     
-    // Check if location is a UUID (likely an ID reference)
-    const isLocationUUID = isUUID(location);
-    
-    if (isLocationUUID && locationAddress) {
+    // If we have a location address, prioritize showing that
+    if (locationAddress) {
       return locationAddress;
     }
     
+    // Otherwise show the location name
     return location;
   };
 
@@ -54,9 +52,6 @@ const ItemDetails = memo(({
         <MapPin className="h-4 w-4 mr-2 text-gray-500 mt-0.5" />
         <div>
           <span className="text-gray-700">{displayLocation()}</span>
-          {!isUUID(location) && locationAddress && (
-            <p className="text-xs text-gray-500 mt-0.5">{locationAddress}</p>
-          )}
         </div>
       </div>
       

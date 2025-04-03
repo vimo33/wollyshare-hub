@@ -1,143 +1,119 @@
-
-import { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { Item } from "@/types/supabase";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import React, { useState, useCallback } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Loader2, X, Send } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { createBorrowRequest } from "@/services/borrowRequestService";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { Item } from "@/types/supabase";
+import { useTelegramChat } from "@/hooks/useTelegramChat";
 
 interface BorrowRequestDialogProps {
   item: Item;
   isOpen: boolean;
   onClose: () => void;
-  onSuccess?: () => void;
+  onSuccess: () => void;
 }
 
-const BorrowRequestDialog = ({
+const BorrowRequestDialog: React.FC<BorrowRequestDialogProps> = ({
   item,
   isOpen,
   onClose,
   onSuccess,
-}: BorrowRequestDialogProps) => {
-  const { user } = useAuth();
+}) => {
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const { startTelegramChat } = useTelegramChat();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = useCallback(async () => {
     if (!user) {
       toast({
         title: "Authentication required",
-        description: "Please sign in to send a borrow request",
+        description: "You must be logged in to request an item.",
         variant: "destructive",
       });
       return;
     }
 
     setIsSubmitting(true);
-
     try {
-      // Pass both the request data and user.id to createBorrowRequest
-      const result = await createBorrowRequest({
-        item_id: item.id,
-        owner_id: item.user_id,
-        message,
-      }, user.id);
+      // Create borrow request
+      const { data, error } = await supabase.from("borrow_requests").insert([
+        {
+          item_id: item.id,
+          borrower_id: user.id,
+          owner_id: item.user_id,
+          message: message,
+          status: "pending",
+        },
+      ]);
 
-      // Check if result is an array or an object with success property
-      if (Array.isArray(result)) {
-        // Handle successful array response
-        toast({
-          title: "Request sent",
-          description: `Your request to borrow ${item.name} has been sent.`,
-        });
-        setMessage("");
-        onClose();
-        if (onSuccess) {
-          onSuccess();
-        }
-      } else if (result && typeof result === 'object') {
-        // Handle successful object response
-        toast({
-          title: "Request sent",
-          description: `Your request to borrow ${item.name} has been sent.`,
-        });
-        setMessage("");
-        onClose();
-        if (onSuccess) {
-          onSuccess();
-        }
-      } else {
-        // Handle error case
-        toast({
-          title: "Error sending request",
-          description: "There was a problem sending your request.",
-          variant: "destructive",
-        });
+      if (error) {
+        throw new Error(error.message);
       }
+
+      // Start Telegram chat
+      await startTelegramChat(user.id, item.user_id, item.name);
+
+      toast({
+        title: "Request submitted",
+        description: "Your request has been successfully submitted.",
+      });
+      onSuccess();
+      onClose();
     } catch (error: any) {
+      console.error("Error submitting borrow request:", error);
       toast({
         title: "Error",
-        description: error.message || "An unexpected error occurred.",
+        description:
+          error.message || "There was an error submitting your request.",
         variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [user, item, message, toast, onClose, onSuccess, startTelegramChat]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px] sm:top-[15%] top-[5%] max-h-[90vh] overflow-y-auto pt-8">
-        <div className="absolute right-4 top-4">
-          <Button 
-            variant="ghost" 
-            size="icon"
-            className="rounded-full h-8 w-8 bg-gray-100 hover:bg-gray-200"
-            onClick={onClose}
-          >
-            <X className="h-4 w-4" />
-            <span className="sr-only">Close</span>
-          </Button>
-        </div>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Request to Borrow</DialogTitle>
+          <DialogDescription>
+            Let {item.ownerName} know why you want to borrow {item.name}.
+          </DialogDescription>
         </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-          <div className="space-y-1">
-            <h3 className="font-semibold">{item.name}</h3>
-            <p className="text-sm text-muted-foreground">Owned by {item.ownerName || "Unknown"}</p>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="message">Message to Owner (Optional)</Label>
-            <Textarea
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="message" className="text-right">
+              Message
+            </Label>
+            <Input
               id="message"
-              placeholder="Hi! I'd like to borrow this item..."
               value={message}
               onChange={(e) => setMessage(e.target.value)}
+              className="col-span-3"
             />
           </div>
-          
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
-              <Send className="mr-2 h-4 w-4" />
-              Send Request
-            </Button>
-          </DialogFooter>
-        </form>
+        </div>
+        <DialogFooter>
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="submit" onClick={handleSubmit} disabled={isSubmitting}>
+            {isSubmitting ? "Submitting..." : "Submit Request"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

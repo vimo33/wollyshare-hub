@@ -22,7 +22,8 @@ const BorrowedItemCard = ({ item }: { item: SupabaseItem }) => {
     <Card className="overflow-hidden hover:shadow-md transition-all duration-300 group">
       <ImageContainer 
         category={item.category} 
-        name={item.name} 
+        name={item.name}
+        itemId={item.id}
       />
       
       <CardHeader className="pb-2">

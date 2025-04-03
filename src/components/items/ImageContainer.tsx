@@ -5,11 +5,13 @@ import { getCategoryIcon, getCategoryIconBackground, getCategoryIconColor } from
 interface ImageContainerProps {
   category: string;
   name: string;
+  itemId?: string;
 }
 
 const ImageContainer = memo(({
   category,
-  name
+  name,
+  itemId = ''
 }: ImageContainerProps) => {
   return (
     <div className="relative h-48 bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden group">
@@ -21,7 +23,7 @@ const ImageContainer = memo(({
       {/* Category Icon */}
       <div className="w-full h-full flex items-center justify-center">
         <div className={`p-8 rounded-full ${getCategoryIconBackground(category)} shadow-inner transition-transform duration-300 group-hover:scale-110`}>
-          {getCategoryIcon(category, 64)}
+          {getCategoryIcon(category, 64, itemId)}
         </div>
       </div>
       

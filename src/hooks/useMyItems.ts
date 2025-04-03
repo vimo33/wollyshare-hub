@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -108,26 +107,7 @@ export const useMyItems = () => {
         throw new Error("User not authenticated");
       }
 
-      // First check if there are any borrow requests for this item
-      const { data: borrowRequests, error: borrowError } = await supabase
-        .from("borrow_requests")
-        .select("id")
-        .eq("item_id", itemId);
-
-      if (borrowError) {
-        throw borrowError;
-      }
-
-      // If there are active borrow requests, return error
-      if (borrowRequests && borrowRequests.length > 0) {
-        return { 
-          success: false, 
-          hasBorrowRequests: true,
-          message: "Cannot delete item with active borrow requests" 
-        };
-      }
-
-      // Otherwise proceed with deletion
+      // Remove borrow request check and proceed directly with deletion
       const { error: deleteError } = await supabase
         .from("items")
         .delete()

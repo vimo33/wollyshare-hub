@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { 
   Wrench, 
   Utensils, 
@@ -12,27 +12,50 @@ import {
   Shirt,
   Music,
   Car,
-  Bike
+  Bike,
+  // Adding icons for activities
+  Ticket,
+  MapPin,
+  Calendar
 } from "lucide-react";
 
+// Create multiple icon options for each category
+const categoryIconOptions: Record<string, React.ReactNode[]> = {
+  "tools": [<Wrench />, <Wrench className="rotate-45" />, <Wrench className="rotate-90" />],
+  "kitchen": [<Utensils />, <Utensils className="rotate-45" />, <Utensils className="scale-x-[-1]" />],
+  "electronics": [<Laptop />, <Laptop className="rotate-12" />, <Laptop className="rotate-[-12]" />],
+  "sports": [<Dumbbell />, <Dumbbell className="rotate-90" />, <Dumbbell className="scale-x-[-1]" />],
+  "books": [<Book />, <Book className="rotate-12" />, <Book className="rotate-[-12]" />],
+  "games": [<Gamepad2 />, <Gamepad2 className="rotate-12" />, <Gamepad2 className="rotate-[-12]" />],
+  "diy-craft": [<Scissors />, <Scissors className="rotate-45" />, <Scissors className="rotate-[-45]" />],
+  "clothing": [<Shirt />, <Shirt className="rotate-12" />, <Shirt className="rotate-[-12]" />],
+  "music": [<Music />, <Music className="rotate-12" />, <Music className="rotate-[-12]" />],
+  "vehicles": [<Car />, <Car className="rotate-12" />, <Car className="rotate-[-12]" />],
+  "bicycles": [<Bike />, <Bike className="rotate-12" />, <Bike className="rotate-[-12]" />],
+  "activities": [<Ticket />, <MapPin />, <Calendar />],
+  "other": [<HelpCircle />, <HelpCircle className="rotate-45" />, <HelpCircle className="rotate-[-45]" />]
+};
+
+// Maintain a map of selected icon indices for each category instance
+const iconSelectionMap = new Map<string, number>();
+
+// Get a random icon index for a category if not already selected
+const getIconIndex = (category: string, itemId: string = '') => {
+  const key = `${category}_${itemId}`;
+  if (!iconSelectionMap.has(key)) {
+    iconSelectionMap.set(key, Math.floor(Math.random() * 3));
+  }
+  return iconSelectionMap.get(key) || 0;
+};
+
 // Map categories to their respective Lucide icons
-export const getCategoryIcon = (category: string, size: number = 24) => {
-  const icons: Record<string, React.ReactNode> = {
-    "tools": <Wrench size={size} />,
-    "kitchen": <Utensils size={size} />,
-    "electronics": <Laptop size={size} />,
-    "sports": <Dumbbell size={size} />,
-    "books": <Book size={size} />,
-    "games": <Gamepad2 size={size} />,
-    "diy-craft": <Scissors size={size} />,
-    "clothing": <Shirt size={size} />,
-    "music": <Music size={size} />,
-    "vehicles": <Car size={size} />,
-    "bicycles": <Bike size={size} />,
-    "other": <HelpCircle size={size} />
-  };
+export const getCategoryIcon = (category: string, size: number = 24, itemId: string = '') => {
+  const options = categoryIconOptions[category] || categoryIconOptions["other"];
+  const iconIndex = getIconIndex(category, itemId);
   
-  return icons[category] || icons["other"];
+  // Clone the icon element and set the size
+  const iconElement = options[iconIndex];
+  return React.cloneElement(iconElement as React.ReactElement, { size });
 };
 
 // Get background colors for category icons
@@ -49,6 +72,7 @@ export const getCategoryIconBackground = (category: string) => {
     "music": "bg-indigo-50",
     "vehicles": "bg-red-50",
     "bicycles": "bg-emerald-50",
+    "activities": "bg-orange-50", // Added activities
     "other": "bg-yellow-50"
   };
   
@@ -69,8 +93,27 @@ export const getCategoryIconColor = (category: string) => {
     "music": "text-indigo-600",
     "vehicles": "text-red-600",
     "bicycles": "text-emerald-600",
+    "activities": "text-orange-600", // Added activities
     "other": "text-yellow-600"
   };
   
   return textColors[category] || textColors["other"];
+};
+
+// Hook for rotating icons
+export const useRotatingIcon = (category: string, itemId: string = '') => {
+  const [iconIndex, setIconIndex] = useState(getIconIndex(category, itemId));
+  
+  useEffect(() => {
+    const key = `${category}_${itemId}`;
+    iconSelectionMap.set(key, iconIndex);
+  }, [category, itemId, iconIndex]);
+  
+  const rotateIcon = () => {
+    const options = categoryIconOptions[category] || categoryIconOptions["other"];
+    const nextIndex = (iconIndex + 1) % options.length;
+    setIconIndex(nextIndex);
+  };
+  
+  return { iconIndex, rotateIcon };
 };
