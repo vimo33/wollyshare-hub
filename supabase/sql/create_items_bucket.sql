@@ -13,38 +13,22 @@ VALUES (bucket_id, bucket_name, true);
 
 -- Set up access policies for the items bucket
 -- Allow users to upload their own images
-EXECUTE format('
-  CREATE POLICY "Users can upload their own item images"
-  ON storage.objects FOR INSERT
-  TO authenticated
-  WITH CHECK (bucket_id = %L AND %s)',
+EXECUTE format('CREATE POLICY "Users can upload their own item images" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = %L AND %s)',
   bucket_id, auth_uid_path
 );
 
 -- Allow users to update their own images
-EXECUTE format('
-  CREATE POLICY "Users can update their own item images"
-  ON storage.objects FOR UPDATE
-  TO authenticated
-  USING (bucket_id = %L AND %s)',
+EXECUTE format('CREATE POLICY "Users can update their own item images" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = %L AND %s)',
   bucket_id, auth_uid_path
 );
 
 -- Allow users to delete their own images
-EXECUTE format('
-  CREATE POLICY "Users can delete their own item images"
-  ON storage.objects FOR DELETE
-  TO authenticated
-  USING (bucket_id = %L AND %s)',
+EXECUTE format('CREATE POLICY "Users can delete their own item images" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = %L AND %s)',
   bucket_id, auth_uid_path
 );
 
 -- Allow anyone to view item images (since they're shared with the community)
-EXECUTE format('
-  CREATE POLICY "Anyone can view item images"
-  ON storage.objects FOR SELECT
-  TO public
-  USING (bucket_id = %L)',
+EXECUTE format('CREATE POLICY "Anyone can view item images" ON storage.objects FOR SELECT TO public USING (bucket_id = %L)',
   bucket_id
 );
 
