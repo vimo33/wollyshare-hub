@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import PageHeader from "@/components/ui/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -31,7 +30,12 @@ const MyItems = () => {
         },
         (payload) => {
           console.log('Borrow request change detected:', payload);
-          if (payload.new && (payload.new.owner_id === user.id || payload.new.borrower_id === user.id)) {
+          // Add type checking to ensure the properties exist before accessing them
+          if (payload.new && 
+              typeof payload.new === 'object' && 
+              'owner_id' in payload.new && 
+              'borrower_id' in payload.new &&
+              (payload.new.owner_id === user.id || payload.new.borrower_id === user.id)) {
             console.log('Refreshing items and borrowed items');
             refetchItems();
             refetchBorrowedItems();
