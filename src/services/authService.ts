@@ -108,6 +108,27 @@ export const logoutUser = async (): Promise<{ error: any }> => {
   return { error };
 };
 
+// Password reset
+export const sendPasswordResetEmail = async (
+  email: string,
+  redirectTo?: string
+): Promise<{ error: any }> => {
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: redirectTo || `${window.location.origin}/reset-password`
+  });
+  return { error };
+};
+
+// Update password
+export const updateUserPassword = async (
+  newPassword: string
+): Promise<{ error: any }> => {
+  const { error } = await supabase.auth.updateUser({
+    password: newPassword
+  });
+  return { error };
+};
+
 // Session management
 export const getCurrentSession = async () => {
   return await supabase.auth.getSession();

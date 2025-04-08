@@ -7,7 +7,9 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import Header from "@/components/Header";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-import Auth from "./pages/Auth"; // Correct path
+import Auth from "./pages/Auth";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import AdminAuth from "./pages/AdminAuth";
 import Admin from "./pages/Admin";
 import AdminMembers from "./pages/AdminMembers";
@@ -31,6 +33,8 @@ const AppRoutes = () => (
   <Routes>
     <Route path="/" element={<Index />} />
     <Route path="/auth" element={<Auth />} />
+    <Route path="/forgot-password" element={<ForgotPassword />} />
+    <Route path="/reset-password" element={<ResetPassword />} />
     <Route path="/admin/auth" element={<AdminAuth />} />
     <Route path="/how-it-works" element={<HowItWorks />} />
     <Route path="/about" element={<About />} />
