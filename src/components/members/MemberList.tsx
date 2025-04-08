@@ -34,7 +34,7 @@ const MemberList: React.FC<MemberListProps> = ({ members, isLoading }) => {
   const deleteMemberMutation = useMutation({
     mutationFn: deleteMember,
     onSuccess: () => {
-      toast.success("Member removed successfully");
+      toast.success("Member and their items removed successfully");
       queryClient.invalidateQueries({ queryKey: ['members'] });
       setMemberToDelete(null);
     },
@@ -99,15 +99,16 @@ const MemberList: React.FC<MemberListProps> = ({ members, isLoading }) => {
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Remove member?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This will revoke membership access for this user. They will no longer be able to access member features.
+                          <AlertDialogTitle>Remove member and their items?</AlertDialogTitle>
+                          <AlertDialogDescription className="space-y-2">
+                            <p>This will revoke membership access for this user. They will no longer be able to access member features.</p>
+                            <p className="font-medium text-destructive">All items created by this member will also be permanently deleted.</p>
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
                           <AlertDialogAction onClick={confirmDeleteMember}>
-                            Remove
+                            Remove Member
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>

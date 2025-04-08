@@ -53,19 +53,38 @@ export const getNonMembers = async (): Promise<Profile[]> => {
 };
 
 export const deleteMember = async (memberId: string): Promise<boolean> => {
-  // Use the delete_member function which checks if the current user is an admin
-  // and sets is_member to false for the specified user
-  const { data, error } = await supabase
-    .rpc('delete_member', {
-      member_id: memberId
-    });
+  try {
+    console.log(`Deleting member with ID: ${memberId} and their items`);
     
-  if (error) {
-    console.error('Error deleting member:', error);
+    // First, delete all items owned by this member
+    const { error: deleteItemsError } = await supabase
+      .from('items')
+      .delete()
+      .eq('user_id', memberId);
+      
+    if (deleteItemsError) {
+      console.error('Error deleting member items:', deleteItemsError);
+      return false;
+    }
+    
+    // Then use the delete_member function which checks if the current user is an admin
+    // and sets is_member to false for the specified user
+    const { data, error } = await supabase
+      .rpc('delete_member', {
+        member_id: memberId
+      });
+      
+    if (error) {
+      console.error('Error removing member status:', error);
+      return false;
+    }
+    
+    console.log('Member and their items deleted successfully');
+    return !!data;
+  } catch (error) {
+    console.error('Exception in deleteMember:', error);
     return false;
   }
-  
-  return !!data;
 };
 
 export const addMemberDirectly = async (email: string, username: string, fullName: string): Promise<boolean> => {

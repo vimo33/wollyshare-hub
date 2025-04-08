@@ -104,6 +104,15 @@ const LoginForm = () => {
         <Button type="submit" className="w-full" disabled={isLoading}>
           {isLoading ? "Logging in..." : "Login"}
         </Button>
+        
+        <div className="text-center mt-6 pt-4 border-t">
+          <p className="text-sm text-muted-foreground">
+            Are you an administrator?{" "}
+            <Link to="/admin/auth" className="text-primary hover:underline">
+              Admin Login
+            </Link>
+          </p>
+        </div>
       </form>
     </Form>
   );
