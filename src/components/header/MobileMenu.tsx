@@ -18,6 +18,32 @@ interface MobileMenuProps {
   setOpen: (open: boolean) => void;
 }
 
+// Extracted menu item component to reduce complexity
+const MenuItem = ({ 
+  path, 
+  isActive, 
+  onClick, 
+  icon: Icon, 
+  label 
+}: { 
+  path: string; 
+  isActive: boolean; 
+  onClick: () => void; 
+  icon: React.ElementType; 
+  label: string;
+}) => (
+  <button 
+    onClick={onClick}
+    className={cn(
+      "text-base font-medium py-2 flex items-center gap-2 text-left",
+      isActive ? "text-primary" : ""
+    )}
+  >
+    <Icon className="h-5 w-5" />
+    <span>{label}</span>
+  </button>
+);
+
 const MobileMenu = ({ open, setOpen }: MobileMenuProps) => {
   const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
@@ -31,6 +57,89 @@ const MobileMenu = ({ open, setOpen }: MobileMenuProps) => {
     navigate(path);
     setOpen(false);
   };
+
+  // Extracted authenticated user menu items to reduce nesting
+  const renderAuthenticatedMenuItems = () => (
+    <>
+      <MenuItem 
+        path="/" 
+        isActive={isActive("/")} 
+        onClick={() => handleNavigation("/")} 
+        icon={Home} 
+        label="Home" 
+      />
+      <MenuItem 
+        path="/my-items" 
+        isActive={isActive("/my-items")} 
+        onClick={() => handleNavigation("/my-items")} 
+        icon={Package} 
+        label="My Items" 
+      />
+      <MenuItem 
+        path="/about" 
+        isActive={isActive("/about")} 
+        onClick={() => handleNavigation("/about")} 
+        icon={HelpCircle} 
+        label="About" 
+      />
+      <MenuItem 
+        path="/how-it-works" 
+        isActive={isActive("/how-it-works")} 
+        onClick={() => handleNavigation("/how-it-works")} 
+        icon={Info} 
+        label="How It Works" 
+      />
+      <MenuItem 
+        path="/profile" 
+        isActive={isActive("/profile")} 
+        onClick={() => handleNavigation("/profile")} 
+        icon={User} 
+        label="Profile" 
+      />
+      {isAdmin && (
+        <button 
+          onClick={() => handleNavigation("/admin")}
+          className={cn(
+            "text-base font-medium py-2 text-left",
+            isActive("/admin") ? "text-primary" : ""
+          )}
+        >
+          Admin Dashboard
+        </button>
+      )}
+      <div className="pt-2 border-t">
+        <LogoutButton size="sm" className="w-full justify-center" />
+      </div>
+    </>
+  );
+
+  // Extracted unauthenticated user menu items to reduce nesting
+  const renderUnauthenticatedMenuItems = () => (
+    <>
+      <MenuItem 
+        path="/about" 
+        isActive={isActive("/about")} 
+        onClick={() => handleNavigation("/about")} 
+        icon={HelpCircle} 
+        label="About" 
+      />
+      <MenuItem 
+        path="/how-it-works" 
+        isActive={isActive("/how-it-works")} 
+        onClick={() => handleNavigation("/how-it-works")} 
+        icon={Info} 
+        label="How It Works" 
+      />
+      <div className="grid grid-cols-2 gap-2 pt-2">
+        <Button onClick={() => handleNavigation("/auth")} variant="outline" size="sm">
+          User Login
+        </Button>
+        <Button onClick={() => handleNavigation("/admin/auth")} variant="outline" size="sm">
+          Admin Login
+        </Button>
+      </div>
+    </>
+  );
 
   return (
     <Drawer open={open} onOpenChange={setOpen}>
@@ -65,105 +174,7 @@ const MobileMenu = ({ open, setOpen }: MobileMenuProps) => {
             </DrawerClose>
           </div>
           
-          {user ? (
-            <>
-              <button 
-                onClick={() => handleNavigation("/")}
-                className={cn(
-                  "text-base font-medium py-2 flex items-center gap-2 text-left",
-                  isActive("/") ? "text-primary" : ""
-                )}
-              >
-                <Home className="h-5 w-5" />
-                <span>Home</span>
-              </button>
-              <button 
-                onClick={() => handleNavigation("/my-items")}
-                className={cn(
-                  "text-base font-medium py-2 flex items-center gap-2 text-left",
-                  isActive("/my-items") ? "text-primary" : ""
-                )}
-              >
-                <Package className="h-5 w-5" />
-                <span>My Items</span>
-              </button>
-              <button 
-                onClick={() => handleNavigation("/about")}
-                className={cn(
-                  "text-base font-medium py-2 flex items-center gap-2 text-left",
-                  isActive("/about") ? "text-primary" : ""
-                )}
-              >
-                <HelpCircle className="h-5 w-5" />
-                <span>About</span>
-              </button>
-              <button 
-                onClick={() => handleNavigation("/how-it-works")}
-                className={cn(
-                  "text-base font-medium py-2 flex items-center gap-2 text-left",
-                  isActive("/how-it-works") ? "text-primary" : ""
-                )}
-              >
-                <Info className="h-5 w-5" />
-                <span>How It Works</span>
-              </button>
-              <button 
-                onClick={() => handleNavigation("/profile")}
-                className={cn(
-                  "text-base font-medium py-2 flex items-center gap-2 text-left",
-                  isActive("/profile") ? "text-primary" : ""
-                )}
-              >
-                <User className="h-5 w-5" />
-                <span>Profile</span>
-              </button>
-              {isAdmin && (
-                <button 
-                  onClick={() => handleNavigation("/admin")}
-                  className={cn(
-                    "text-base font-medium py-2 text-left",
-                    isActive("/admin") ? "text-primary" : ""
-                  )}
-                >
-                  Admin Dashboard
-                </button>
-              )}
-              <div className="pt-2 border-t">
-                <LogoutButton size="sm" className="w-full justify-center" />
-              </div>
-            </>
-          ) : (
-            <>
-              <button
-                onClick={() => handleNavigation("/about")}
-                className={cn(
-                  "text-base font-medium py-2 flex items-center gap-2 text-left",
-                  isActive("/about") ? "text-primary" : ""
-                )}
-              >
-                <HelpCircle className="h-5 w-5" />
-                <span>About</span>
-              </button>
-              <button
-                onClick={() => handleNavigation("/how-it-works")}
-                className={cn(
-                  "text-base font-medium py-2 flex items-center gap-2 text-left",
-                  isActive("/how-it-works") ? "text-primary" : ""
-                )}
-              >
-                <Info className="h-5 w-5" />
-                <span>How It Works</span>
-              </button>
-              <div className="grid grid-cols-2 gap-2 pt-2">
-                <Button onClick={() => handleNavigation("/auth")} variant="outline" size="sm">
-                  User Login
-                </Button>
-                <Button onClick={() => handleNavigation("/admin/auth")} variant="outline" size="sm">
-                  Admin Login
-                </Button>
-              </div>
-            </>
-          )}
+          {user ? renderAuthenticatedMenuItems() : renderUnauthenticatedMenuItems()}
         </div>
       </DrawerContent>
     </Drawer>

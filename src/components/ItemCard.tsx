@@ -1,5 +1,5 @@
 
-import { useState, useCallback, memo } from "react";
+import { useState, useCallback, memo, KeyboardEvent } from "react";
 import { Item } from "@/types/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -70,6 +70,15 @@ const ItemCard = memo(({
     refetchBorrowedItems();
   }, [toast, refetchBorrowedItems]);
 
+  // Add keyboard handler for accessibility
+  const handleKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
+    // Trigger click action on Enter or Space key
+    if (onClick && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault();
+      onClick();
+    }
+  }, [onClick]);
+
   // Create the item object for the dialog
   const itemForDialog: Item = {
     id,
@@ -91,6 +100,10 @@ const ItemCard = memo(({
       <div
         className="rounded-2xl overflow-hidden bg-white shadow-sm border border-gray-100 transition-all duration-300 hover:shadow-md hover:-translate-y-1 cursor-pointer w-full max-w-md mx-auto flex flex-col h-full group"
         onClick={onClick}
+        onKeyDown={handleKeyDown}
+        tabIndex={0}
+        role="button"
+        aria-label={`View details for ${name}`}
       >
         <ImageContainer 
           category={category}
@@ -122,6 +135,7 @@ const ItemCard = memo(({
             <button 
               className="w-full mt-4 py-2 rounded-lg bg-secondary hover:bg-secondary/80 text-sm font-medium transition-colors flex items-center justify-center"
               onClick={handleRequestClick}
+              aria-label="Request to borrow this item"
             >
               <Send className="mr-2 h-4 w-4" />
               Request to Borrow
