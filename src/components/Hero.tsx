@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -65,7 +66,27 @@ const Hero = () => {
     // Also set up a refresh interval to keep the stats updated
     const refreshInterval = setInterval(fetchStats, 60000); // Refresh every minute
     
-    return () => clearInterval(refreshInterval);
+    // Set up subscription for real-time updates to borrow requests
+    const channel = supabase
+      .channel('borrowed-items-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'borrow_requests'
+        },
+        () => {
+          console.log('Borrow request change detected, refreshing stats');
+          fetchStats();
+        }
+      )
+      .subscribe();
+    
+    return () => {
+      clearInterval(refreshInterval);
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   return (

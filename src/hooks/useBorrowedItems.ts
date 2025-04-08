@@ -32,6 +32,7 @@ export const useBorrowedItems = () => {
 
       if (borrowRequests.length === 0) {
         setItems([]);
+        setIsLoading(false);
         return;
       }
 
@@ -105,6 +106,30 @@ export const useBorrowedItems = () => {
   useEffect(() => {
     if (user) {
       fetchBorrowedItems();
+    }
+    
+    // Set up subscription for real-time updates
+    if (user) {
+      const channel = supabase
+        .channel('borrowed-items-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'borrow_requests',
+            filter: `borrower_id=eq.${user.id}`
+          },
+          () => {
+            console.log('Borrow request change detected, refreshing borrowed items');
+            fetchBorrowedItems();
+          }
+        )
+        .subscribe();
+      
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [user, fetchBorrowedItems]);
 

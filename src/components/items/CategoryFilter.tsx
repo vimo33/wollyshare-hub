@@ -58,6 +58,12 @@ const CategoryFilter = ({ activeCategory, handleCategoryClick }: CategoryFilterP
         onClick={() => handleCategoryClick("diy-craft")}
       />
       <CategoryPill 
+        label="Activities" 
+        color="orange"
+        active={activeCategory === "activities"}
+        onClick={() => handleCategoryClick("activities")}
+      />
+      <CategoryPill 
         label="Other" 
         color="yellow"
         active={activeCategory === "other"}
