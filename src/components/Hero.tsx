@@ -68,7 +68,7 @@ const Hero = () => {
     
     // Set up subscription for real-time updates to borrow requests
     const channel = supabase
-      .channel('borrowed-items-updates')
+      .channel('hero-stats-updates')
       .on(
         'postgres_changes',
         {
@@ -76,8 +76,9 @@ const Hero = () => {
           schema: 'public',
           table: 'borrow_requests'
         },
-        () => {
-          console.log('Borrow request change detected, refreshing stats');
+        (payload) => {
+          console.log('Borrow request change detected in Hero component:', payload);
+          // Refresh stats for any change in borrow_requests table
           fetchStats();
         }
       )

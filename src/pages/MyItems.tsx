@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import PageHeader from "@/components/ui/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -18,6 +19,8 @@ const MyItems = () => {
   useEffect(() => {
     if (!user) return;
     
+    console.log("Setting up real-time subscription in MyItems component");
+    
     // Set up channel for borrow requests changes
     const channel = supabase
       .channel('my-items-changes')
@@ -30,21 +33,33 @@ const MyItems = () => {
         },
         (payload) => {
           console.log('Borrow request change detected:', payload);
-          // Add type checking to ensure the properties exist before accessing them
-          if (payload.new && 
-              typeof payload.new === 'object' && 
-              'owner_id' in payload.new && 
-              'borrower_id' in payload.new &&
-              (payload.new.owner_id === user.id || payload.new.borrower_id === user.id)) {
-            console.log('Refreshing items and borrowed items');
-            refetchItems();
-            refetchBorrowedItems();
+          
+          try {
+            // Properly type check the payload before accessing properties
+            if (payload && 
+                payload.new && 
+                typeof payload.new === 'object' && 
+                'owner_id' in payload.new && 
+                'borrower_id' in payload.new) {
+              
+              // If current user is the owner or borrower, refresh items
+              if (payload.new.owner_id === user.id || payload.new.borrower_id === user.id) {
+                console.log('Refreshing items and borrowed items');
+                refetchItems();
+                refetchBorrowedItems();
+              }
+            }
+          } catch (err) {
+            console.error("Error processing borrow request update:", err);
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log(`Subscription status for my-items-changes: ${status}`);
+      });
     
     return () => {
+      console.log("Removing my-items-changes channel subscription");
       supabase.removeChannel(channel);
     };
   }, [user, refetchItems, refetchBorrowedItems]);

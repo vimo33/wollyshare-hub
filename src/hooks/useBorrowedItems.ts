@@ -110,24 +110,49 @@ export const useBorrowedItems = () => {
     
     // Set up subscription for real-time updates
     if (user) {
+      console.log("Setting up real-time subscription for borrowed items");
+      
+      // Listen for both status changes to 'approved' and any changes where user is already borrower
       const channel = supabase
         .channel('borrowed-items-changes')
         .on(
           'postgres_changes',
           {
-            event: '*',
+            event: 'UPDATE',
             schema: 'public',
             table: 'borrow_requests',
             filter: `borrower_id=eq.${user.id}`
           },
-          () => {
-            console.log('Borrow request change detected, refreshing borrowed items');
-            fetchBorrowedItems();
+          (payload) => {
+            console.log('Borrow request update detected:', payload);
+            // Check if status was changed to approved
+            if (payload.new && typeof payload.new === 'object' && 'status' in payload.new && payload.new.status === 'approved') {
+              console.log('Borrow request approved, refreshing borrowed items');
+              fetchBorrowedItems();
+            }
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'borrow_requests',
+            filter: `borrower_id=eq.${user.id}` 
+          },
+          (payload) => {
+            console.log('New borrow request detected:', payload);
+            // New requests are usually pending, but we can refresh to be safe
+            if (payload.new && typeof payload.new === 'object' && 'status' in payload.new && payload.new.status === 'approved') {
+              console.log('New approved borrow request, refreshing borrowed items');
+              fetchBorrowedItems();
+            }
           }
         )
         .subscribe();
       
       return () => {
+        console.log("Removing borrow items channel subscription");
         supabase.removeChannel(channel);
       };
     }
