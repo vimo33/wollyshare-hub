@@ -19,6 +19,8 @@ export const useBorrowedItems = () => {
         throw new Error("User not authenticated");
       }
 
+      console.log("Fetching borrowed items for user:", user.id);
+
       // Get approved borrow requests for the current user
       const { data: borrowRequests, error: borrowError } = await supabase
         .from("borrow_requests")
@@ -29,6 +31,8 @@ export const useBorrowedItems = () => {
       if (borrowError) {
         throw borrowError;
       }
+
+      console.log("Found borrowed requests:", borrowRequests?.length || 0);
 
       if (borrowRequests.length === 0) {
         setItems([]);
@@ -46,6 +50,8 @@ export const useBorrowedItems = () => {
       if (itemsError) {
         throw itemsError;
       }
+      
+      console.log("Retrieved item details for borrowed items:", itemsData?.length || 0);
       
       // Get owner details
       const ownerIds = borrowRequests.map(request => request.owner_id);
@@ -95,6 +101,7 @@ export const useBorrowedItems = () => {
       });
 
       setItems(transformedItems);
+      console.log("Borrowed items list updated with", transformedItems.length, "items");
     } catch (err: any) {
       setError(err);
       console.error("Error fetching borrowed items:", err);
@@ -112,9 +119,25 @@ export const useBorrowedItems = () => {
     if (user) {
       console.log("Setting up real-time subscription for borrowed items");
       
-      // Listen for both status changes to 'approved' and any changes where user is already borrower
+      // Listen for new borrow requests with auto-approval
       const channel = supabase
         .channel('borrowed-items-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'borrow_requests',
+            filter: `borrower_id=eq.${user.id}`
+          },
+          (payload) => {
+            console.log('New borrow request detected:', payload);
+            if (payload.new && typeof payload.new === 'object' && 'status' in payload.new && payload.new.status === 'approved') {
+              console.log('New auto-approved borrow request detected, refreshing borrowed items');
+              fetchBorrowedItems();
+            }
+          }
+        )
         .on(
           'postgres_changes',
           {
@@ -125,31 +148,15 @@ export const useBorrowedItems = () => {
           },
           (payload) => {
             console.log('Borrow request update detected:', payload);
-            // Check if status was changed to approved
             if (payload.new && typeof payload.new === 'object' && 'status' in payload.new && payload.new.status === 'approved') {
               console.log('Borrow request approved, refreshing borrowed items');
               fetchBorrowedItems();
             }
           }
         )
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'borrow_requests',
-            filter: `borrower_id=eq.${user.id}` 
-          },
-          (payload) => {
-            console.log('New borrow request detected:', payload);
-            // New requests are usually pending, but we can refresh to be safe
-            if (payload.new && typeof payload.new === 'object' && 'status' in payload.new && payload.new.status === 'approved') {
-              console.log('New approved borrow request, refreshing borrowed items');
-              fetchBorrowedItems();
-            }
-          }
-        )
-        .subscribe();
+        .subscribe((status) => {
+          console.log(`Subscription status for borrowed-items-changes: ${status}`);
+        });
       
       return () => {
         console.log("Removing borrow items channel subscription");

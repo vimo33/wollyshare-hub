@@ -38,13 +38,16 @@ const MyItems = () => {
             // Properly type check the payload before accessing properties
             if (payload && 
                 payload.new && 
-                typeof payload.new === 'object' && 
-                'owner_id' in payload.new && 
-                'borrower_id' in payload.new) {
+                typeof payload.new === 'object') {
+              
+              // Check if owner_id and borrower_id exist before accessing
+              const newData = payload.new as Record<string, any>;
+              const ownerId = newData.owner_id;
+              const borrowerId = newData.borrower_id;
               
               // If current user is the owner or borrower, refresh items
-              if (payload.new.owner_id === user.id || payload.new.borrower_id === user.id) {
-                console.log('Refreshing items and borrowed items');
+              if (ownerId === user.id || borrowerId === user.id) {
+                console.log('User is owner or borrower, refreshing items and borrowed items');
                 refetchItems();
                 refetchBorrowedItems();
               }

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -72,17 +71,44 @@ const Hero = () => {
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'INSERT',
           schema: 'public',
           table: 'borrow_requests'
         },
         (payload) => {
-          console.log('Borrow request change detected in Hero component:', payload);
-          // Refresh stats for any change in borrow_requests table
-          fetchStats();
+          console.log('New borrow request detected in Hero component:', payload);
+          // Check if it's an auto-approved request
+          if (payload.new && 
+              typeof payload.new === 'object' && 
+              'status' in payload.new && 
+              payload.new.status === 'approved') {
+            console.log('New auto-approved request, refreshing stats immediately');
+            fetchStats();
+          }
         }
       )
-      .subscribe();
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'borrow_requests'
+        },
+        (payload) => {
+          console.log('Borrow request update detected in Hero component:', payload);
+          // Check if status was updated to approved
+          if (payload.new && 
+              typeof payload.new === 'object' && 
+              'status' in payload.new && 
+              payload.new.status === 'approved') {
+            console.log('Borrow request status changed to approved, refreshing stats');
+            fetchStats();
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log(`Subscription status for hero-stats-updates: ${status}`);
+      });
     
     return () => {
       clearInterval(refreshInterval);

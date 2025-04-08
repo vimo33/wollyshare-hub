@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from "react";
 import {
   Dialog,
@@ -12,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { createBorrowRequest } from "@/services/borrowRequestService";
 import { Item } from "@/types/supabase";
 import { useTelegramChat } from "@/hooks/useTelegramChat";
 
@@ -47,27 +48,22 @@ const BorrowRequestDialog: React.FC<BorrowRequestDialogProps> = ({
 
     setIsSubmitting(true);
     try {
-      // Create borrow request
-      const { data, error } = await supabase.from("borrow_requests").insert([
+      // Create borrow request using the service function that now auto-approves
+      const response = await createBorrowRequest(
         {
           item_id: item.id,
-          borrower_id: user.id,
           owner_id: item.user_id,
           message: message,
-          status: "pending",
         },
-      ]);
-
-      if (error) {
-        throw new Error(error.message);
-      }
+        user.id
+      );
 
       // Start Telegram chat
       await startTelegramChat(user.id, item.user_id, item.name);
 
       toast({
-        title: "Request submitted",
-        description: "Your request has been successfully submitted.",
+        title: "Request approved automatically",
+        description: "Your borrow request has been automatically approved.",
       });
       onSuccess();
       onClose();

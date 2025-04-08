@@ -162,12 +162,13 @@ export const createBorrowRequest = async (requestData: BorrowRequestData, userId
   console.log("Request data:", requestData);
 
   // Create the payload with the correct schema fields, focusing on borrower_id which is used in RLS
+  // MODIFIED: Changed status from "pending" to "approved" for auto-approval
   const payload = {
     item_id: requestData.item_id,
     owner_id: requestData.owner_id,
     message: requestData.message,
     borrower_id: currentUserId, // Required for NOT NULL constraint and RLS policy
-    status: "pending",
+    status: "approved", // Auto-approve all requests
   };
 
   console.log("Final payload for insert:", payload);
@@ -200,10 +201,10 @@ export const createBorrowRequest = async (requestData: BorrowRequestData, userId
       throw error;
     }
 
-    console.log("Successfully created borrow request:", data);
+    console.log("Successfully created borrow request with auto-approval:", data);
 
     // Send notifications after successful request creation
-    console.log("Sending Telegram notifications for new request");
+    console.log("Sending Telegram notifications for new auto-approved request");
     const notificationResults = await sendTelegramNotifications(
       currentUserId,
       requestData.owner_id,
@@ -214,9 +215,10 @@ export const createBorrowRequest = async (requestData: BorrowRequestData, userId
     console.log("Notification process completed:", notificationResults);
     
     // Explicitly update the borrow_requests table status to trigger realtime updates
+    // This is kept to ensure any realtime listeners are notified
     await supabase
       .from("borrow_requests")
-      .update({ status: "pending" }) // Redundant update to trigger realtime events
+      .update({ status: "approved" }) // This will trigger realtime events
       .eq("id", data[0].id);
     
     return data;
