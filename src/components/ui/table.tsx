@@ -17,7 +17,7 @@ const Table = React.forwardRef<
       {!props.children && (
         <thead>
           <tr>
-            <th aria-hidden="true" className="hidden">Header</th>
+            <th className="sr-only">Header</th>
           </tr>
         </thead>
       )}
