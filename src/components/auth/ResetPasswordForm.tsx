@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useNavigate } from "react-router-dom";
+import { updateUserPassword } from "@/services/authService";
 
 const resetPasswordSchema = z.object({
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
@@ -26,20 +27,7 @@ const ResetPasswordForm = () => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    // Check if we're on a valid password reset page
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        // If no session, the user might have a recovery token in the URL
-        // Supabase will handle this automatically
-        console.log("No active session found, relying on URL parameters");
-      }
-    };
-    
-    checkSession();
-  }, []);
+  const [success, setSuccess] = useState(false);
 
   const form = useForm<ResetPasswordFormValues>({
     resolver: zodResolver(resetPasswordSchema),
@@ -54,9 +42,8 @@ const ResetPasswordForm = () => {
     setError(null);
 
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: data.password,
-      });
+      // Use our authService function to update the password
+      const { error } = await updateUserPassword(data.password);
 
       if (error) {
         setError(error.message);
@@ -66,11 +53,16 @@ const ResetPasswordForm = () => {
           description: error.message,
         });
       } else {
+        setSuccess(true);
         toast({
           title: "Password updated",
           description: "Your password has been updated successfully",
         });
-        navigate("/auth");
+        
+        // Slight delay before redirecting
+        setTimeout(() => {
+          navigate("/auth");
+        }, 2000);
       }
     } catch (err) {
       console.error("Error updating password:", err);
@@ -79,6 +71,20 @@ const ResetPasswordForm = () => {
       setIsSubmitting(false);
     }
   };
+
+  if (success) {
+    return (
+      <div className="text-center py-4">
+        <h3 className="text-lg font-medium mb-2">Password Reset Successful!</h3>
+        <p className="text-muted-foreground mb-4">
+          Your password has been updated successfully.
+        </p>
+        <Button onClick={() => navigate("/auth")} className="w-full">
+          Continue to Login
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <Form {...form}>
