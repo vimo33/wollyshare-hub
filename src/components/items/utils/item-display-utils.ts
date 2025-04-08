@@ -5,7 +5,9 @@ import { extractLocationFromDescription } from '@/utils/itemUtils';
 import { Item } from '@/types/item';
 import { useMemo } from 'react';
 
-// Format the location display text
+/**
+ * Format the location display text
+ */
 export const formatLocationDisplay = (location?: string, locationAddress?: string): string => {
   if (!location || location === "Unknown Location" || location === "Location not specified") {
     return "Location not specified";
@@ -19,7 +21,9 @@ export const formatLocationDisplay = (location?: string, locationAddress?: strin
   return location;
 };
 
-// Extract location information from item data and location map with memoization
+/**
+ * Extract location information from item data and location map
+ */
 export const extractLocationInfo = (
   item: any, 
   locationData?: Map<string, {name: string, address: string}>
@@ -42,7 +46,9 @@ export const extractLocationInfo = (
   return { locationName, locationAddress };
 };
 
-// Transform raw item data from Supabase to our Item type
+/**
+ * Transform raw item data from Supabase to our Item type
+ */
 export const transformItemData = (
   rawItem: any, 
   userInfo: { name: string, location: string | null } | undefined,
@@ -60,7 +66,7 @@ export const transformItemData = (
   }, locationData);
   
   // Validate category to include all available categories
-  const validCategories = ["tools", "kitchen", "electronics", "sports", "books", "games", "diy-craft", "other"];
+  const validCategories = ["tools", "kitchen", "electronics", "sports", "books", "games", "diy-craft", "other", "activities"];
   const safeCategory = validCategories.includes(rawItem.category) ? rawItem.category : "other";
   
   return {
@@ -72,7 +78,9 @@ export const transformItemData = (
   } as Item;
 };
 
-// Custom hook for using item transformation with memoization
+/**
+ * Custom hook for using item transformation with memoization
+ */
 export const useTransformItemData = (
   rawItem: any,
   userInfo: { name: string, location: string | null } | undefined,

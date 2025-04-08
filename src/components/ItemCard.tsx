@@ -1,5 +1,5 @@
 
-import { useState, useCallback, memo, useEffect } from "react";
+import { useState, useCallback, memo } from "react";
 import { Item } from "@/types/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -7,7 +7,7 @@ import BorrowRequestDialog from "./borrow/BorrowRequestDialog";
 import ImageContainer from "./items/ImageContainer";
 import ItemDetails from "./items/ItemDetails";
 import { Send } from "lucide-react";
-import { useBorrowedItems } from "@/hooks/useBorrowedItems"; // Add this import
+import { useBorrowedItems } from "@/hooks/useBorrowedItems";
 
 type ItemCardProps = {
   id: string;
@@ -43,13 +43,10 @@ const ItemCard = memo(({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
-  const { refetchBorrowedItems } = useBorrowedItems(); // Add this hook
+  const { refetchBorrowedItems } = useBorrowedItems();
 
   const handleRequestClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    
-    console.log("Request button clicked. User authenticated:", !!user);
-    console.log("User details:", user);
     
     if (!user) {
       toast({
@@ -64,7 +61,6 @@ const ItemCard = memo(({
   }, [user, toast]);
 
   const handleRequestSuccess = useCallback(() => {
-    console.log("Borrow request successfully submitted");
     toast({
       title: "Request sent!",
       description: "Your borrow request has been sent successfully",
@@ -145,7 +141,6 @@ const ItemCard = memo(({
   );
 });
 
-ItemDetails.displayName = 'ItemDetails';
 ItemCard.displayName = 'ItemCard';
 
 export default ItemCard;

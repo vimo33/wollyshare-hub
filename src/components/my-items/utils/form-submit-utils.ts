@@ -3,21 +3,40 @@ import { ItemFormValues } from "../types";
 import { supabase } from "@/integrations/supabase/client";
 import sanitizeHtml from "sanitize-html";
 
-export const submitItemForm = async (values: ItemFormValues, userId: string): Promise<{ success: boolean; error?: any }> => {
+/**
+ * Sanitizes user input values
+ */
+const sanitizeValues = (values: ItemFormValues): ItemFormValues => {
+  return {
+    ...values,
+    name: sanitizeHtml(values.name, { allowedTags: [] }),
+    description: values.description 
+      ? sanitizeHtml(values.description, {
+          allowedTags: ['b', 'i', 'em', 'strong', 'a', 'p', 'br'],
+          allowedAttributes: {
+            'a': ['href']
+          }
+        }) 
+      : undefined,
+    location: values.location 
+      ? sanitizeHtml(values.location, { allowedTags: [] }) 
+      : undefined,
+    condition: values.condition 
+      ? sanitizeHtml(values.condition, { allowedTags: [] }) 
+      : undefined
+  };
+};
+
+/**
+ * Creates a new item in the database
+ */
+export const submitItemForm = async (
+  values: ItemFormValues, 
+  userId: string
+): Promise<{ success: boolean; error?: any }> => {
   try {
     // Sanitize user inputs
-    const sanitizedValues = {
-      ...values,
-      name: sanitizeHtml(values.name, { allowedTags: [] }),
-      description: values.description ? sanitizeHtml(values.description, {
-        allowedTags: ['b', 'i', 'em', 'strong', 'a', 'p', 'br'],
-        allowedAttributes: {
-          'a': ['href']
-        }
-      }) : null,
-      location: values.location ? sanitizeHtml(values.location, { allowedTags: [] }) : null,
-      condition: values.condition ? sanitizeHtml(values.condition, { allowedTags: [] }) : null
-    };
+    const sanitizedValues = sanitizeValues(values);
 
     const { error } = await supabase.from("items").insert({
       name: sanitizedValues.name,
@@ -38,21 +57,17 @@ export const submitItemForm = async (values: ItemFormValues, userId: string): Pr
   }
 };
 
-export const updateItemForm = async (itemId: string, values: ItemFormValues, userId: string): Promise<{ success: boolean; error?: any }> => {
+/**
+ * Updates an existing item in the database
+ */
+export const updateItemForm = async (
+  itemId: string, 
+  values: ItemFormValues, 
+  userId: string
+): Promise<{ success: boolean; error?: any }> => {
   try {
     // Sanitize user inputs
-    const sanitizedValues = {
-      ...values,
-      name: sanitizeHtml(values.name, { allowedTags: [] }),
-      description: values.description ? sanitizeHtml(values.description, {
-        allowedTags: ['b', 'i', 'em', 'strong', 'a', 'p', 'br'],
-        allowedAttributes: {
-          'a': ['href']
-        }
-      }) : null,
-      location: values.location ? sanitizeHtml(values.location, { allowedTags: [] }) : null,
-      condition: values.condition ? sanitizeHtml(values.condition, { allowedTags: [] }) : null
-    };
+    const sanitizedValues = sanitizeValues(values);
 
     const { error } = await supabase
       .from("items")

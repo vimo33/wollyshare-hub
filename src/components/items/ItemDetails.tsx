@@ -11,12 +11,6 @@ interface ItemDetailsProps {
   weekendAvailability: string;
 }
 
-// UUID validation function
-const isUUID = (str: string): boolean => {
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  return uuidRegex.test(str);
-};
-
 const ItemDetails = memo(({
   ownerName,
   location,

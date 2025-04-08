@@ -2,26 +2,26 @@
 import { Item } from "@/types/item";
 import { LocationMap } from "@/hooks/useItemsQuery";
 
+/**
+ * Transform an item from raw data into a fully populated Item object
+ */
 export const transformItemData = (
   item: any, 
   userInfo: { name?: string; location?: string | null } = {}, 
   locationMap?: LocationMap
 ): Item => {
+  if (!item) {
+    throw new Error('Cannot transform undefined or null item data');
+  }
+
   // Get location details if available
   const locationData = item.location && locationMap?.get(item.location);
   
   // Determine location display and address - prefer data from the location map
-  let locationName = userInfo.location || null;
-  let locationAddress = null;
+  const locationName = locationData?.name || userInfo.location || null;
+  const locationAddress = locationData?.address || undefined;
   
-  // If we have a location ID and it exists in the location map
-  if (item.location && locationMap && locationMap.has(item.location)) {
-    const locData = locationMap.get(item.location);
-    locationName = locData?.name || locationName;
-    locationAddress = locData?.address || null;
-  }
-  
-  // Ensure we have the basics needed for the item
+  // Return transformed item with all required properties
   return {
     id: item.id,
     name: item.name,
@@ -34,7 +34,7 @@ export const transformItemData = (
     condition: item.condition || null,
     location: locationName,
     ownerName: userInfo.name || 'Unknown User',
-    locationAddress: locationAddress,
+    locationAddress,
     created_at: item.created_at,
     updated_at: item.updated_at
   };

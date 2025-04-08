@@ -7,6 +7,24 @@ import { Database } from "@/integrations/supabase/types";
 export type BaseItem = Database['public']['Tables']['items']['Row'];
 
 /**
+ * Valid item categories
+ */
+export type ItemCategory = 
+  | "tools" 
+  | "kitchen" 
+  | "electronics" 
+  | "sports" 
+  | "books" 
+  | "games" 
+  | "diy-craft" 
+  | "clothing" 
+  | "music" 
+  | "vehicles" 
+  | "bicycles" 
+  | "activities" 
+  | "other";
+
+/**
  * Extended Item type with additional UI properties
  */
 export interface Item extends BaseItem {
