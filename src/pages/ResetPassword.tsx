@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ResetPasswordForm from "@/components/auth/ResetPasswordForm";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Link } from "react-router-dom";
 
@@ -17,13 +16,18 @@ const ResetPassword = () => {
     const checkResetFlow = async () => {
       setLoading(true);
       
-      // Get the URL hash parameters
+      // Check if we're in a recovery flow by looking at URL hash or query parameters
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      const accessToken = hashParams.get("access_token");
-      const type = hashParams.get("type");
+      const queryParams = new URLSearchParams(window.location.search);
+      
+      // Check both hash and query parameters for the token
+      const accessToken = hashParams.get("access_token") || queryParams.get("token");
+      const type = hashParams.get("type") || queryParams.get("type");
+      
+      console.log("Reset password flow check:", { accessToken, type, hash: window.location.hash, search: window.location.search });
       
       // Check if we're in a password reset flow
-      if (type === "recovery" && accessToken) {
+      if ((type === "recovery" || type === "passwordReset") && accessToken) {
         setValidResetFlow(true);
       } else {
         // Not a valid reset flow

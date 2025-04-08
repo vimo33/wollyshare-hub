@@ -113,6 +113,7 @@ export const sendPasswordResetEmail = async (
   email: string,
   redirectTo?: string
 ): Promise<{ error: any }> => {
+  console.log(`Sending password reset email with redirect to: ${redirectTo || `${window.location.origin}/reset-password`}`);
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: redirectTo || `${window.location.origin}/reset-password`
   });
@@ -123,9 +124,17 @@ export const sendPasswordResetEmail = async (
 export const updateUserPassword = async (
   newPassword: string
 ): Promise<{ error: any }> => {
+  console.log("Updating user password");
   const { error } = await supabase.auth.updateUser({
     password: newPassword
   });
+  
+  if (error) {
+    console.error("Error updating password:", error);
+  } else {
+    console.log("Password updated successfully");
+  }
+  
   return { error };
 };
 

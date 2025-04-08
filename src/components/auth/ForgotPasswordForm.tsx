@@ -7,7 +7,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { sendPasswordResetEmail } from "@/services/authService";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle2 } from "lucide-react";
 
@@ -35,12 +35,12 @@ const ForgotPasswordForm = () => {
     setError(null);
 
     try {
-      // Use Supabase's password reset functionality
-      const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
+      console.log("Sending password reset email to:", data.email);
+      // Use the authService function for password reset
+      const { error } = await sendPasswordResetEmail(data.email, `${window.location.origin}/reset-password`);
 
       if (error) {
+        console.error("Error sending reset email:", error);
         setError(error.message);
         toast({
           variant: "destructive",
@@ -76,7 +76,10 @@ const ForgotPasswordForm = () => {
         <p className="text-sm text-muted-foreground mt-4">
           Didn't receive an email? Check your spam folder or
           <button
-            onClick={() => form.handleSubmit(onSubmit)()}
+            onClick={() => {
+              setEmailSent(false);
+              form.reset();
+            }}
             className="text-primary hover:underline ml-1"
           >
             try again

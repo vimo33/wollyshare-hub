@@ -7,7 +7,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useNavigate } from "react-router-dom";
 import { updateUserPassword } from "@/services/authService";
@@ -42,10 +41,12 @@ const ResetPasswordForm = () => {
     setError(null);
 
     try {
+      console.log("Attempting to update password");
       // Use our authService function to update the password
       const { error } = await updateUserPassword(data.password);
 
       if (error) {
+        console.error("Error from updateUserPassword:", error);
         setError(error.message);
         toast({
           variant: "destructive",
