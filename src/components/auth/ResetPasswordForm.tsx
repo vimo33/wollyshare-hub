@@ -69,9 +69,9 @@ const ResetPasswordForm = () => {
           navigate("/auth");
         }, 2000);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error updating password:", err);
-      setError("An unexpected error occurred. Please try again.");
+      setError(err?.message || "An unexpected error occurred. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
