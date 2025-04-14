@@ -36,8 +36,11 @@ const ForgotPasswordForm = () => {
 
     try {
       console.log("Sending password reset email to:", data.email);
+      // Build a clean reset URL without any existing query params or hash
+      const resetUrl = `${window.location.origin}/reset-password`;
+      
       // Use the authService function for password reset
-      const { error } = await sendPasswordResetEmail(data.email, `${window.location.origin}/reset-password`);
+      const { error } = await sendPasswordResetEmail(data.email, resetUrl);
 
       if (error) {
         console.error("Error sending reset email:", error);

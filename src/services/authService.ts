@@ -113,10 +113,20 @@ export const sendPasswordResetEmail = async (
   email: string,
   redirectTo?: string
 ): Promise<{ error: any }> => {
-  console.log(`Sending password reset email with redirect to: ${redirectTo || `${window.location.origin}/reset-password`}`);
+  const redirectUrl = redirectTo || `${window.location.origin}/reset-password`;
+  console.log(`Sending password reset email with redirect to: ${redirectUrl}`);
+  
+  // Make sure the URL doesn't already contain a hash or search params
+  const cleanRedirectUrl = redirectUrl.split('?')[0].split('#')[0];
+  
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: redirectTo || `${window.location.origin}/reset-password`
+    redirectTo: cleanRedirectUrl
   });
+  
+  if (error) {
+    console.error("Error sending password reset email:", error);
+  }
+  
   return { error };
 };
 

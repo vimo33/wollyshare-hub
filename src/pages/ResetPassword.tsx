@@ -18,19 +18,42 @@ const ResetPassword = () => {
       setLoading(true);
       
       try {
-        // Check if we're in a recovery flow by looking at URL hash or query parameters
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const queryParams = new URLSearchParams(window.location.search);
-        
-        // Check both hash and query parameters for the token
-        const accessToken = hashParams.get("access_token") || queryParams.get("token");
-        const refreshToken = hashParams.get("refresh_token") || "";
-        const type = hashParams.get("type") || queryParams.get("type");
+        // Extract token from URL hash (Supabase sends recovery links with hash format)
+        let accessToken = null;
+        let refreshToken = null;
+        let type = null;
+
+        // First check hash parameters (most common with Supabase auth)
+        if (window.location.hash) {
+          const hashParams = new URLSearchParams(window.location.hash.substring(1));
+          accessToken = hashParams.get("access_token");
+          refreshToken = hashParams.get("refresh_token") || "";
+          type = hashParams.get("type");
+
+          console.log("Found in hash params:", { 
+            hasAccessToken: !!accessToken,
+            hasRefreshToken: !!refreshToken,
+            type
+          });
+        }
+
+        // If not in hash, check query parameters as fallback
+        if (!accessToken) {
+          const queryParams = new URLSearchParams(window.location.search);
+          accessToken = queryParams.get("token");
+          type = queryParams.get("type");
+          
+          console.log("Found in query params:", { 
+            hasAccessToken: !!accessToken,
+            type
+          });
+        }
         
         console.log("Reset password flow check:", { 
-          accessToken: accessToken ? "[TOKEN EXISTS]" : null,
+          hasAccessToken: !!accessToken,
           type,
-          hash: window.location.hash ? "[HASH EXISTS]" : null
+          hashExists: !!window.location.hash,
+          hashLength: window.location.hash.length
         });
         
         // If we have an access token in the URL, we're in a password reset flow
@@ -44,28 +67,28 @@ const ResetPassword = () => {
             // This will set the recovery token as the active session
             const { data, error } = await supabase.auth.setSession({
               access_token: accessToken,
-              refresh_token: refreshToken,
+              refresh_token: refreshToken || "",
             });
             
             if (error) {
               console.error("Error setting recovery session:", error);
-              setError("Invalid or expired password reset link. Please request a new one.");
+              setError(`Invalid or expired password reset link. Please request a new one. (${error.message})`);
             } else {
-              console.log("Successfully set recovery session");
+              console.log("Successfully set recovery session with user:", data.user?.email);
               setValidResetFlow(true);
             }
-          } catch (err) {
+          } catch (err: any) {
             console.error("Exception during recovery flow:", err);
-            setError("An unexpected error occurred. Please try again.");
+            setError(`An unexpected error occurred: ${err?.message || "Unknown error"}. Please try again.`);
           }
         } else {
           // Not a valid reset flow
           console.error("No access token found in URL");
           setError("Invalid or expired password reset link. Please request a new one.");
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error("Exception in checkResetFlow:", err);
-        setError("An unexpected error occurred. Please try again.");
+        setError(`An unexpected error occurred: ${err?.message || "Unknown error"}. Please try again.`);
       }
       
       setLoading(false);
