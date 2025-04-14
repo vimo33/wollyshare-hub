@@ -53,10 +53,11 @@ const ResetPassword = () => {
           // If we have a token in query params, we need to exchange it for a session
           if (token && type === "recovery") {
             try {
-              // Use the token to get a session
+              // For recovery tokens, we need to use the proper method
+              // The verifyOtp method for recovery type requires a different format
               const { data, error: verifyError } = await supabase.auth.verifyOtp({
-                token,
-                type: "recovery",
+                token_hash: token,
+                type: "recovery"
               });
               
               if (verifyError) {
