@@ -67,17 +67,15 @@ export const deleteMember = async (memberId: string): Promise<boolean> => {
       return false;
     }
     
-    // Then call a more thorough delete_member_complete function that:
-    // 1. Sets is_member to false
-    // 2. Removes user access if possible
-    // 3. Marks the profile for complete deletion
+    // Then call the delete_member function that's available in the database
+    // This function sets is_member to false and handles other cleanup
     const { data, error } = await supabase
-      .rpc('delete_member_complete', {
+      .rpc('delete_member', {
         member_id: memberId
       });
       
     if (error) {
-      console.error('Error removing member completely:', error);
+      console.error('Error removing member:', error);
       return false;
     }
     
