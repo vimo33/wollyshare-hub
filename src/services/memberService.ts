@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Profile } from '@/types/supabase';
 
@@ -54,32 +53,20 @@ export const getNonMembers = async (): Promise<Profile[]> => {
 
 export const deleteMember = async (memberId: string): Promise<boolean> => {
   try {
-    console.log(`Deleting member with ID: ${memberId} and permanently removing their items`);
+    console.log(`Deleting member with ID: ${memberId} and permanently removing their data`);
     
-    // First, permanently delete all items owned by this member from the database
-    const { error: deleteItemsError } = await supabase
-      .from('items')
-      .delete()
-      .eq('user_id', memberId);
-      
-    if (deleteItemsError) {
-      console.error('Error permanently deleting member items:', deleteItemsError);
-      return false;
-    }
-    
-    // Then call the delete_member function that's available in the database
-    // This function sets is_member to false and handles other cleanup
+    // Call the delete_member_complete function that performs thorough cleanup
     const { data, error } = await supabase
-      .rpc('delete_member', {
+      .rpc('delete_member_complete', {
         member_id: memberId
       });
       
     if (error) {
-      console.error('Error removing member:', error);
+      console.error('Error removing member completely:', error);
       return false;
     }
     
-    console.log('Member and all their items permanently deleted successfully');
+    console.log('Member and all their data permanently deleted successfully');
     return !!data;
   } catch (error) {
     console.error('Exception in deleteMember:', error);
