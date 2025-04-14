@@ -18,18 +18,20 @@ const ResetPassword = () => {
       setLoading(true);
       
       try {
-        // Extract token from URL hash (Supabase sends recovery links with hash format)
+        console.log("Starting reset password flow check...");
+        
+        // Determine if we have a token either in the hash or query params
         let accessToken = null;
         let refreshToken = null;
         let type = null;
 
-        // First check hash parameters (most common with Supabase auth)
+        // Case 1: Token in hash fragment (#) - Supabase's default callback format
         if (window.location.hash) {
           const hashParams = new URLSearchParams(window.location.hash.substring(1));
           accessToken = hashParams.get("access_token");
           refreshToken = hashParams.get("refresh_token") || "";
           type = hashParams.get("type");
-
+          
           console.log("Found in hash params:", { 
             hasAccessToken: !!accessToken,
             hasRefreshToken: !!refreshToken,
@@ -37,16 +39,45 @@ const ResetPassword = () => {
           });
         }
 
-        // If not in hash, check query parameters as fallback
+        // Case 2: Token in URL query parameters (?) - Alternative format
         if (!accessToken) {
           const queryParams = new URLSearchParams(window.location.search);
-          accessToken = queryParams.get("token");
+          const token = queryParams.get("token");
           type = queryParams.get("type");
           
           console.log("Found in query params:", { 
-            hasAccessToken: !!accessToken,
+            hasToken: !!token,
             type
           });
+          
+          // If we have a token in query params, we need to exchange it for a session
+          if (token && type === "recovery") {
+            try {
+              // Use the token to get a session
+              const { data, error: verifyError } = await supabase.auth.verifyOtp({
+                token,
+                type: "recovery",
+              });
+              
+              if (verifyError) {
+                console.error("Error verifying OTP:", verifyError);
+                throw verifyError;
+              }
+              
+              if (data?.session) {
+                console.log("Successfully verified OTP and created session");
+                // Set valid reset flow since we now have an authenticated session
+                setValidResetFlow(true);
+                setLoading(false);
+                return;
+              }
+            } catch (error: any) {
+              console.error("Error verifying recovery token:", error);
+              setError(`Invalid or expired password reset link. Please request a new one. (${error.message})`);
+              setLoading(false);
+              return;
+            }
+          }
         }
         
         console.log("Reset password flow check:", { 
@@ -73,18 +104,30 @@ const ResetPassword = () => {
             if (error) {
               console.error("Error setting recovery session:", error);
               setError(`Invalid or expired password reset link. Please request a new one. (${error.message})`);
-            } else {
+            } else if (data?.session) {
               console.log("Successfully set recovery session with user:", data.user?.email);
               setValidResetFlow(true);
+            } else {
+              console.error("No session established");
+              setError("Invalid or expired password reset link. Please request a new one. (No session established)");
             }
           } catch (err: any) {
             console.error("Exception during recovery flow:", err);
             setError(`An unexpected error occurred: ${err?.message || "Unknown error"}. Please try again.`);
           }
         } else {
-          // Not a valid reset flow
-          console.error("No access token found in URL");
-          setError("Invalid or expired password reset link. Please request a new one.");
+          // Check if we already have an active session that might be a recovery session
+          const { data: { session } } = await supabase.auth.getSession();
+          
+          if (session?.user) {
+            console.log("Found existing session, checking if it's a recovery session");
+            // We have a session - check if it's a valid recovery session
+            setValidResetFlow(true);
+          } else {
+            // Not a valid reset flow
+            console.error("No access token or valid session found");
+            setError("Invalid or expired password reset link. Please request a new one. (Auth session missing!)");
+          }
         }
       } catch (err: any) {
         console.error("Exception in checkResetFlow:", err);

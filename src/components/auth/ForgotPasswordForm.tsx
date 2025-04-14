@@ -36,7 +36,8 @@ const ForgotPasswordForm = () => {
 
     try {
       console.log("Sending password reset email to:", data.email);
-      // Build a clean reset URL without any existing query params or hash
+      
+      // Construct a clean reset URL - absolute without fragments or existing params
       const resetUrl = `${window.location.origin}/reset-password`;
       
       // Use the authService function for password reset
@@ -57,9 +58,14 @@ const ForgotPasswordForm = () => {
           description: "Check your inbox for the password reset link",
         });
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error during password reset:", err);
       setError("An unexpected error occurred. Please try again.");
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+      });
     } finally {
       setIsSubmitting(false);
     }

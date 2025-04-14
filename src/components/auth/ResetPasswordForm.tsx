@@ -43,6 +43,15 @@ const ResetPasswordForm = () => {
 
     try {
       console.log("Attempting to update password");
+      
+      // Verify we have a valid session before proceeding
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        setError("No valid authentication session found. Please request a new password reset link.");
+        setIsSubmitting(false);
+        return;
+      }
+      
       // Use our authService function to update the password
       const { error } = await updateUserPassword(data.password);
 
