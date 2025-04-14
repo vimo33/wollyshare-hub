@@ -28,7 +28,7 @@ const ResetPassword = () => {
       console.log("Reset password flow check:", { accessToken, type, hash: window.location.hash, search: window.location.search });
       
       // If we're in a password reset flow, sign out any existing user first
-      if ((type === "recovery" || type === "passwordReset") && accessToken) {
+      if ((type === "recovery" || type === "passwordReset" || hashParams.has("access_token")) && accessToken) {
         // Sign out any current user to ensure we're in a clean state
         await supabase.auth.signOut();
         
@@ -38,7 +38,7 @@ const ResetPassword = () => {
             // This will set the recovery token as the active session
             const { data, error } = await supabase.auth.setSession({
               access_token: accessToken,
-              refresh_token: "",
+              refresh_token: hashParams.get("refresh_token") || "",
             });
             
             if (error) {
