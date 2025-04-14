@@ -54,32 +54,34 @@ export const getNonMembers = async (): Promise<Profile[]> => {
 
 export const deleteMember = async (memberId: string): Promise<boolean> => {
   try {
-    console.log(`Deleting member with ID: ${memberId} and their items`);
+    console.log(`Deleting member with ID: ${memberId} and permanently removing their items`);
     
-    // First, delete all items owned by this member
+    // First, permanently delete all items owned by this member from the database
     const { error: deleteItemsError } = await supabase
       .from('items')
       .delete()
       .eq('user_id', memberId);
       
     if (deleteItemsError) {
-      console.error('Error deleting member items:', deleteItemsError);
+      console.error('Error permanently deleting member items:', deleteItemsError);
       return false;
     }
     
-    // Then use the delete_member function which checks if the current user is an admin
-    // and sets is_member to false for the specified user
+    // Then call a more thorough delete_member_complete function that:
+    // 1. Sets is_member to false
+    // 2. Removes user access if possible
+    // 3. Marks the profile for complete deletion
     const { data, error } = await supabase
-      .rpc('delete_member', {
+      .rpc('delete_member_complete', {
         member_id: memberId
       });
       
     if (error) {
-      console.error('Error removing member status:', error);
+      console.error('Error removing member completely:', error);
       return false;
     }
     
-    console.log('Member and their items deleted successfully');
+    console.log('Member and all their items permanently deleted successfully');
     return !!data;
   } catch (error) {
     console.error('Exception in deleteMember:', error);

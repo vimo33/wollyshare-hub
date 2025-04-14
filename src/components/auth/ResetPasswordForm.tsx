@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useNavigate } from "react-router-dom";
 import { updateUserPassword } from "@/services/authService";
+import { supabase } from "@/integrations/supabase/client";
 
 const resetPasswordSchema = z.object({
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
@@ -59,6 +60,9 @@ const ResetPasswordForm = () => {
           title: "Password updated",
           description: "Your password has been updated successfully",
         });
+        
+        // Sign out to clear the recovery token session
+        await supabase.auth.signOut();
         
         // Slight delay before redirecting
         setTimeout(() => {

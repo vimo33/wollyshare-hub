@@ -33,11 +33,10 @@ const Hero = () => {
         const totalMembers = await getTotalMembers();
         console.log("Total members count fetched:", totalMembers);
 
-        // Fetch approved borrow requests count instead of categories
+        // Fetch ALL borrow requests count, regardless of status
         const { count: borrowedCount, error: borrowedError } = await supabase
           .from('borrow_requests')
-          .select('id', { count: 'exact', head: true })
-          .eq('status', 'approved');
+          .select('id', { count: 'exact', head: true });
 
         if (itemsError) {
           console.error('Error fetching items count:', itemsError);
@@ -47,7 +46,7 @@ const Hero = () => {
           console.error('Error fetching borrowed count:', borrowedError);
         }
 
-        console.log(`Stats: ${itemsCount} items, ${totalMembers} members, ${borrowedCount} items borrowed`);
+        console.log(`Stats: ${itemsCount} items, ${totalMembers} members, ${borrowedCount} items borrowed/requested`);
         
         setStats({
           itemsCount: itemsCount?.toString() || '0',
@@ -65,7 +64,7 @@ const Hero = () => {
     // Also set up a refresh interval to keep the stats updated
     const refreshInterval = setInterval(fetchStats, 60000); // Refresh every minute
     
-    // Set up subscription for real-time updates to borrow requests
+    // Set up subscription for real-time updates to borrow requests - now for ANY status change
     const channel = supabase
       .channel('hero-stats-updates')
       .on(
@@ -77,14 +76,8 @@ const Hero = () => {
         },
         (payload) => {
           console.log('New borrow request detected in Hero component:', payload);
-          // Check if it's an auto-approved request
-          if (payload.new && 
-              typeof payload.new === 'object' && 
-              'status' in payload.new && 
-              payload.new.status === 'approved') {
-            console.log('New auto-approved request, refreshing stats immediately');
-            fetchStats();
-          }
+          // Refresh stats immediately for ANY new borrow request
+          fetchStats();
         }
       )
       .on(
@@ -96,14 +89,8 @@ const Hero = () => {
         },
         (payload) => {
           console.log('Borrow request update detected in Hero component:', payload);
-          // Check if status was updated to approved
-          if (payload.new && 
-              typeof payload.new === 'object' && 
-              'status' in payload.new && 
-              payload.new.status === 'approved') {
-            console.log('Borrow request status changed to approved, refreshing stats');
-            fetchStats();
-          }
+          // Refresh stats for ANY status update
+          fetchStats();
         }
       )
       .subscribe((status) => {
@@ -146,7 +133,7 @@ const Hero = () => {
           </p>
         </div>
         
-        {/* Statistics - Updated to show Items Borrowed instead of Categories */}
+        {/* Statistics - Updated to show all borrow requests, not just approved ones */}
         <div className={cn(
           "grid grid-cols-1 md:grid-cols-3 gap-8 transition-all duration-1000 delay-300",
           isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
@@ -161,7 +148,7 @@ const Hero = () => {
           </div>
           <div className="glass rounded-2xl p-6 text-center hover-lift">
             <div className="text-3xl font-bold mb-2">{stats.borrowedCount}</div>
-            <p className="text-muted-foreground">Items Borrowed</p>
+            <p className="text-muted-foreground">Borrows & Requests</p>
           </div>
         </div>
       </div>

@@ -5,6 +5,7 @@ import ResetPasswordForm from "@/components/auth/ResetPasswordForm";
 import { useNavigate } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 const ResetPassword = () => {
   const [loading, setLoading] = useState(true);
@@ -26,9 +27,32 @@ const ResetPassword = () => {
       
       console.log("Reset password flow check:", { accessToken, type, hash: window.location.hash, search: window.location.search });
       
-      // Check if we're in a password reset flow
+      // If we're in a password reset flow, sign out any existing user first
       if ((type === "recovery" || type === "passwordReset") && accessToken) {
-        setValidResetFlow(true);
+        // Sign out any current user to ensure we're in a clean state
+        await supabase.auth.signOut();
+        
+        // Set the auth session with the recovery token
+        if (accessToken) {
+          try {
+            // This will set the recovery token as the active session
+            const { data, error } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: "",
+            });
+            
+            if (error) {
+              console.error("Error setting recovery session:", error);
+              setError("Invalid or expired password reset link. Please request a new one.");
+            } else {
+              console.log("Successfully set recovery session:", data);
+              setValidResetFlow(true);
+            }
+          } catch (err) {
+            console.error("Exception during recovery flow:", err);
+            setError("An unexpected error occurred. Please try again.");
+          }
+        }
       } else {
         // Not a valid reset flow
         setError("Invalid or expired password reset link. Please request a new one.");
