@@ -48,7 +48,7 @@ const BorrowRequestDialog: React.FC<BorrowRequestDialogProps> = ({
 
     setIsSubmitting(true);
     try {
-      // Create borrow request using the service function that now auto-approves
+      // First create borrow request to get it in the database 
       const response = await createBorrowRequest(
         {
           item_id: item.id,
@@ -58,13 +58,15 @@ const BorrowRequestDialog: React.FC<BorrowRequestDialogProps> = ({
         user.id
       );
 
-      // Start Telegram chat
-      await startTelegramChat(user.id, item.user_id, item.name);
+      // Then send Telegram notification with the user's message included
+      await startTelegramChat(user.id, item.user_id, item.name, message);
 
       toast({
         title: "Request approved automatically",
         description: "Your borrow request has been automatically approved.",
       });
+      
+      // Close dialog and trigger success callback
       onSuccess();
       onClose();
     } catch (error: any) {
@@ -99,6 +101,7 @@ const BorrowRequestDialog: React.FC<BorrowRequestDialogProps> = ({
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               className="col-span-3"
+              placeholder="Briefly explain why you want to borrow this item..."
             />
           </div>
         </div>

@@ -18,7 +18,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
 interface MemberListProps {
@@ -28,7 +27,7 @@ interface MemberListProps {
 
 const MemberList: React.FC<MemberListProps> = ({ members, isLoading }) => {
   const queryClient = useQueryClient();
-  const [memberToDelete, setMemberToDelete] = React.useState<string | null>(null);
+  const [openAlertDialogId, setOpenAlertDialogId] = React.useState<string | null>(null);
 
   // Delete member mutation
   const deleteMemberMutation = useMutation({
@@ -36,7 +35,7 @@ const MemberList: React.FC<MemberListProps> = ({ members, isLoading }) => {
     onSuccess: () => {
       toast.success("Member and their items removed successfully");
       queryClient.invalidateQueries({ queryKey: ['members'] });
-      setMemberToDelete(null);
+      setOpenAlertDialogId(null);
     },
     onError: (error) => {
       toast.error("Failed to remove member: " + error);
@@ -44,12 +43,12 @@ const MemberList: React.FC<MemberListProps> = ({ members, isLoading }) => {
   });
 
   const handleDeleteMember = (memberId: string) => {
-    setMemberToDelete(memberId);
+    setOpenAlertDialogId(memberId);
   };
 
-  const confirmDeleteMember = () => {
-    if (memberToDelete) {
-      deleteMemberMutation.mutate(memberToDelete);
+  const confirmDeleteMember = (memberId: string) => {
+    if (memberId) {
+      deleteMemberMutation.mutate(memberId);
     }
   };
 
@@ -85,7 +84,10 @@ const MemberList: React.FC<MemberListProps> = ({ members, isLoading }) => {
                     {member.created_at ? format(new Date(member.created_at), 'MMM d, yyyy') : 'N/A'}
                   </TableCell>
                   <TableCell>
-                    <AlertDialog>
+                    <AlertDialog 
+                      open={openAlertDialogId === member.id}
+                      onOpenChange={(open) => !open && setOpenAlertDialogId(null)}
+                    >
                       <AlertDialogTrigger asChild>
                         <Button 
                           variant="destructive" 
@@ -107,7 +109,7 @@ const MemberList: React.FC<MemberListProps> = ({ members, isLoading }) => {
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={confirmDeleteMember}>
+                          <AlertDialogAction onClick={() => confirmDeleteMember(member.id)}>
                             Remove Member
                           </AlertDialogAction>
                         </AlertDialogFooter>

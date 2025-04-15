@@ -6,12 +6,13 @@ export const useTelegramChat = () => {
   // Get user from useAuth hook at the component level
   const { user } = useAuth();
 
-  const startTelegramChat = async (requesterId: string, ownerId: string, itemName: string) => {
+  const startTelegramChat = async (requesterId: string, ownerId: string, itemName: string, message?: string) => {
     try {
       console.log("useTelegramChat.startTelegramChat called with:", {
         requesterId,
         ownerId,
-        itemName
+        itemName,
+        message
       });
 
       // Get telegram_id, telegram_username, and other data for requester and owner
@@ -52,6 +53,9 @@ export const useTelegramChat = () => {
         }
       });
 
+      // Format message if provided
+      const messageText = message ? `\n\nMessage from requester: "${message}"` : '';
+
       // Send messages to both users with inline keyboard buttons
       const messages = [];
 
@@ -80,27 +84,28 @@ export const useTelegramChat = () => {
 
         messages.push({ 
           chat_id: ownerTelegramId, 
-          text: `<b>${requesterName}</b> has requested your item <b>"${itemName}"</b>.\n\nThey've been notified about their request. You can now chat with them directly in Telegram.`,
+          text: `<b>${requesterName}</b> has requested your item <b>"${itemName}"</b>.${messageText}\n\nThey've been notified about their request. You can now chat with them directly in Telegram.`,
           reply_markup: replyMarkup
         });
       }
 
       console.log('Prepared messages:', JSON.stringify(messages));
 
-      // Send all messages and collect results
-      const results = await Promise.all(messages.map(async (msg) => {
+      // Wait for all messages to be sent sequentially to prevent duplication
+      const results = [];
+      for (const msg of messages) {
         console.log(`Sending notification to chat_id: ${msg.chat_id} with reply markup: ${msg.reply_markup ? 'yes' : 'no'}`);
         try {
           const result = await supabase.functions.invoke('send-telegram-notification', {
             body: msg
           });
           console.log(`Notification result for ${msg.chat_id}:`, result);
-          return result;
+          results.push(result);
         } catch (err) {
           console.error(`Error sending notification to ${msg.chat_id}:`, err);
-          return { error: err };
+          results.push({ error: err });
         }
-      }));
+      }
 
       console.log('All notification results:', results);
       return results;

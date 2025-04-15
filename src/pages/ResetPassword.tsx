@@ -20,10 +20,25 @@ const ResetPassword = () => {
       try {
         console.log("Starting reset password flow check...");
         
+        // Extract error from hash if present (for detecting expired tokens)
+        if (window.location.hash && window.location.hash.includes('error=')) {
+          const errorParams = new URLSearchParams(window.location.hash.substring(1));
+          const errorCode = errorParams.get('error_code');
+          const errorDescription = errorParams.get('error_description');
+          
+          if (errorCode && errorDescription) {
+            console.error(`Auth error detected: ${errorCode} - ${errorDescription}`);
+            setError(`${errorDescription.replace(/\+/g, ' ')}. Please request a new password reset link.`);
+            setLoading(false);
+            return;
+          }
+        }
+        
         // Determine if we have a token either in the hash or query params
         let accessToken = null;
         let refreshToken = null;
         let type = null;
+        let queryToken = null;
 
         // Case 1: Token in hash fragment (#) - Supabase's default callback format
         if (window.location.hash) {
@@ -42,21 +57,20 @@ const ResetPassword = () => {
         // Case 2: Token in URL query parameters (?) - Alternative format
         if (!accessToken) {
           const queryParams = new URLSearchParams(window.location.search);
-          const token = queryParams.get("token");
+          queryToken = queryParams.get("token");
           type = queryParams.get("type");
           
           console.log("Found in query params:", { 
-            hasToken: !!token,
+            hasToken: !!queryToken,
             type
           });
           
-          // If we have a token in query params, we need to exchange it for a session
-          if (token && type === "recovery") {
+          // If we have a token in query params, we need to verify it
+          if (queryToken && type === "recovery") {
             try {
-              // For recovery tokens, we need to use the proper method
-              // The verifyOtp method for recovery type requires a different format
+              // For recovery tokens in query params, use token_hash
               const { data, error: verifyError } = await supabase.auth.verifyOtp({
-                token_hash: token,
+                token_hash: queryToken,
                 type: "recovery"
               });
               

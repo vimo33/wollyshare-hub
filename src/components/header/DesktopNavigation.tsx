@@ -1,74 +1,55 @@
 
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Package, Info, HelpCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 
 const DesktopNavigation = () => {
-  const { user } = useAuth();
   const location = useLocation();
+  const { user } = useAuth();
+
+  // Use the blue color from the hero section
+  const activeClass = "text-[#1EAEDB] font-medium";
+  const inactiveClass = "text-muted-foreground hover:text-[#1EAEDB]";
   
-  // Helper function to check if a path is active
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => {
+    if (path === "/") {
+      return location.pathname === "/" ? activeClass : inactiveClass;
+    }
+    return location.pathname.startsWith(path) ? activeClass : inactiveClass;
+  };
 
   return (
-    <nav className="hidden md:flex items-center space-x-6">
-      {/* Only show these links if user is logged in */}
-      {user && (
+    <nav className="hidden md:flex items-center gap-6 mx-8">
+      {user ? (
+        // Navigation for logged-in users
         <>
-          <Link 
-            to="/" 
-            className={cn(
-              "text-sm font-medium transition-colors flex items-center gap-1",
-              isActive("/") 
-                ? "text-primary" 
-                : "hover:text-primary/80"
-            )}
-          >
-            <Home className="h-4 w-4" />
-            <span>Home</span>
+          <Link to="/" className={isActive("/") + " transition duration-200"}>
+            Discover
           </Link>
-          <Link 
-            to="/my-items" 
-            className={cn(
-              "text-sm font-medium transition-colors flex items-center gap-1",
-              isActive("/my-items") 
-                ? "text-primary" 
-                : "hover:text-primary/80"
-            )}
-          >
-            <Package className="h-4 w-4" />
-            <span>My WollyShare</span>
+          <Link to="/my-items" className={isActive("/my-items") + " transition duration-200"}>
+            My Items
+          </Link>
+          <Link to="/how-it-works" className={isActive("/how-it-works") + " transition duration-200"}>
+            How It Works
+          </Link>
+          <Link to="/about" className={isActive("/about") + " transition duration-200"}>
+            About
+          </Link>
+        </>
+      ) : (
+        // Navigation for guests
+        <>
+          <Link to="/" className={isActive("/") + " transition duration-200"}>
+            Home
+          </Link>
+          <Link to="/how-it-works" className={isActive("/how-it-works") + " transition duration-200"}>
+            How It Works
+          </Link>
+          <Link to="/about" className={isActive("/about") + " transition duration-200"}>
+            About
           </Link>
         </>
       )}
-      
-      <Link 
-        to="/about" 
-        className={cn(
-          "text-sm font-medium transition-colors flex items-center gap-1",
-          isActive("/about") 
-            ? "text-primary" 
-            : "hover:text-primary/80"
-        )}
-      >
-        <HelpCircle className="h-4 w-4" />
-        <span>About</span>
-      </Link>
-      
-      <Link 
-        to="/how-it-works" 
-        className={cn(
-          "text-sm font-medium transition-colors flex items-center gap-1",
-          isActive("/how-it-works") 
-            ? "text-primary" 
-            : "hover:text-primary/80"
-        )}
-      >
-        <Info className="h-4 w-4" />
-        <span>How It Works</span>
-      </Link>
     </nav>
   );
 };

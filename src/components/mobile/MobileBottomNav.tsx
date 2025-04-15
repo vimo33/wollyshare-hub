@@ -1,53 +1,83 @@
 
-import { Home, Package, User } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
-import { cn } from "@/lib/utils";
+import React from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Home, Package, HelpCircle, CircleUser, Settings } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const MobileBottomNav = () => {
+  const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
-  
-  // Don't show the bottom nav if the user isn't logged in
-  if (!user) return null;
-  
-  const isActive = (path: string) => location.pathname === path;
+  const isMobile = useIsMobile();
+  const { user, isAdmin } = useAuth();
+
+  // Don't render on desktop or if user isn't logged in
+  if (!isMobile || !user) {
+    return null;
+  }
+
+  // Use the blue color from the hero section
+  const activeClass = "text-[#1EAEDB]";
+  const inactiveClass = "text-muted-foreground";
+
+  const isActive = (path: string) => {
+    return location.pathname === path;
+  };
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background border-t shadow-lg">
-      <div className="flex items-center justify-around py-2 px-1">
-        <Link 
-          to="/" 
-          className={cn(
-            "flex flex-col items-center justify-center p-2 rounded-md transition-colors",
-            isActive("/") ? "text-primary" : "text-muted-foreground"
-          )}
+    <div className="fixed bottom-0 left-0 right-0 border-t bg-background/80 backdrop-blur-md z-40">
+      <div className="grid grid-cols-5 h-14">
+        <button
+          className="flex flex-col items-center justify-center"
+          onClick={() => navigate("/")}
         >
-          <Home className="h-6 w-6 mb-1" />
-          <span className="text-xs font-medium">Home</span>
-        </Link>
-        
-        <Link 
-          to="/my-items" 
-          className={cn(
-            "flex flex-col items-center justify-center p-2 rounded-md transition-colors",
-            isActive("/my-items") ? "text-primary" : "text-muted-foreground"
-          )}
+          <Home className={isActive("/") ? activeClass : inactiveClass} size={20} />
+          <span className={`text-xs mt-1 ${isActive("/") ? activeClass : inactiveClass}`}>
+            Discover
+          </span>
+        </button>
+
+        <button
+          className="flex flex-col items-center justify-center"
+          onClick={() => navigate("/my-items")}
         >
-          <Package className="h-6 w-6 mb-1" />
-          <span className="text-xs font-medium">My Items</span>
-        </Link>
-        
-        <Link 
-          to="/profile" 
-          className={cn(
-            "flex flex-col items-center justify-center p-2 rounded-md transition-colors",
-            isActive("/profile") ? "text-primary" : "text-muted-foreground"
-          )}
+          <Package className={isActive("/my-items") ? activeClass : inactiveClass} size={20} />
+          <span className={`text-xs mt-1 ${isActive("/my-items") ? activeClass : inactiveClass}`}>
+            My Items
+          </span>
+        </button>
+
+        <button
+          className="flex flex-col items-center justify-center"
+          onClick={() => navigate("/how-it-works")}
         >
-          <User className="h-6 w-6 mb-1" />
-          <span className="text-xs font-medium">Profile</span>
-        </Link>
+          <HelpCircle className={isActive("/how-it-works") ? activeClass : inactiveClass} size={20} />
+          <span className={`text-xs mt-1 ${isActive("/how-it-works") ? activeClass : inactiveClass}`}>
+            Help
+          </span>
+        </button>
+
+        <button
+          className="flex flex-col items-center justify-center"
+          onClick={() => navigate("/profile")}
+        >
+          <CircleUser className={isActive("/profile") ? activeClass : inactiveClass} size={20} />
+          <span className={`text-xs mt-1 ${isActive("/profile") ? activeClass : inactiveClass}`}>
+            Profile
+          </span>
+        </button>
+
+        {isAdmin && (
+          <button
+            className="flex flex-col items-center justify-center"
+            onClick={() => navigate("/admin")}
+          >
+            <Settings className={isActive("/admin") ? activeClass : inactiveClass} size={20} />
+            <span className={`text-xs mt-1 ${isActive("/admin") ? activeClass : inactiveClass}`}>
+              Admin
+            </span>
+          </button>
+        )}
       </div>
     </div>
   );

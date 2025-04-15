@@ -8,6 +8,7 @@ import SignupForm from "@/components/auth/SignupForm";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useSearchParams } from "react-router-dom";
 import { verifyInvitation } from "@/services/invitationService";
+import PendingApprovalModal from "@/components/auth/PendingApprovalModal";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -15,13 +16,21 @@ const Auth = () => {
   const invitationToken = searchParams.get("token");
   const [tokenValid, setTokenValid] = useState<boolean | null>(null);
   const [tokenChecked, setTokenChecked] = useState(false);
-  const { user } = useAuth();
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Redirect to home if already logged in
-    if (user) {
+    // If user is logged in but not approved, show approval modal
+    if (user && profile && !profile.is_member) {
+      setShowApprovalModal(true);
+      return;
+    }
+    
+    // Redirect approved users to home
+    if (user && profile && profile.is_member) {
       navigate("/");
+      return;
     }
 
     // Verify invitation token if present
@@ -41,9 +50,34 @@ const Auth = () => {
     } else if (!invitationToken) {
       setTokenChecked(true);
     }
-  }, [user, navigate, invitationToken, tokenChecked]);
+  }, [user, navigate, invitationToken, tokenChecked, profile]);
 
   const toggleForm = () => setIsLogin(!isLogin);
+
+  // Show approval modal for users who aren't yet approved members
+  if (user && profile && !profile.is_member) {
+    return (
+      <div className="container max-w-md mx-auto mt-12 p-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Account Pending Approval</CardTitle>
+            <CardDescription>
+              Your account is waiting for admin approval
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center">
+            <p className="mb-4">
+              Please contact an admin on Telegram for approval.
+            </p>
+            <PendingApprovalModal 
+              isOpen={showApprovalModal} 
+              onClose={() => setShowApprovalModal(false)}
+            />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (invitationToken && !tokenChecked) {
     return (

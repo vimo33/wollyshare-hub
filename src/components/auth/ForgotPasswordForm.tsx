@@ -37,8 +37,9 @@ const ForgotPasswordForm = () => {
     try {
       console.log("Sending password reset email to:", data.email);
       
-      // Construct a clean reset URL - absolute without fragments or existing params
-      const resetUrl = `${window.location.origin}/reset-password`;
+      // Build the full absolute URL with no hash or search params
+      const resetUrl = window.location.origin + "/reset-password";
+      console.log("Using reset URL:", resetUrl);
       
       // Use the authService function for password reset
       const { error } = await sendPasswordResetEmail(data.email, resetUrl);
