@@ -18,6 +18,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger, // Ensure this is imported
 } from "@/components/ui/alert-dialog";
 
 interface MemberListProps {
