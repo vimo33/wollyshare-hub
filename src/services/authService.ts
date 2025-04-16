@@ -117,11 +117,8 @@ export const sendPasswordResetEmail = async (
   const redirectUrl = redirectTo || `${window.location.origin}/reset-password`;
   console.log(`Sending password reset email with redirect to: ${redirectUrl}`);
   
-  // Make sure the URL doesn't already contain a hash or search params
-  const cleanRedirectUrl = redirectUrl.split('?')[0].split('#')[0];
-  
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: cleanRedirectUrl
+    redirectTo: redirectUrl
   });
   
   if (error) {
@@ -140,7 +137,13 @@ export const updateUserPassword = async (
   console.log("Updating user password");
   
   // Get the current session to check if we're in a valid recovery flow
-  const { data: sessionData } = await supabase.auth.getSession();
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  
+  if (sessionError) {
+    console.error("Session error when updating password:", sessionError);
+    return { error: sessionError };
+  }
+  
   if (!sessionData.session) {
     console.error("No active session when trying to update password");
     return { error: new Error("No active session. Please request a new password reset link.") };

@@ -44,26 +44,38 @@ const ResetPasswordForm = () => {
     try {
       console.log("Attempting to update password");
       
-      // Verify we have a valid session before proceeding
-      const { data: sessionData } = await supabase.auth.getSession();
+      // Double-check we have a valid session before proceeding
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error("Error getting session:", sessionError);
+        setError(`Authentication error: ${sessionError.message}. Please request a new password reset link.`);
+        setIsSubmitting(false);
+        return;
+      }
+      
       if (!sessionData.session) {
         setError("No valid authentication session found. Please request a new password reset link.");
         setIsSubmitting(false);
         return;
       }
       
-      // Use our authService function to update the password
-      const { error } = await updateUserPassword(data.password);
+      // Use the direct Supabase API call for updating password
+      // This ensures we're using the current active recovery session
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: data.password
+      });
 
-      if (error) {
-        console.error("Error from updateUserPassword:", error);
-        setError(error.message);
+      if (updateError) {
+        console.error("Error updating password:", updateError);
+        setError(updateError.message);
         toast({
           variant: "destructive",
           title: "Error",
-          description: error.message,
+          description: updateError.message,
         });
       } else {
+        console.log("Password updated successfully");
         setSuccess(true);
         toast({
           title: "Password updated",
@@ -79,7 +91,7 @@ const ResetPasswordForm = () => {
         }, 2000);
       }
     } catch (err: any) {
-      console.error("Error updating password:", err);
+      console.error("Unexpected error updating password:", err);
       setError(err?.message || "An unexpected error occurred. Please try again.");
     } finally {
       setIsSubmitting(false);

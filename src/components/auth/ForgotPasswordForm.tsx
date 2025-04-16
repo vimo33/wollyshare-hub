@@ -7,9 +7,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { sendPasswordResetEmail } from "@/services/authService";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const forgotPasswordSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -37,12 +37,16 @@ const ForgotPasswordForm = () => {
     try {
       console.log("Sending password reset email to:", data.email);
       
-      // Build the full absolute URL with no hash or search params
-      const resetUrl = window.location.origin + "/reset-password";
+      // Build the absolute URL for the reset password page
+      const origin = window.location.origin; // e.g., https://example.com
+      const resetUrl = `${origin}/reset-password`; 
+      
       console.log("Using reset URL:", resetUrl);
       
-      // Use the authService function for password reset
-      const { error } = await sendPasswordResetEmail(data.email, resetUrl);
+      // Send the password reset email directly using Supabase client
+      const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
+        redirectTo: resetUrl,
+      });
 
       if (error) {
         console.error("Error sending reset email:", error);
@@ -53,6 +57,7 @@ const ForgotPasswordForm = () => {
           description: error.message,
         });
       } else {
+        console.log("Password reset email sent successfully");
         setEmailSent(true);
         toast({
           title: "Email sent",
