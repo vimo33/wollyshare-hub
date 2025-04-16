@@ -32,23 +32,20 @@ const ResetPassword = () => {
           return;
         }
 
-        // Modern approach: Check for recovery token in query params first
-        const token = urlParams.get('token');
+        // Priority 1: Modern approach with 'code' parameter (newest Supabase versions)
+        const code = urlParams.get('code');
         const type = urlParams.get('type');
-        const code = urlParams.get('code'); // Newer Supabase versions use 'code'
         
         console.log("URL parameters:", { 
-          hasToken: !!token,
           hasCode: !!code,
           type
         });
 
-        // Handle modern Supabase auth flow with 'code' parameter
         if (code && (type === "recovery" || type === "passwordRecovery" || !type)) {
           try {
             console.log("Verifying with OTP code");
             
-            // For recovery flow, we need to use token_hash instead of token to match Supabase's expected parameters
+            // Use token_hash parameter for recovery flow
             const { data, error: verifyError } = await supabase.auth.verifyOtp({
               token_hash: code,
               type: "recovery"
@@ -73,7 +70,9 @@ const ResetPassword = () => {
           }
         }
         
-        // Handle legacy token in query params
+        // Priority 2: Legacy token parameter (older Supabase versions)
+        const token = urlParams.get('token');
+        
         if (token && (type === "recovery" || type === "passwordRecovery" || !type)) {
           try {
             console.log("Verifying with token_hash");
@@ -101,7 +100,7 @@ const ResetPassword = () => {
           }
         }
         
-        // Handle hash fragment (older Supabase approach)
+        // Priority 3: Hash fragment (older Supabase approach)
         if (window.location.hash) {
           const hashParams = new URLSearchParams(window.location.hash.substring(1));
           const accessToken = hashParams.get("access_token");
@@ -116,9 +115,6 @@ const ResetPassword = () => {
           
           if (accessToken && (hashType === "recovery" || !hashType)) {
             console.log("Setting session with access token from hash");
-            
-            // Sign out any current user to ensure we're in a clean state
-            await supabase.auth.signOut();
             
             try {
               const { data, error } = await supabase.auth.setSession({
