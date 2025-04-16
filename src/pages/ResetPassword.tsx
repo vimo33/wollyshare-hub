@@ -147,17 +147,6 @@ const ResetPassword = () => {
           }
         }
         
-        // As a last resort, check if we already have an active session
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (session?.user) {
-          console.log("Found existing session, checking if it's a recovery session");
-          const isRecoverySession = session?.user?.aud === 'recovery'; // This check might not be reliable
-          setValidResetFlow(true);
-          setLoading(false);
-          return;
-        }
-        
         // No valid reset flow found
         console.error("No valid recovery token, code, or session found");
         setError("Invalid or expired password reset link. Please request a new password reset link.");
