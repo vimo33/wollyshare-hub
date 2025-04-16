@@ -9,7 +9,9 @@ const Redirector = () => {
 
   useEffect(() => {
     if (destination) {
-      navigate(destination);
+      // Clean up the destination by removing any leading slashes
+      const cleanDestination = destination.replace(/^\/+/, '/');
+      navigate(cleanDestination);
     } else {
       navigate('/auth');
     }
