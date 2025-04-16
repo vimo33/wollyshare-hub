@@ -47,8 +47,10 @@ const ResetPassword = () => {
         if (code && (type === "recovery" || type === "passwordRecovery" || !type)) {
           try {
             console.log("Verifying with OTP code");
+            
+            // For recovery flow, we need to use token_hash instead of token to match Supabase's expected parameters
             const { data, error: verifyError } = await supabase.auth.verifyOtp({
-              token: code,
+              token_hash: code,
               type: "recovery"
             });
             

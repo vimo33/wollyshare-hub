@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { sendPasswordResetEmail } from "@/services/authService";
 
 const forgotPasswordSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -43,10 +43,7 @@ const ForgotPasswordForm = () => {
       
       console.log("Using reset URL:", resetUrl);
       
-      // Send the password reset email directly using Supabase client
-      const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
-        redirectTo: resetUrl,
-      });
+      const { error } = await sendPasswordResetEmail(data.email, resetUrl);
 
       if (error) {
         console.error("Error sending reset email:", error);
