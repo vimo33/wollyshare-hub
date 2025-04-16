@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { AuthError } from "@supabase/supabase-js";
 
 const ResetPassword = () => {
   const [loading, setLoading] = useState(true);
@@ -32,7 +33,7 @@ const ResetPassword = () => {
           return;
         }
 
-        // Priority 1: Modern approach with 'code' parameter (newest Supabase versions)
+        // Modern approach: Check for 'code' parameter (newest Supabase versions)
         const code = urlParams.get('code');
         const type = urlParams.get('type');
         
@@ -61,95 +62,41 @@ const ResetPassword = () => {
               setValidResetFlow(true);
               setLoading(false);
               return;
+            } else {
+              console.error("No session returned after OTP verification");
+              throw new Error("Authentication failed. No session was established.");
             }
-          } catch (error: any) {
+          } catch (error) {
             console.error("Error verifying recovery code:", error);
-            setError(`Invalid or expired password reset link. Please request a new one. (${error.message})`);
+            setError(`Invalid or expired password reset link. Please request a new one.`);
             setLoading(false);
             return;
           }
         }
         
-        // Priority 2: Legacy token parameter (older Supabase versions)
-        const token = urlParams.get('token');
+        // Legacy approach: Check for existing session as fallback
+        console.log("Checking for existing session");
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
-        if (token && (type === "recovery" || type === "passwordRecovery" || !type)) {
-          try {
-            console.log("Verifying with token_hash");
-            const { data, error: verifyError } = await supabase.auth.verifyOtp({
-              token_hash: token,
-              type: "recovery"
-            });
-            
-            if (verifyError) {
-              console.error("Error verifying token_hash:", verifyError);
-              throw verifyError;
-            }
-            
-            if (data?.session) {
-              console.log("Successfully verified token and created session");
-              setValidResetFlow(true);
-              setLoading(false);
-              return;
-            }
-          } catch (error: any) {
-            console.error("Error verifying recovery token:", error);
-            setError(`Invalid or expired password reset link. Please request a new one. (${error.message})`);
-            setLoading(false);
-            return;
-          }
+        if (sessionError) {
+          console.error("Error checking session:", sessionError);
+          throw sessionError;
         }
         
-        // Priority 3: Hash fragment (older Supabase approach)
-        if (window.location.hash) {
-          const hashParams = new URLSearchParams(window.location.hash.substring(1));
-          const accessToken = hashParams.get("access_token");
-          const refreshToken = hashParams.get("refresh_token");
-          const hashType = hashParams.get("type");
-          
-          console.log("Hash parameters:", { 
-            hasAccessToken: !!accessToken,
-            hasRefreshToken: !!refreshToken,
-            hashType
-          });
-          
-          if (accessToken && (hashType === "recovery" || !hashType)) {
-            console.log("Setting session with access token from hash");
-            
-            try {
-              const { data, error } = await supabase.auth.setSession({
-                access_token: accessToken,
-                refresh_token: refreshToken || "",
-              });
-              
-              if (error) {
-                console.error("Error setting session from hash:", error);
-                setError(`Invalid or expired password reset link. Please request a new one. (${error.message})`);
-              } else if (data?.session) {
-                console.log("Successfully set session from hash with user:", data.user?.email);
-                setValidResetFlow(true);
-                setLoading(false);
-                return;
-              } else {
-                console.error("No session established from hash");
-                setError("Invalid or expired password reset link. Please request a new one. (No session established)");
-              }
-            } catch (err: any) {
-              console.error("Exception during hash recovery flow:", err);
-              setError(`An unexpected error occurred: ${err?.message || "Unknown error"}. Please try again.`);
-              setLoading(false);
-              return;
-            }
-          }
+        if (session?.user) {
+          console.log("Found existing session for user:", session.user.email);
+          setValidResetFlow(true);
+          setLoading(false);
+          return;
         }
         
-        // No valid reset flow found
-        console.error("No valid recovery token, code, or session found");
+        // No valid recovery flow found
+        console.error("No valid recovery code or session found");
         setError("Invalid or expired password reset link. Please request a new password reset link.");
         
       } catch (err: any) {
         console.error("Exception in checkResetFlow:", err);
-        setError(`An unexpected error occurred: ${err?.message || "Unknown error"}. Please try again.`);
+        setError(`An unexpected error occurred. Please request a new password reset link.`);
       }
       
       setLoading(false);
@@ -179,7 +126,7 @@ const ResetPassword = () => {
         <CardContent>
           {error ? (
             <>
-              <Alert className="mb-4">
+              <Alert className="mb-4" variant="destructive">
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
               <div className="text-center mt-4">

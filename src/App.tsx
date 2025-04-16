@@ -21,6 +21,7 @@ import Profile from "./pages/Profile";
 import About from "./pages/About";
 import { useAuth } from "@/contexts/AuthContext";
 import MobileBottomNav from "@/components/mobile/MobileBottomNav";
+import Redirector from "@/components/auth/Redirector";
 
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAdmin, isLoading } = useAuth();
@@ -35,6 +36,7 @@ const AppRoutes = () => (
     <Route path="/auth" element={<Auth />} />
     <Route path="/forgot-password" element={<ForgotPassword />} />
     <Route path="/reset-password" element={<ResetPassword />} />
+    <Route path="/redirect" element={<Redirector />} />
     <Route path="/admin/auth" element={<AdminAuth />} />
     <Route path="/how-it-works" element={<HowItWorks />} />
     <Route path="/about" element={<About />} />

@@ -41,7 +41,7 @@ const ResetPasswordForm = () => {
     setError(null);
 
     try {
-      console.log("Attempting to update password");
+      console.log("Verifying session before password update");
       
       // Double-check we have a valid session before proceeding
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
@@ -54,13 +54,15 @@ const ResetPasswordForm = () => {
       }
       
       if (!sessionData.session) {
+        console.error("No valid session found");
         setError("No valid authentication session found. Please request a new password reset link.");
         setIsSubmitting(false);
         return;
       }
       
+      console.log("Valid session found, updating password for user:", sessionData.session.user.email);
+      
       // Use the direct Supabase API call for updating password
-      // This ensures we're using the current active recovery session
       const { error: updateError } = await supabase.auth.updateUser({
         password: data.password
       });
@@ -92,6 +94,11 @@ const ResetPasswordForm = () => {
     } catch (err: any) {
       console.error("Unexpected error updating password:", err);
       setError(err?.message || "An unexpected error occurred. Please try again.");
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+      });
     } finally {
       setIsSubmitting(false);
     }
