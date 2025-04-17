@@ -67,6 +67,14 @@ const SignupForm: React.FC<SignupFormProps> = ({ invitationToken }) => {
   const onSubmit = async (data: SignupFormValues) => {
     setIsLoading(true);
     try {
+      console.log("Submitting signup form with data:", {
+        ...data,
+        password: "[REDACTED]"
+      });
+      
+      // Clean telegram username (remove @ if included)
+      const cleanTelegramUsername = data.telegramUsername?.replace('@', '');
+      
       const { user, error } = await registerUser({
         email: data.email,
         password: data.password,
@@ -76,7 +84,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ invitationToken }) => {
         metadata: {
           location: data.location,
           telegram_id: data.telegramId,
-          telegram_username: data.telegramUsername?.replace('@', '') // Remove @ if included
+          telegram_username: cleanTelegramUsername
         }
       });
 

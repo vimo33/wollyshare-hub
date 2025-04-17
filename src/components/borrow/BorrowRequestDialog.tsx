@@ -15,7 +15,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { createBorrowRequest } from "@/services/borrowRequestService";
 import { Item } from "@/types/supabase";
-import { useTelegramChat } from "@/hooks/useTelegramChat";
 
 interface BorrowRequestDialogProps {
   item: Item;
@@ -34,7 +33,6 @@ const BorrowRequestDialog: React.FC<BorrowRequestDialogProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
-  const { startTelegramChat } = useTelegramChat();
 
   const handleSubmit = useCallback(async () => {
     if (!user) {
@@ -48,7 +46,7 @@ const BorrowRequestDialog: React.FC<BorrowRequestDialogProps> = ({
 
     setIsSubmitting(true);
     try {
-      // First create borrow request to get it in the database 
+      // Create borrow request (this already handles the Telegram notifications)
       const response = await createBorrowRequest(
         {
           item_id: item.id,
@@ -57,9 +55,6 @@ const BorrowRequestDialog: React.FC<BorrowRequestDialogProps> = ({
         },
         user.id
       );
-
-      // Then send Telegram notification with the user's message included
-      await startTelegramChat(user.id, item.user_id, item.name, message);
 
       toast({
         title: "Request approved automatically",
@@ -80,7 +75,7 @@ const BorrowRequestDialog: React.FC<BorrowRequestDialogProps> = ({
     } finally {
       setIsSubmitting(false);
     }
-  }, [user, item, message, toast, onClose, onSuccess, startTelegramChat]);
+  }, [user, item, message, toast, onClose, onSuccess]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

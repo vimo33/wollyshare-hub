@@ -13,13 +13,15 @@ const sendTelegramNotifications = async (
   requesterId: string, 
   ownerId: string, 
   itemName: string,
-  itemId: string
+  itemId: string,
+  message?: string
 ) => {
   console.log("Preparing to send Telegram notifications for request:", {
     requesterId,
     ownerId,
     itemName,
-    itemId
+    itemId,
+    message
   });
 
   try {
@@ -71,6 +73,9 @@ const sendTelegramNotifications = async (
       }
     });
 
+    // Format message if provided
+    const messageText = message ? `\nMessage from requester: "${message}"` : '';
+
     // Prepare messages with direct message buttons
     const messages = [];
 
@@ -99,7 +104,7 @@ const sendTelegramNotifications = async (
 
       messages.push({ 
         chat_id: ownerTelegramId, 
-        text: `<b>${requesterName}</b> has requested your item <b>"${itemName}"</b>.\n\nThey've been notified about their request. You can now chat with them directly in Telegram.`,
+        text: `<b>${requesterName}</b> has requested your item <b>"${itemName}"</b>.${messageText}\n\nYou can now chat with them directly in Telegram.`,
         reply_markup: replyMarkup
       });
     }
@@ -209,7 +214,8 @@ export const createBorrowRequest = async (requestData: BorrowRequestData, userId
       currentUserId,
       requestData.owner_id,
       itemData.name,
-      requestData.item_id
+      requestData.item_id,
+      requestData.message // Pass the message to the notification function
     );
     
     console.log("Notification process completed:", notificationResults);

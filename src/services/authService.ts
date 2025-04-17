@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 // Types for better organization
@@ -42,6 +41,9 @@ export const registerUser = async ({
     }
   }
   
+  // Log the metadata to verify what's being passed
+  console.log("Registering user with metadata:", metadata);
+  
   // Register the user
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -50,7 +52,10 @@ export const registerUser = async ({
       data: {
         username,
         full_name: fullName,
-        ...metadata
+        location: metadata.location,
+        telegram_id: metadata.telegram_id,
+        telegram_username: metadata.telegram_username,
+        ...metadata  // Include any other metadata fields as a fallback
       }
     }
   });
