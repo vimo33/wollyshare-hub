@@ -41,16 +41,20 @@ const IncomingRequestsTable = ({
     try {
       setProcessingIds(prev => new Set(prev).add(requestId));
       
-      await updateBorrowRequestStatus(requestId, status, user.id);
+      const { success, error } = await updateBorrowRequestStatus(requestId, status, user.id);
       
-      toast({
-        title: status === 'approved' ? "Request approved!" : "Request declined",
-        description: status === 'approved' 
-          ? "The borrower has been notified." 
-          : "The request has been declined.",
-      });
-      
-      refreshRequests();
+      if (success) {
+        toast({
+          title: status === 'approved' ? "Request approved!" : "Request declined",
+          description: status === 'approved' 
+            ? "The borrower has been notified." 
+            : "The request has been declined.",
+        });
+        
+        refreshRequests();
+      } else {
+        throw new Error(error?.message || "Failed to update request");
+      }
     } catch (error: any) {
       console.error(`Error ${status} request:`, error);
       toast({

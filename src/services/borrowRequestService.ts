@@ -1,12 +1,54 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { IncomingRequest } from "@/types/supabase";
-import { useAuth } from "@/contexts/AuthContext";
+import { PostgrestError } from "@supabase/supabase-js";
 
 // Types for better organization
 interface TelegramResponse {
   data: any;
   error: any;
 }
+
+// Function to update borrow request status
+export const updateBorrowRequestStatus = async (
+  requestId: string, 
+  status: 'approved' | 'rejected',
+  userId: string
+): Promise<{ success: boolean; error?: any }> => {
+  try {
+    // Verify the user is the owner of this request
+    const { data: requestData, error: requestError } = await supabase
+      .from('borrow_requests')
+      .select('owner_id, item_id, borrower_id')
+      .eq('id', requestId)
+      .single();
+    
+    if (requestError) {
+      console.error("Error fetching borrow request:", requestError);
+      return { success: false, error: requestError };
+    }
+    
+    if (requestData.owner_id !== userId) {
+      return { success: false, error: "You are not authorized to update this request" };
+    }
+    
+    // Update the status
+    const { error: updateError } = await supabase
+      .from('borrow_requests')
+      .update({ status })
+      .eq('id', requestId);
+    
+    if (updateError) {
+      console.error(`Error updating borrow request status to ${status}:`, updateError);
+      return { success: false, error: updateError };
+    }
+    
+    return { success: true };
+  } catch (err) {
+    console.error("Error in updateBorrowRequestStatus:", err);
+    return { success: false, error: err };
+  }
+};
 
 // Function to send Telegram notifications
 const sendTelegramNotifications = async (
@@ -34,7 +76,7 @@ const sendTelegramNotifications = async (
     
     if (requesterError) {
       console.error("Error fetching requester profile:", requesterError);
-      return { error: requesterError };
+      return { data: null, error: requesterError };
     }
     
     // Fetch owner's profile to get their Telegram ID
@@ -46,7 +88,7 @@ const sendTelegramNotifications = async (
     
     if (ownerError) {
       console.error("Error fetching owner profile:", ownerError);
-      return { error: ownerError };
+      return { data: null, error: ownerError };
     }
     
     // Check if both users have Telegram IDs
@@ -117,18 +159,18 @@ const sendTelegramNotifications = async (
 
       if (error) {
         console.error("Error sending Telegram notifications:", error);
-        return { error };
+        return { data: null, error };
       }
 
       console.log("Telegram notifications sent successfully:", data);
-      return { data };
+      return { data, error: null };
     } else {
       console.log("No Telegram notifications to send (missing Telegram IDs)");
-      return { data: "No notifications sent (missing Telegram IDs)" };
+      return { data: "No notifications sent (missing Telegram IDs)", error: null };
     }
   } catch (err) {
     console.error("Error in sendTelegramNotifications:", err);
-    return { error: err };
+    return { data: null, error: err };
   }
 };
 
@@ -157,7 +199,7 @@ export const createBorrowRequest = async (
 
     if (error) {
       console.error("Error creating borrow request:", error);
-      return { error };
+      return { data: null, error };
     }
 
     // Fetch the item name for the notification
@@ -169,7 +211,7 @@ export const createBorrowRequest = async (
 
     if (itemError) {
       console.error("Error fetching item name:", itemError);
-      return { error: itemError };
+      return { data: null, error: itemError };
     }
 
     const itemName = itemData?.name || 'Unknown Item';
@@ -189,10 +231,10 @@ export const createBorrowRequest = async (
     }
 
     console.log("Borrow request created successfully:", data);
-    return { data };
+    return { data, error: null };
   } catch (err) {
     console.error("Error in createBorrowRequest:", err);
-    return { error: err };
+    return { data: null, error: err };
   }
 };
 

@@ -2,7 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { IncomingRequest } from "@/types/supabase";
-import { getIncomingRequests } from "@/services/itemService";
+import { getIncomingRequests } from "@/services/borrowRequestService";
 
 export const useIncomingRequests = () => {
   const { user } = useAuth();

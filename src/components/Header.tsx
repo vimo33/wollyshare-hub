@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import Logo from "./header/Logo";
 import DesktopNavigation from "./header/DesktopNavigation";
@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 const Header = () => {
   const { user, isLoading, isAdmin } = useAuth();
   const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -29,7 +30,7 @@ const Header = () => {
             </button>
           )}
           {!isLoading && (user ? <UserMenu /> : <AuthMenu />)}
-          <MobileMenu />
+          <MobileMenu open={open} setOpen={setOpen} />
         </div>
       </div>
     </header>
