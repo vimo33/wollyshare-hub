@@ -97,8 +97,10 @@ const SignupForm: React.FC<SignupFormProps> = ({ invitationToken }) => {
         console.error("Signup error:", error);
       } else {
         toast({
+          variant: "success",
           title: "Account created!",
           description: "Please check your email to verify your account.",
+          className: "bg-green-500 text-white" // Adding green background with white text
         });
         navigate("/");
       }

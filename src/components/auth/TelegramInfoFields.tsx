@@ -43,7 +43,7 @@ const TelegramInfoFields: React.FC<TelegramInfoFieldsProps> = ({ control }) => {
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>You can get your Telegram ID by messaging @get_id_bot on Telegram</p>
+                    <p>You can get your Telegram ID by messaging @userinfobot on Telegram</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -52,7 +52,7 @@ const TelegramInfoFields: React.FC<TelegramInfoFieldsProps> = ({ control }) => {
               <Input placeholder="123456789" {...field} />
             </FormControl>
             <FormDescription className="text-xs text-muted-foreground">
-              To get your Telegram ID, open Telegram and message @get_id_bot. The bot will reply with your numeric ID.
+              To get your Telegram ID, open Telegram and search for @userinfobot and click start. The bot will reply with your numeric ID.
             </FormDescription>
             <FormMessage />
           </FormItem>
@@ -84,7 +84,7 @@ const TelegramInfoFields: React.FC<TelegramInfoFieldsProps> = ({ control }) => {
               <Input placeholder="johndoe" {...field} />
             </FormControl>
             <FormDescription className="text-xs text-muted-foreground">
-              To set a Telegram username, open Telegram, go to Settings → Username, and create a username without the @ symbol.
+              To set a Telegram username, open Telegram, go to Settings → See or create your Username, enter it here without the @ symbol.
             </FormDescription>
             <FormMessage />
           </FormItem>

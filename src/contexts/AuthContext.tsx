@@ -32,70 +32,85 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     // Get initial session
     const initAuth = async () => {
-      setIsLoading(true);
-      
-      const { data } = await supabase.auth.getSession();
-      setUser(data.session?.user || null);
-      
-      if (data.session?.user) {
-        const userProfile = await getProfile();
-        setProfile(userProfile);
+      try {
+        setIsLoading(true);
         
-        const adminProfileData = await getAdminProfile();
-        setAdminProfile(adminProfileData);
+        // Set up the auth state listener FIRST
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+          console.log('Auth state changed:', event);
+          
+          // Update user state synchronously first
+          setUser(session?.user || null);
+          
+          // Then fetch additional data if user exists
+          if (session?.user) {
+            // Use setTimeout to avoid Supabase Auth deadlock
+            setTimeout(async () => {
+              console.log("Fetching user profile data after auth change");
+              const userProfile = await getProfile();
+              setProfile(userProfile);
+              
+              const adminProfileData = await getAdminProfile();
+              setAdminProfile(adminProfileData);
+              
+              setIsLoading(false);
+            }, 0);
+          } else {
+            setProfile(null);
+            setAdminProfile(null);
+            setIsLoading(false);
+          }
+        });
+        
+        // THEN check for existing session
+        const { data } = await supabase.auth.getSession();
+        setUser(data.session?.user || null);
+        
+        if (data.session?.user) {
+          const userProfile = await getProfile();
+          setProfile(userProfile);
+          
+          const adminProfileData = await getAdminProfile();
+          setAdminProfile(adminProfileData);
 
-        // Set up realtime subscription for profile changes
-        // This ensures membership status updates are reflected immediately
-        const profileChanges = supabase
-          .channel('profile-changes')
-          .on(
-            'postgres_changes',
-            {
-              event: 'UPDATE',
-              schema: 'public',
-              table: 'profiles',
-              filter: `id=eq.${data.session.user.id}`,
-            },
-            async (payload) => {
-              console.log('Profile updated in realtime:', payload);
-              // Refresh user profile data
-              const refreshedProfile = await getProfile();
-              setProfile(refreshedProfile);
-            }
-          )
-          .subscribe();
+          // Set up realtime subscription for profile changes
+          // This ensures membership status updates are reflected immediately
+          const profileChanges = supabase
+            .channel('profile-changes')
+            .on(
+              'postgres_changes',
+              {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'profiles',
+                filter: `id=eq.${data.session.user.id}`,
+              },
+              async (payload) => {
+                console.log('Profile updated in realtime:', payload);
+                // Refresh user profile data
+                const refreshedProfile = await getProfile();
+                setProfile(refreshedProfile);
+              }
+            )
+            .subscribe();
 
-        // Return cleanup function
-        return () => {
-          supabase.removeChannel(profileChanges);
-        };
+          // Return cleanup function
+          return () => {
+            supabase.removeChannel(profileChanges);
+          };
+        }
+        
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error initializing auth:", error);
+        setIsLoading(false);
       }
-      
-      setIsLoading(false);
     };
-    
-    const subscription = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event);
-      setUser(session?.user || null);
-      
-      if (session?.user) {
-        const userProfile = await getProfile();
-        setProfile(userProfile);
-        
-        const adminProfileData = await getAdminProfile();
-        setAdminProfile(adminProfileData);
-      } else {
-        setProfile(null);
-        setAdminProfile(null);
-      }
-      
-      setIsLoading(false);
-    });
     
     initAuth();
     
     return () => {
-      subscription.data.subscription.unsubscribe();
+      // Cleanup handled within initAuth
     };
   }, []);
   

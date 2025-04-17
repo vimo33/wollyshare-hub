@@ -1,14 +1,14 @@
-
 import { supabase } from "@/integrations/supabase/client";
+import { IncomingRequest } from "@/types/supabase";
+import { useAuth } from "@/contexts/AuthContext";
 
-// Interface for borrow request data
-interface BorrowRequestData {
-  item_id: string;
-  owner_id: string;
-  message: string;
+// Types for better organization
+interface TelegramResponse {
+  data: any;
+  error: any;
 }
 
-// Send Telegram notifications to both owner and borrower
+// Function to send Telegram notifications
 const sendTelegramNotifications = async (
   requesterId: string, 
   ownerId: string, 
@@ -25,53 +25,71 @@ const sendTelegramNotifications = async (
   });
 
   try {
-    // Get telegram_id, telegram_username and user details for requester and owner
-    const [requesterResult, ownerResult] = await Promise.all([
-      supabase.from('profiles').select('telegram_id, telegram_username, username, full_name').eq('id', requesterId).single(),
-      supabase.from('profiles').select('telegram_id, telegram_username, username, full_name').eq('id', ownerId).single()
-    ]);
-
-    console.log("Retrieved profile data:", {
-      requester: requesterResult.data,
-      requesterError: requesterResult.error,
-      owner: ownerResult.data,
-      ownerError: ownerResult.error
-    });
-
-    if (requesterResult.error) {
-      console.error("Error fetching requester data:", requesterResult.error);
+    // Fetch requester's profile to get their username
+    const { data: requesterProfile, error: requesterError } = await supabase
+      .from('profiles')
+      .select('username, telegram_id, telegram_username')
+      .eq('id', requesterId)
+      .single();
+    
+    if (requesterError) {
+      console.error("Error fetching requester profile:", requesterError);
+      return { error: requesterError };
     }
     
-    if (ownerResult.error) {
-      console.error("Error fetching owner data:", ownerResult.error);
+    // Fetch owner's profile to get their Telegram ID
+    const { data: ownerProfile, error: ownerError } = await supabase
+      .from('profiles')
+      .select('telegram_id, telegram_username')
+      .eq('id', ownerId)
+      .single();
+    
+    if (ownerError) {
+      console.error("Error fetching owner profile:", ownerError);
+      return { error: ownerError };
     }
-
-    const requesterTelegramId = requesterResult.data?.telegram_id;
-    const ownerTelegramId = ownerResult.data?.telegram_id;
-    const requesterName = requesterResult.data?.full_name || requesterResult.data?.username || 'Someone';
-    const ownerName = ownerResult.data?.full_name || ownerResult.data?.username || 'the owner';
-    const requesterUsername = requesterResult.data?.telegram_username;
-    const ownerUsername = ownerResult.data?.telegram_username;
-
-    if (!requesterTelegramId && !ownerTelegramId) {
-      console.warn('No Telegram IDs found for requester or owner - skipping notifications');
-      return;
+    
+    // Check if both users have Telegram IDs
+    const requesterTelegramId = requesterProfile?.telegram_id;
+    const requesterTelegramUsername = requesterProfile?.telegram_username;
+    const ownerTelegramId = ownerProfile?.telegram_id;
+    const ownerTelegramUsername = ownerProfile?.telegram_username;
+    
+    // If either user doesn't have a Telegram ID, log a warning
+    if (!requesterTelegramId || !ownerTelegramId) {
+      console.warn("Missing Telegram IDs:", {
+        requesterTelegramId,
+        ownerTelegramId
+      });
     }
-
-    console.log('Sending notifications to:', {
-      requester: { 
-        id: requesterId, 
-        telegramId: requesterTelegramId,
-        telegramUsername: requesterUsername,
-        name: requesterName 
-      },
-      owner: { 
-        id: ownerId, 
-        telegramId: ownerTelegramId,
-        telegramUsername: ownerUsername,
-        name: ownerName 
-      }
+    
+    // Get the requester's name (username or 'Unknown User')
+    const requesterName = requesterProfile?.username || 'Unknown User';
+    
+    console.log("Prepared notification data:", {
+      requesterName,
+      requesterTelegramId,
+      requesterTelegramUsername,
+      ownerTelegramId,
+      ownerTelegramUsername
     });
+
+    // Prepare Telegram Chat inline keyboard markup for both users
+    let replyMarkup = undefined;
+
+    if (requesterTelegramUsername && ownerTelegramUsername) {
+      // Both users have Telegram usernames, create direct message buttons
+      replyMarkup = {
+        inline_keyboard: [
+          [
+            {
+              text: "Open chat",
+              url: `https://t.me/${requesterTelegramUsername}`
+            }
+          ]
+        ]
+      };
+    }
 
     // Format message if provided
     const messageText = message ? `\nMessage from requester: "${message}"` : '';
@@ -79,28 +97,9 @@ const sendTelegramNotifications = async (
     // Prepare messages with direct message buttons
     const messages = [];
 
-    if (requesterTelegramId) {
-      // Add reply_markup with inline keyboard if owner has a username
-      const replyMarkup = ownerUsername ? {
-        inline_keyboard: [[
-          { text: "Message Owner", url: `https://t.me/${ownerUsername}` }
-        ]]
-      } : undefined;
-
-      messages.push({ 
-        chat_id: requesterTelegramId, 
-        text: `You requested <b>"${itemName}"</b>.\n\nThe owner, ${ownerName}, has been notified. You can now chat with them directly in Telegram.`,
-        reply_markup: replyMarkup
-      });
-    }
-
+    // Notification to owner
     if (ownerTelegramId) {
-      // Add reply_markup with inline keyboard if requester has a username
-      const replyMarkup = requesterUsername ? {
-        inline_keyboard: [[
-          { text: "Message Requester", url: `https://t.me/${requesterUsername}` }
-        ]]
-      } : undefined;
+      console.log(`Sending notification to owner (${ownerTelegramId})`);
 
       messages.push({ 
         chat_id: ownerTelegramId, 
@@ -109,180 +108,160 @@ const sendTelegramNotifications = async (
       });
     }
 
-    console.log('Prepared messages for sending:', JSON.stringify(messages.map(m => ({
-      ...m,
-      has_reply_markup: !!m.reply_markup
-    }))));
+    // Only send if we have messages to send
+    if (messages.length > 0) {
+      // Send notifications using edge function
+      const { data, error } = await supabase.functions.invoke('send-telegram-notification', {
+        body: { messages }
+      });
 
-    // Send all messages and collect results
-    const results = await Promise.all(messages.map(async (msg) => {
-      console.log(`Sending notification to chat_id: ${msg.chat_id} with reply markup: ${msg.reply_markup ? 'yes' : 'no'}`);
-      try {
-        const result = await supabase.functions.invoke('send-telegram-notification', {
-          body: msg
-        });
-        console.log(`Notification result for ${msg.chat_id}:`, result);
-        return result;
-      } catch (err) {
-        console.error(`Error sending notification to ${msg.chat_id}:`, err);
-        return { error: err };
+      if (error) {
+        console.error("Error sending Telegram notifications:", error);
+        return { error };
       }
-    }));
 
-    console.log('All notification results:', results);
-    return results;
-  } catch (error) {
-    console.error('Error in sendTelegramNotifications:', error);
-    return { error };
+      console.log("Telegram notifications sent successfully:", data);
+      return { data };
+    } else {
+      console.log("No Telegram notifications to send (missing Telegram IDs)");
+      return { data: "No notifications sent (missing Telegram IDs)" };
+    }
+  } catch (err) {
+    console.error("Error in sendTelegramNotifications:", err);
+    return { error: err };
   }
 };
 
-// Create a new borrow request
-export const createBorrowRequest = async (requestData: BorrowRequestData, userId: string) => {
-  if (!userId) {
-    console.error("User not authenticated");
-    throw new Error("User not authenticated");
-  }
-
-  // Always fetch the current auth user directly from Supabase to ensure the most recent session
-  const { data: authData, error: authError } = await supabase.auth.getUser();
-  if (authError) {
-    console.error("Auth verification error:", authError);
-    throw new Error(`Authentication verification failed: ${authError.message}`);
-  }
-  
-  if (!authData.user) {
-    console.error("No authenticated user found in current session");
-    throw new Error("Authentication required. Please log in again.");
-  }
-  
-  // Log the verification process
-  console.log("Auth verification - provided userId:", userId);
-  console.log("Auth verification - current session userId:", authData.user.id);
-  
-  // Always use the Supabase auth user ID to ensure RLS compatibility
-  const currentUserId = authData.user.id;
-  
-  console.log("Creating borrow request with verified userId:", currentUserId);
-  console.log("Request data:", requestData);
-
-  // Create the payload with the correct schema fields, focusing on borrower_id which is used in RLS
-  // MODIFIED: Changed status from "pending" to "approved" for auto-approval
-  const payload = {
-    item_id: requestData.item_id,
-    owner_id: requestData.owner_id,
-    message: requestData.message,
-    borrower_id: currentUserId, // Required for NOT NULL constraint and RLS policy
-    status: "approved", // Auto-approve all requests
-  };
-
-  console.log("Final payload for insert:", payload);
+// Create a borrow request
+export const createBorrowRequest = async (
+  { item_id, owner_id, message }: { item_id: string; owner_id: string; message?: string },
+  requester_id: string
+): Promise<TelegramResponse> => {
+  console.log("Creating borrow request:", { item_id, owner_id, requester_id, message });
 
   try {
-    // Get the item details for notification
-    const { data: itemData, error: itemError } = await supabase
-      .from("items")
-      .select("name")
-      .eq("id", requestData.item_id)
-      .single();
-
-    if (itemError) {
-      console.error("Error fetching item details:", itemError);
-      throw itemError;
-    }
-
-    console.log("Retrieved item data for notification:", itemData);
-
-    // Insert the borrow request
+    // Insert the borrow request into the database
     const { data, error } = await supabase
-      .from("borrow_requests")
-      .insert(payload)
-      .select();
+      .from('borrow_requests')
+      .insert([
+        {
+          item_id,
+          owner_id,
+          borrower_id: requester_id,
+          status: 'pending',
+          message: message || null,
+        },
+      ])
+      .select()
+      .single();
 
     if (error) {
       console.error("Error creating borrow request:", error);
-      console.error("Error details:", JSON.stringify(error, null, 2));
-      console.error("Request payload:", JSON.stringify(payload, null, 2));
-      throw error;
+      return { error };
     }
 
-    console.log("Successfully created borrow request with auto-approval:", data);
+    // Fetch the item name for the notification
+    const { data: itemData, error: itemError } = await supabase
+      .from('items')
+      .select('name')
+      .eq('id', item_id)
+      .single();
 
-    // Send notifications after successful request creation
-    console.log("Sending Telegram notifications for new auto-approved request");
-    const notificationResults = await sendTelegramNotifications(
-      currentUserId,
-      requestData.owner_id,
-      itemData.name,
-      requestData.item_id,
-      requestData.message // Pass the message to the notification function
-    );
-    
-    console.log("Notification process completed:", notificationResults);
-    
-    // Explicitly update the borrow_requests table status to trigger realtime updates
-    // This is kept to ensure any realtime listeners are notified
-    await supabase
-      .from("borrow_requests")
-      .update({ status: "approved" }) // This will trigger realtime events
-      .eq("id", data[0].id);
-    
-    return data;
-  } catch (error) {
-    console.error("Error in createBorrowRequest:", error);
-    throw error;
-  }
-};
+    if (itemError) {
+      console.error("Error fetching item name:", itemError);
+      return { error: itemError };
+    }
 
-// Get borrow requests for a specific item
-export const getBorrowRequests = async (itemId: string) => {
-  const { data, error } = await supabase
-    .from("borrow_requests")
-    .select(`
-      id, 
-      item_id, 
-      borrower_id, 
-      profiles:borrower_id (username, full_name),
+    const itemName = itemData?.name || 'Unknown Item';
+
+    // Send Telegram notifications
+    const telegramResponse = await sendTelegramNotifications(
+      requester_id,
       owner_id,
-      status,
-      message,
-      created_at
-    `)
-    .eq("item_id", itemId)
-    .order("created_at", { ascending: false });
+      itemName,
+      item_id,
+      message
+    );
 
-  if (error) {
-    console.error("Error fetching borrow requests:", error);
-    throw error;
+    if (telegramResponse.error) {
+      console.error("Error sending Telegram notifications:", telegramResponse.error);
+      // Do not return here, continue to return the borrow request data
+    }
+
+    console.log("Borrow request created successfully:", data);
+    return { data };
+  } catch (err) {
+    console.error("Error in createBorrowRequest:", err);
+    return { error: err };
   }
-
-  return data;
 };
 
-// Update a borrow request status
-export const updateBorrowRequestStatus = async (
-  requestId: string, 
-  status: 'approved' | 'rejected' | 'cancelled',
-  userId: string
-) => {
-  if (!userId) {
-    console.error("User not authenticated");
+// Get all incoming borrow requests for the current user's items
+export const getIncomingRequests = async (): Promise<IncomingRequest[]> => {
+  // Get the user from local storage or session
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user;
+  
+  if (!user) {
     throw new Error("User not authenticated");
   }
 
-  console.log("Updating borrow request status:", { requestId, status, userId });
+  try {
+    // Get all borrow requests for the current user's items
+    const { data, error } = await supabase
+      .from("borrow_requests")
+      .select(`
+        id,
+        item_id,
+        items:item_id (name),
+        borrower_id,
+        status,
+        message,
+        created_at
+      `)
+      .eq("owner_id", user.id)
+      .eq("status", "pending")
+      .order("created_at", { ascending: false });
 
-  const { data, error } = await supabase
-    .from("borrow_requests")
-    .update({ status })
-    .eq("id", requestId)
-    .select();
+    if (error) {
+      console.error("Error fetching incoming requests:", error);
+      throw error;
+    }
 
-  if (error) {
-    console.error("Error updating borrow request:", error);
-    throw error;
+    // Get borrower usernames separately
+    const borrowerIds = (data || []).map(request => request.borrower_id);
+    const { data: borrowerProfiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, username')
+      .in('id', borrowerIds);
+
+    if (profilesError) {
+      console.error("Error fetching borrower profiles:", profilesError);
+    }
+
+    // Create a map of borrower ids to usernames
+    const borrowerMap = new Map();
+    if (borrowerProfiles) {
+      borrowerProfiles.forEach(profile => {
+        borrowerMap.set(profile.id, profile.username || 'Unknown User');
+      });
+    }
+
+    // Transform the data to match the IncomingRequest type
+    return (data || []).map((request) => ({
+      id: request.id,
+      item_id: request.item_id,
+      item_name: request.items?.name || 'Unknown Item',
+      borrower_id: request.borrower_id,
+      requester_username: borrowerMap.get(request.borrower_id) || 'Unknown User',
+      start_date: '',  // Set default value as it's not in database yet
+      end_date: '',    // Set default value as it's not in database yet
+      status: (request.status || 'pending') as IncomingRequest['status'],
+      message: request.message || '',
+      created_at: request.created_at,
+    }));
+  } catch (err) {
+    console.error("Error in getIncomingRequests:", err);
+    return [];  // Return empty array on error
   }
-
-  console.log("Successfully updated borrow request status:", data);
-  return data;
 };

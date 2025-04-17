@@ -1,7 +1,7 @@
 
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Home, Package, HelpCircle, CircleUser, Settings } from "lucide-react";
+import { Home, Package, HelpCircle, CircleUser } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -9,7 +9,7 @@ const MobileBottomNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useIsMobile();
-  const { user, isAdmin } = useAuth();
+  const { user } = useAuth();
 
   // Don't render on desktop or if user isn't logged in
   if (!isMobile || !user) {
@@ -26,7 +26,7 @@ const MobileBottomNav = () => {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 border-t bg-background/80 backdrop-blur-md z-40">
-      <div className="grid grid-cols-5 h-14">
+      <div className="grid grid-cols-4 h-14">
         <button
           className="flex flex-col items-center justify-center"
           onClick={() => navigate("/")}
@@ -66,18 +66,6 @@ const MobileBottomNav = () => {
             Profile
           </span>
         </button>
-
-        {isAdmin && (
-          <button
-            className="flex flex-col items-center justify-center"
-            onClick={() => navigate("/admin")}
-          >
-            <Settings className={isActive("/admin") ? activeClass : inactiveClass} size={20} />
-            <span className={`text-xs mt-1 ${isActive("/admin") ? activeClass : inactiveClass}`}>
-              Admin
-            </span>
-          </button>
-        )}
       </div>
     </div>
   );
