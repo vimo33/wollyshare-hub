@@ -21,18 +21,20 @@ serve(async (req) => {
     }
     
     const requestData = await req.json();
-    console.log("Received notification request with data:", JSON.stringify(requestData));
+    console.log("Received notification request with data:", JSON.stringify({
+      ...requestData,
+      chat_id: requestData.chat_id ? "REDACTED" : undefined // Redact chat_id for privacy
+    }));
     
     const { chat_id, text, reply_markup } = requestData;
-    console.log(`Attempting to send message to chat_id: ${chat_id}, message: ${text}`);
     
     if (!chat_id || !text) {
-      console.error("Missing required parameters", { chat_id, text });
+      console.error("Missing required parameters", { chat_id: !!chat_id, text: !!text });
       throw new Error("Chat ID and text are required");
     }
     
     const telegramApiUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-    console.log(`Making request to Telegram API at: ${telegramApiUrl.split(TELEGRAM_BOT_TOKEN).join("REDACTED")}`);
+    console.log("Making request to Telegram API");
     
     // Create the payload, including reply_markup if provided
     const payload = {
@@ -43,8 +45,9 @@ serve(async (req) => {
     };
 
     console.log("Sending payload to Telegram:", JSON.stringify({
-      ...payload,
-      chat_id: payload.chat_id // Keep the original chat_id for logging
+      text_length: text?.length || 0,
+      has_reply_markup: !!reply_markup,
+      parse_mode: "HTML"
     }));
     
     const telegramResponse = await fetch(telegramApiUrl, {
@@ -59,11 +62,17 @@ serve(async (req) => {
     
     if (!telegramResponse.ok) {
       console.error("Telegram API error response:", telegramData);
-      console.error("Request details:", { chat_id, text_length: text?.length, has_reply_markup: !!reply_markup });
+      console.error("Request details:", { 
+        text_length: text?.length || 0, 
+        has_reply_markup: !!reply_markup 
+      });
       throw new Error(`Telegram API error: ${JSON.stringify(telegramData)}`);
     }
     
-    console.log("Message sent successfully:", telegramData);
+    console.log("Message sent successfully:", {
+      ok: telegramData.ok,
+      message_id: telegramData.result?.message_id
+    });
     
     return new Response(
       JSON.stringify({ success: true, data: telegramData }),

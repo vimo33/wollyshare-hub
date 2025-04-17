@@ -5,8 +5,8 @@ import { PostgrestError } from "@supabase/supabase-js";
 
 // Types for better organization
 interface TelegramResponse {
-  data: any;
-  error: any;
+  data: any | null;
+  error: any | null;
 }
 
 // Function to update borrow request status
@@ -16,6 +16,8 @@ export const updateBorrowRequestStatus = async (
   userId: string
 ): Promise<{ success: boolean; error?: any }> => {
   try {
+    console.log(`Updating borrow request ${requestId} to status ${status} by user ${userId}`);
+    
     // Verify the user is the owner of this request
     const { data: requestData, error: requestError } = await supabase
       .from('borrow_requests')
@@ -29,6 +31,7 @@ export const updateBorrowRequestStatus = async (
     }
     
     if (requestData.owner_id !== userId) {
+      console.error("Authorization error: User is not the owner of this request");
       return { success: false, error: "You are not authorized to update this request" };
     }
     
@@ -43,6 +46,7 @@ export const updateBorrowRequestStatus = async (
       return { success: false, error: updateError };
     }
     
+    console.log(`Successfully updated borrow request ${requestId} to ${status}`);
     return { success: true };
   } catch (err) {
     console.error("Error in updateBorrowRequestStatus:", err);
@@ -57,7 +61,7 @@ const sendTelegramNotifications = async (
   itemName: string,
   itemId: string,
   message?: string
-) => {
+): Promise<TelegramResponse> => {
   console.log("Preparing to send Telegram notifications for request:", {
     requesterId,
     ownerId,
@@ -98,7 +102,7 @@ const sendTelegramNotifications = async (
     const ownerTelegramUsername = ownerProfile?.telegram_username;
     
     // If either user doesn't have a Telegram ID, log a warning
-    if (!requesterTelegramId || !ownerTelegramId) {
+    if (!requesterTelegramId && !ownerTelegramId) {
       console.warn("Missing Telegram IDs:", {
         requesterTelegramId,
         ownerTelegramId
@@ -116,56 +120,66 @@ const sendTelegramNotifications = async (
       ownerTelegramUsername
     });
 
-    // Prepare Telegram Chat inline keyboard markup for both users
-    let replyMarkup = undefined;
-
-    if (requesterTelegramUsername && ownerTelegramUsername) {
-      // Both users have Telegram usernames, create direct message buttons
-      replyMarkup = {
-        inline_keyboard: [
-          [
-            {
-              text: "Open chat",
-              url: `https://t.me/${requesterTelegramUsername}`
-            }
-          ]
-        ]
-      };
-    }
-
     // Format message if provided
     const messageText = message ? `\nMessage from requester: "${message}"` : '';
 
-    // Prepare messages with direct message buttons
-    const messages = [];
-
-    // Notification to owner
+    // Prepare messages for notification
     if (ownerTelegramId) {
       console.log(`Sending notification to owner (${ownerTelegramId})`);
 
-      messages.push({ 
-        chat_id: ownerTelegramId, 
-        text: `<b>${requesterName}</b> has requested your item <b>"${itemName}"</b>.${messageText}\n\nYou can now chat with them directly in Telegram.`,
-        reply_markup: replyMarkup
-      });
-    }
+      // Create message for owner with button to message requester if available
+      const replyMarkup = requesterTelegramUsername ? {
+        inline_keyboard: [[
+          { text: "Message Requester", url: `https://t.me/${requesterTelegramUsername}` }
+        ]]
+      } : undefined;
 
-    // Only send if we have messages to send
-    if (messages.length > 0) {
-      // Send notifications using edge function
+      // Send notification using edge function
       const { data, error } = await supabase.functions.invoke('send-telegram-notification', {
-        body: { messages }
+        body: {
+          chat_id: ownerTelegramId,
+          text: `<b>${requesterName}</b> has requested your item <b>"${itemName}"</b>.${messageText}\n\nYou can now chat with them directly in Telegram.`,
+          reply_markup: replyMarkup
+        }
       });
 
       if (error) {
-        console.error("Error sending Telegram notifications:", error);
+        console.error("Error sending Telegram notification to owner:", error);
         return { data: null, error };
       }
 
-      console.log("Telegram notifications sent successfully:", data);
+      console.log("Telegram notification to owner sent successfully:", data);
+      
+      // Also send notification to requester if they have Telegram ID
+      if (requesterTelegramId) {
+        console.log(`Sending notification to requester (${requesterTelegramId})`);
+        
+        // Create message for requester with button to message owner if available
+        const requesterReplyMarkup = ownerTelegramUsername ? {
+          inline_keyboard: [[
+            { text: "Message Owner", url: `https://t.me/${ownerTelegramUsername}` }
+          ]]
+        } : undefined;
+        
+        const { data: requesterData, error: requesterError } = await supabase.functions.invoke('send-telegram-notification', {
+          body: {
+            chat_id: requesterTelegramId,
+            text: `You requested <b>"${itemName}"</b>.\n\nThe owner has been notified. You can now chat with them directly in Telegram.`,
+            reply_markup: requesterReplyMarkup
+          }
+        });
+        
+        if (requesterError) {
+          console.error("Error sending Telegram notification to requester:", requesterError);
+          // We don't return error here as the main notification to owner was sent
+        } else {
+          console.log("Telegram notification to requester sent successfully:", requesterData);
+        }
+      }
+      
       return { data, error: null };
     } else {
-      console.log("No Telegram notifications to send (missing Telegram IDs)");
+      console.log("No Telegram notifications sent (missing owner Telegram ID)");
       return { data: "No notifications sent (missing Telegram IDs)", error: null };
     }
   } catch (err) {
@@ -225,12 +239,14 @@ export const createBorrowRequest = async (
       message
     );
 
-    if (telegramResponse.error) {
-      console.error("Error sending Telegram notifications:", telegramResponse.error);
-      // Do not return here, continue to return the borrow request data
-    }
-
     console.log("Borrow request created successfully:", data);
+    
+    // Return successful result even if telegram had issues
+    if (telegramResponse.error) {
+      console.error("Warning: Telegram notifications had issues:", telegramResponse.error);
+      return { data, error: telegramResponse.error };
+    }
+    
     return { data, error: null };
   } catch (err) {
     console.error("Error in createBorrowRequest:", err);
@@ -245,10 +261,13 @@ export const getIncomingRequests = async (): Promise<IncomingRequest[]> => {
   const user = session?.user;
   
   if (!user) {
+    console.error("User not authenticated in getIncomingRequests");
     throw new Error("User not authenticated");
   }
 
   try {
+    console.log("Fetching incoming requests for user:", user.id);
+    
     // Get all borrow requests for the current user's items
     const { data, error } = await supabase
       .from("borrow_requests")
@@ -270,12 +289,14 @@ export const getIncomingRequests = async (): Promise<IncomingRequest[]> => {
       throw error;
     }
 
+    console.log("Incoming requests fetched:", data?.length || 0);
+
     // Get borrower usernames separately
     const borrowerIds = (data || []).map(request => request.borrower_id);
     const { data: borrowerProfiles, error: profilesError } = await supabase
       .from('profiles')
       .select('id, username')
-      .in('id', borrowerIds);
+      .in('id', borrowerIds.length > 0 ? borrowerIds : ['00000000-0000-0000-0000-000000000000']);
 
     if (profilesError) {
       console.error("Error fetching borrower profiles:", profilesError);
@@ -307,3 +328,4 @@ export const getIncomingRequests = async (): Promise<IncomingRequest[]> => {
     return [];  // Return empty array on error
   }
 };
+

@@ -51,6 +51,7 @@ const IncomingRequestsTable = ({
             : "The request has been declined.",
         });
         
+        // Refresh the requests list
         refreshRequests();
       } else {
         throw new Error(error?.message || "Failed to update request");
@@ -89,34 +90,42 @@ const IncomingRequestsTable = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {requests.map((request) => (
-            <TableRow key={request.id}>
-              <TableCell className="font-medium">{request.requester_username}</TableCell>
-              <TableCell>{request.item_name}</TableCell>
-              <TableCell>{formatDate(request.created_at)}</TableCell>
-              <TableCell className="max-w-xs truncate">{request.message || '-'}</TableCell>
-              <TableCell className="text-right">
-                <div className="flex space-x-2 justify-end">
-                  <Button 
-                    size="sm" 
-                    className="bg-green-600 hover:bg-green-700" 
-                    disabled={processingIds.has(request.id)}
-                    onClick={() => handleUpdateStatus(request.id, 'approved')}
-                  >
-                    Approve
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    disabled={processingIds.has(request.id)}
-                    onClick={() => handleUpdateStatus(request.id, 'rejected')}
-                  >
-                    Decline
-                  </Button>
-                </div>
+          {requests.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={5} className="text-center py-6">
+                No incoming requests found.
               </TableCell>
             </TableRow>
-          ))}
+          ) : (
+            requests.map((request) => (
+              <TableRow key={request.id}>
+                <TableCell className="font-medium">{request.requester_username}</TableCell>
+                <TableCell>{request.item_name}</TableCell>
+                <TableCell>{formatDate(request.created_at)}</TableCell>
+                <TableCell className="max-w-xs truncate">{request.message || '-'}</TableCell>
+                <TableCell className="text-right">
+                  <div className="flex space-x-2 justify-end">
+                    <Button 
+                      size="sm" 
+                      className="bg-green-600 hover:bg-green-700" 
+                      disabled={processingIds.has(request.id)}
+                      onClick={() => handleUpdateStatus(request.id, 'approved')}
+                    >
+                      Approve
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      disabled={processingIds.has(request.id)}
+                      onClick={() => handleUpdateStatus(request.id, 'rejected')}
+                    >
+                      Decline
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
         </TableBody>
       </Table>
     </div>

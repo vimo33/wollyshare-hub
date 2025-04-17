@@ -14,9 +14,11 @@ export const useIncomingRequests = () => {
     error,
     refetch: fetchIncomingRequests
   } = useQuery({
-    queryKey: ['incomingRequests'],
+    queryKey: ['incomingRequests', user?.id],
     queryFn: getIncomingRequests,
     enabled: !!user,
+    refetchOnWindowFocus: true,
+    refetchInterval: 30000, // Refresh every 30 seconds
   });
 
   return {
