@@ -32,7 +32,7 @@ const BorrowedItemCard = ({ item }: { item: SupabaseItem }) => {
       
       <CardContent className="space-y-2">
         {item.description && (
-          <p className="text-sm text-gray-600 line-clamp-3">{item.description}</p>
+          <p className="text-sm text-gray-600 line-clamp-3 overflow-y-auto max-h-24">{item.description}</p>
         )}
         <p className="flex items-center text-sm">
           <User className="h-4 w-4 mr-2 text-muted-foreground" />

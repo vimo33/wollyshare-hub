@@ -1,111 +1,56 @@
 
-import { useState, useMemo, useCallback, useEffect } from "react";
-import { useItemsQuery } from "./useItemsQuery";
-import { Item } from "@/types/item";
-import { useAuth } from "@/contexts/AuthContext";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const useHomePageItems = () => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
-  const [ownerData, setOwnerData] = useState<Record<string, {username: string, full_name: string}>>({});
-  const [isOwnerDataLoading, setIsOwnerDataLoading] = useState(false);
   const { user } = useAuth();
-  
-  // Use useItemsQuery without userId to get all items, but make it depend on user auth state
-  const { data: items = [], isLoading: isItemsLoading, error, refetch } = useItemsQuery({
-    // This key ensures query is refetched when auth state changes
-    queryKey: ['items', 'all', user?.id || 'anonymous']
-  });
-  
-  // Add a manual refetch function that can be called after login
-  const refreshItems = useCallback(() => {
-    console.log("Manually refreshing home page items");
-    refetch();
-  }, [refetch]);
-  
-  // Fetch owner data for all items
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalBorrows, setTotalBorrows] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetchStats = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Count total items
+      const { count: itemsCount, error: itemsError } = await supabase
+        .from("items")
+        .select("*", { count: "exact", head: true });
+
+      if (itemsError) throw itemsError;
+      
+      setTotalItems(itemsCount || 0);
+
+      // Count total borrows (all approved borrow requests)
+      const { count: borrowsCount, error: borrowsError } = await supabase
+        .from("borrow_requests")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "approved");
+
+      if (borrowsError) throw borrowsError;
+      
+      setTotalBorrows(borrowsCount || 0);
+
+    } catch (err: any) {
+      console.error("Error fetching home page stats:", err);
+      setError(err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    const fetchOwnerData = async () => {
-      if (!items || items.length === 0) return;
-      
-      setIsOwnerDataLoading(true);
-      
-      try {
-        // Extract unique owner IDs
-        const uniqueOwnerIds = [...new Set(items.map(item => item.user_id))];
-        
-        // Fetch profile data for all owners at once
-        const { data: profiles, error } = await supabase
-          .from('profiles')
-          .select('id, username, full_name')
-          .in('id', uniqueOwnerIds);
-          
-        if (error) {
-          console.error('Error fetching item owner data:', error);
-          return;
-        }
-        
-        // Create a lookup object for quick access by ID
-        const ownerLookup: Record<string, {username: string, full_name: string}> = {};
-        profiles?.forEach((profile) => {
-          ownerLookup[profile.id] = {
-            username: profile.username || 'Unknown',
-            full_name: profile.full_name || 'Unknown User'
-          };
-        });
-        
-        setOwnerData(ownerLookup);
-      } catch (err) {
-        console.error('Error in fetchOwnerData:', err);
-      } finally {
-        setIsOwnerDataLoading(false);
-      }
-    };
-    
-    fetchOwnerData();
-  }, [items]);
-  
-  // Enhanced items with owner data
-  const enhancedItems = useMemo(() => {
-    if (!items) return [];
-    
-    return items.map(item => {
-      const owner = ownerData[item.user_id];
-      return {
-        ...item,
-        ownerName: owner?.full_name || owner?.username || 'Unknown User'
-      };
-    });
-  }, [items, ownerData]);
-  
-  // Filter items based on search query and active category
-  const filteredItems = useMemo(() => {
-    if (!enhancedItems) return [];
-    
-    return enhancedItems.filter((item: Item) => {
-      const matchesSearch = 
-        searchQuery === "" || 
-        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (item.ownerName && item.ownerName.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase()));
-      
-      const matchesCategory = 
-        !activeCategory || 
-        item.category === activeCategory;
-      
-      return matchesSearch && matchesCategory;
-    });
-  }, [enhancedItems, searchQuery, activeCategory]);
-  
+    fetchStats();
+  }, [fetchStats]);
+
   return {
-    filteredItems,
-    isLoading: isItemsLoading || isOwnerDataLoading,
+    totalItems,
+    totalBorrows,
+    isLoading,
     error,
-    searchQuery,
-    setSearchQuery,
-    activeCategory,
-    setActiveCategory,
-    refreshItems
+    refetchStats: fetchStats
   };
 };

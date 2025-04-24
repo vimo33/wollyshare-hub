@@ -40,6 +40,7 @@ export const useBorrowedItems = () => {
 
       if (!borrowRequests || borrowRequests.length === 0) {
         setItems([]);
+        setIsLoading(false);
         return;
       }
 
@@ -57,7 +58,7 @@ export const useBorrowedItems = () => {
         throw itemsError;
       }
 
-      // Get owner profiles
+      // Get owner profiles as a separate query to avoid join errors
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select("id, username, full_name, location")
@@ -69,9 +70,11 @@ export const useBorrowedItems = () => {
 
       // Create a map for quick lookup
       const profilesMap = new Map();
-      profiles?.forEach(profile => {
-        profilesMap.set(profile.id, profile);
-      });
+      if (profiles) {
+        profiles.forEach(profile => {
+          profilesMap.set(profile.id, profile);
+        });
+      }
 
       // Map borrow requests to their respective items and owners
       const borrowMap = new Map();
@@ -81,26 +84,27 @@ export const useBorrowedItems = () => {
 
       // Transform the data to match the Item type
       const transformedItems: Item[] = itemsData
-        .map((item) => {
-          const borrowRequest = borrowMap.get(item.id);
-          const ownerProfile = borrowRequest ? profilesMap.get(borrowRequest.owner_id) : null;
+        ? itemsData.map((item) => {
+            const borrowRequest = borrowMap.get(item.id);
+            const ownerProfile = borrowRequest ? profilesMap.get(borrowRequest.owner_id) : null;
 
-          return {
-            id: item.id,
-            name: item.name,
-            category: item.category as Item['category'],
-            description: item.description,
-            image_url: item.image_url,
-            weekday_availability: item.weekday_availability,
-            weekend_availability: item.weekend_availability,
-            user_id: borrowRequest?.owner_id,
-            location: item.location,
-            condition: item.condition,
-            created_at: borrowRequest?.created_at,
-            ownerName: ownerProfile?.username || ownerProfile?.full_name || "Unknown Owner",
-            locationAddress: ownerProfile?.location
-          };
-        });
+            return {
+              id: item.id,
+              name: item.name,
+              category: item.category as Item['category'],
+              description: item.description,
+              image_url: item.image_url,
+              weekday_availability: item.weekday_availability,
+              weekend_availability: item.weekend_availability,
+              user_id: borrowRequest?.owner_id,
+              location: item.location,
+              condition: item.condition,
+              created_at: borrowRequest?.created_at,
+              ownerName: ownerProfile ? (ownerProfile.username || ownerProfile.full_name || "Unknown Owner") : "Unknown Owner",
+              locationAddress: ownerProfile ? ownerProfile.location : undefined
+            };
+          })
+        : [];
 
       setItems(transformedItems);
     } catch (err: any) {

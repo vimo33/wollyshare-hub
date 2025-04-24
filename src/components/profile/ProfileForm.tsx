@@ -84,6 +84,20 @@ const ProfileForm = ({ profile, userEmail, onProfileUpdate }) => {
         <BasicInfoFields control={form.control} />
         <LocationField control={form.control} locations={locations} />
         <TelegramInfoFields control={form.control} />
+        <div className="flex items-center my-4 px-1">
+          <p className="text-sm text-muted-foreground">
+            Connect with the{" "}
+            <a 
+              href="https://t.me/WollyShareBot" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-[#1EAEDB] hover:underline font-medium"
+            >
+              WollyShare Bot
+            </a>{" "}
+            on Telegram to receive notifications.
+          </p>
+        </div>
         <ProfileSubmitButton isSubmitting={isSubmitting} />
       </form>
     </Form>
