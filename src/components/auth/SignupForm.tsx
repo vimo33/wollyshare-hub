@@ -75,17 +75,22 @@ const SignupForm: React.FC<SignupFormProps> = ({ invitationToken }) => {
       // Clean telegram username (remove @ if included)
       const cleanTelegramUsername = data.telegramUsername?.replace('@', '');
       
+      // Fix: Create a proper metadata object with the correct field structure
+      const metadata = {
+        location: data.location,
+        telegram_id: data.telegramId,
+        telegram_username: cleanTelegramUsername
+      };
+      
+      console.log("Registration metadata being sent:", metadata);
+      
       const { user, error } = await registerUser({
         email: data.email,
         password: data.password,
         username: data.username,
         fullName: data.fullName,
         invitationToken,
-        metadata: {
-          location: data.location,
-          telegram_id: data.telegramId,
-          telegram_username: cleanTelegramUsername
-        }
+        metadata // Pass the metadata correctly
       });
 
       if (error) {
@@ -100,7 +105,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ invitationToken }) => {
           variant: "success",
           title: "Account created!",
           description: "Please check your email to verify your account.",
-          className: "bg-green-500 text-white" // Adding green background with white text
+          className: "bg-green-500 text-white" 
         });
         navigate("/");
       }

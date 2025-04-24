@@ -44,6 +44,7 @@ export const registerUser = async ({
   // Log the metadata to verify what's being passed
   console.log("Registering user with metadata:", metadata);
   
+  // Fix: Properly structure the metadata with explicit field mapping
   // Register the user
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -52,13 +53,20 @@ export const registerUser = async ({
       data: {
         username,
         full_name: fullName,
-        location: metadata.location,
-        telegram_id: metadata.telegram_id,
-        telegram_username: metadata.telegram_username,
-        ...metadata  // Include any other metadata fields as a fallback
+        // Fix: Explicitly map the location and telegram fields
+        location: metadata.location || null,
+        telegram_id: metadata.telegram_id || null,
+        telegram_username: metadata.telegram_username || null
       }
     }
   });
+  
+  // Debug log to verify the response
+  if (error) {
+    console.error("Registration error:", error);
+  } else {
+    console.log("Registration successful, user data:", data.user);
+  }
   
   return {
     user: data.user,
