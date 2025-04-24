@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 // Types for better organization
@@ -120,8 +121,27 @@ export const sendPasswordResetEmail = async (
   email: string,
   redirectTo?: string
 ): Promise<{ error: any }> => {
-  // Build the redirect URL - make sure to use the full path without any hash or search params
-  const redirectUrl = redirectTo || `${window.location.origin}/reset-password`;
+  // Properly construct the redirect URL without double slashes
+  let redirectUrl = redirectTo;
+  
+  if (!redirectUrl) {
+    const origin = window.location.origin;
+    const resetPath = "reset-password"; // No leading slash
+    redirectUrl = `${origin}/${resetPath}`;
+  } else {
+    // Ensure the URL is properly formatted if provided
+    try {
+      // Parse the URL to standardize it
+      const url = new URL(redirectTo);
+      redirectUrl = url.toString();
+    } catch (e) {
+      // If URL parsing fails, construct a standard URL
+      const origin = window.location.origin;
+      const path = redirectTo.startsWith('/') ? redirectTo.substring(1) : redirectTo;
+      redirectUrl = `${origin}/${path}`;
+    }
+  }
+  
   console.log(`Sending password reset email with redirect to: ${redirectUrl}`);
   
   const { error } = await supabase.auth.resetPasswordForEmail(email, {

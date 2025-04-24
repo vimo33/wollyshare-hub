@@ -38,8 +38,10 @@ const ForgotPasswordForm = () => {
       console.log("Sending password reset email to:", data.email);
       
       // Build the absolute URL for the reset password page
+      // Make sure there are no leading or trailing slashes causing issues
       const origin = window.location.origin;
-      const resetUrl = `${origin}/reset-password`;
+      const resetPath = "reset-password"; // No leading slash
+      const resetUrl = `${origin}/${resetPath}`;
       
       console.log("Using reset URL:", resetUrl);
       

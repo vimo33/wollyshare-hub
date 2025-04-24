@@ -18,8 +18,7 @@ const SubmitButton: React.FC<SubmitButtonProps> = ({ isLoading }) => {
             href="https://t.me/WollyShareBot" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="text-[#1EAEDB] hover:underline font-medium"
-            style={{ color: "#1EAEDB" }}
+            className="text-blue-600 hover:underline font-medium"
           >
             WollyShare Bot
           </a>{" "}

@@ -2,17 +2,17 @@
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ResetPasswordForm from "@/components/auth/ResetPasswordForm";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { AuthError } from "@supabase/supabase-js";
 
 const ResetPassword = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [validResetFlow, setValidResetFlow] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const checkResetFlow = async () => {
@@ -20,6 +20,7 @@ const ResetPassword = () => {
       
       try {
         console.log("Starting reset password flow check...");
+        console.log("Current URL:", window.location.href);
         
         // Check for error parameters from Supabase auth redirect
         const urlParams = new URLSearchParams(window.location.search);
@@ -39,7 +40,8 @@ const ResetPassword = () => {
         
         console.log("URL parameters:", { 
           hasCode: !!code,
-          type
+          type,
+          searchParams: Object.fromEntries(urlParams.entries())
         });
 
         if (code && (type === "recovery" || type === "passwordRecovery" || !type)) {
@@ -72,6 +74,11 @@ const ResetPassword = () => {
             setLoading(false);
             return;
           }
+        } else if (!code) {
+          console.error("No code parameter found in URL");
+          setError("Missing authentication code. Please request a new password reset link.");
+          setLoading(false);
+          return;
         }
         
         // Legacy approach: Check for existing session as fallback
