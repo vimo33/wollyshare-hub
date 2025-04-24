@@ -24,20 +24,19 @@ const Hero = () => {
       try {
         console.log("Fetching total stats from all users");
         
-        // Fetch total items count without user filtering
+        // Fetch total items count
         const { count: itemsCount, error: itemsError } = await supabase
           .from('items')
           .select('id', { count: 'exact', head: true });
 
-        // Fetch total members count (all profiles)
+        // Fetch total members count
         const totalMembers = await getTotalMembers();
         console.log("Total members count fetched:", totalMembers);
 
-        // Fetch ALL approved borrow requests - FIXED: Make sure count is accurate
+        // Fetch ALL borrow requests - no status filter
         const { count: borrowedCount, error: borrowedError } = await supabase
           .from('borrow_requests')
-          .select('id', { count: 'exact', head: true })
-          .eq('status', 'approved');
+          .select('id', { count: 'exact', head: true });
 
         if (itemsError) {
           console.error('Error fetching items count:', itemsError);
@@ -47,10 +46,8 @@ const Hero = () => {
           console.error('Error fetching borrowed count:', borrowedError);
         }
 
-        // Debugging to check the counts
         console.log(`Stats: ${itemsCount} items, ${totalMembers} members, ${borrowedCount} items borrowed`);
         
-        // Set string values to avoid NaN issues
         setStats({
           itemsCount: itemsCount?.toString() || '0',
           membersCount: totalMembers.toString(),

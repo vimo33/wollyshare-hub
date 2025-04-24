@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -37,15 +36,13 @@ const ForgotPasswordForm = () => {
     try {
       console.log("Sending password reset email to:", data.email);
       
-      // Build the absolute URL for the reset password page - FIXED: Ensure URL is properly constructed
-      // Create URL object to ensure valid formatting
-      const origin = window.location.origin;
-      const url = new URL('/reset-password', origin);
-      const resetUrl = url.toString();
+      // Get origin and construct reset URL
+      const origin = window.location.origin.replace(/\/+$/, ''); // Remove trailing slashes
+      const resetPath = '/reset-password';
+      const resetUrl = `${origin}${resetPath}`;
       
       console.log("Using reset URL:", resetUrl);
       
-      // Call Supabase directly to ensure proper redirectTo URL
       const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
         redirectTo: resetUrl,
       });

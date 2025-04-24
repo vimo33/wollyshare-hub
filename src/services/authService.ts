@@ -115,29 +115,23 @@ export const logoutUser = async (): Promise<{ error: any }> => {
   return { error };
 };
 
-// Password reset - FIXED: Improved URL handling and error logging
 export const sendPasswordResetEmail = async (
   email: string,
   redirectTo?: string
 ): Promise<{ error: any }> => {
   try {
-    // Properly construct the redirect URL - FIXED: Use URL constructor for validation
+    // Clean and validate the redirect URL
     let redirectUrl: string;
     
     if (!redirectTo) {
-      // Create a clean URL using the URL constructor
-      const url = new URL('/reset-password', window.location.origin);
-      redirectUrl = url.toString();
+      const origin = window.location.origin.replace(/\/+$/, ''); // Remove trailing slashes
+      redirectUrl = `${origin}/reset-password`;
     } else {
-      try {
-        // Validate and clean the provided URL
-        const url = new URL(redirectTo);
-        redirectUrl = url.toString();
-      } catch (e) {
-        // Fallback if URL parsing fails
-        const origin = window.location.origin;
-        const path = redirectTo.startsWith('/') ? redirectTo.substring(1) : redirectTo;
-        redirectUrl = `${origin}/${path}`;
+      // Clean up any provided URL
+      redirectUrl = redirectTo.replace(/\/+/g, '/'); // Replace multiple slashes with single slash
+      if (!redirectUrl.startsWith('http')) {
+        const origin = window.location.origin.replace(/\/+$/, '');
+        redirectUrl = `${origin}${redirectUrl.startsWith('/') ? '' : '/'}${redirectUrl}`;
       }
     }
     
