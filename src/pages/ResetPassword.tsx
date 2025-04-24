@@ -34,21 +34,31 @@ const ResetPassword = () => {
           return;
         }
 
-        // Modern approach: Check for 'code' parameter (newest Supabase versions)
+        // Get the 'code' parameter from the URL
         const code = urlParams.get('code');
         const type = urlParams.get('type');
         
+        // Debug all URL parameters to identify issues
         console.log("URL parameters:", { 
           hasCode: !!code,
+          codeValue: code,
           type,
           searchParams: Object.fromEntries(urlParams.entries())
         });
 
+        // FIXED: Empty code parameter check
+        if (!code || code.trim() === '') {
+          console.error("No code parameter found in URL or code is empty");
+          setError("Missing or invalid authentication code. Please request a new password reset link.");
+          setLoading(false);
+          return;
+        }
+
+        // Validate the code with Supabase
         if (code && (type === "recovery" || type === "passwordRecovery" || !type)) {
           try {
-            console.log("Verifying with OTP code");
+            console.log("Verifying with OTP code:", code);
             
-            // Use token_hash parameter for recovery flow
             const { data, error: verifyError } = await supabase.auth.verifyOtp({
               token_hash: code,
               type: "recovery"
@@ -74,11 +84,6 @@ const ResetPassword = () => {
             setLoading(false);
             return;
           }
-        } else if (!code) {
-          console.error("No code parameter found in URL");
-          setError("Missing authentication code. Please request a new password reset link.");
-          setLoading(false);
-          return;
         }
         
         // Legacy approach: Check for existing session as fallback

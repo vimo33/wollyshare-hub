@@ -33,7 +33,7 @@ const Hero = () => {
         const totalMembers = await getTotalMembers();
         console.log("Total members count fetched:", totalMembers);
 
-        // Fetch ALL borrow requests count, regardless of status
+        // Fetch ALL approved borrow requests - FIXED: Make sure count is accurate
         const { count: borrowedCount, error: borrowedError } = await supabase
           .from('borrow_requests')
           .select('id', { count: 'exact', head: true })
@@ -47,8 +47,10 @@ const Hero = () => {
           console.error('Error fetching borrowed count:', borrowedError);
         }
 
-        console.log(`Stats: ${itemsCount} items, ${totalMembers} members, ${borrowedCount} items borrowed/requested`);
+        // Debugging to check the counts
+        console.log(`Stats: ${itemsCount} items, ${totalMembers} members, ${borrowedCount} items borrowed`);
         
+        // Set string values to avoid NaN issues
         setStats({
           itemsCount: itemsCount?.toString() || '0',
           membersCount: totalMembers.toString(),
@@ -65,32 +67,19 @@ const Hero = () => {
     // Also set up a refresh interval to keep the stats updated
     const refreshInterval = setInterval(fetchStats, 60000); // Refresh every minute
     
-    // Set up subscription for real-time updates to borrow requests - now for ANY status change
+    // Set up subscription for real-time updates to borrow requests
     const channel = supabase
       .channel('hero-stats-updates')
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*', // Listen to all changes (INSERT, UPDATE, DELETE)
           schema: 'public',
           table: 'borrow_requests'
         },
         (payload) => {
-          console.log('New borrow request detected in Hero component:', payload);
-          // Refresh stats immediately for ANY new borrow request
-          fetchStats();
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'borrow_requests'
-        },
-        (payload) => {
-          console.log('Borrow request update detected in Hero component:', payload);
-          // Refresh stats for ANY status update
+          console.log('Borrow request change detected in Hero component:', payload);
+          // Refresh stats immediately for ANY borrow request change
           fetchStats();
         }
       )

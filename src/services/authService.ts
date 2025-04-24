@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 // Types for better organization
@@ -116,45 +115,49 @@ export const logoutUser = async (): Promise<{ error: any }> => {
   return { error };
 };
 
-// Password reset
+// Password reset - FIXED: Improved URL handling and error logging
 export const sendPasswordResetEmail = async (
   email: string,
   redirectTo?: string
 ): Promise<{ error: any }> => {
-  // Properly construct the redirect URL without double slashes
-  let redirectUrl = redirectTo;
-  
-  if (!redirectUrl) {
-    const origin = window.location.origin;
-    const resetPath = "reset-password"; // No leading slash
-    redirectUrl = `${origin}/${resetPath}`;
-  } else {
-    // Ensure the URL is properly formatted if provided
-    try {
-      // Parse the URL to standardize it
-      const url = new URL(redirectTo);
+  try {
+    // Properly construct the redirect URL - FIXED: Use URL constructor for validation
+    let redirectUrl: string;
+    
+    if (!redirectTo) {
+      // Create a clean URL using the URL constructor
+      const url = new URL('/reset-password', window.location.origin);
       redirectUrl = url.toString();
-    } catch (e) {
-      // If URL parsing fails, construct a standard URL
-      const origin = window.location.origin;
-      const path = redirectTo.startsWith('/') ? redirectTo.substring(1) : redirectTo;
-      redirectUrl = `${origin}/${path}`;
+    } else {
+      try {
+        // Validate and clean the provided URL
+        const url = new URL(redirectTo);
+        redirectUrl = url.toString();
+      } catch (e) {
+        // Fallback if URL parsing fails
+        const origin = window.location.origin;
+        const path = redirectTo.startsWith('/') ? redirectTo.substring(1) : redirectTo;
+        redirectUrl = `${origin}/${path}`;
+      }
     }
+    
+    console.log(`Sending password reset email with redirect to: ${redirectUrl}`);
+    
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: redirectUrl
+    });
+    
+    if (error) {
+      console.error("Error sending password reset email:", error);
+    } else {
+      console.log("Password reset email sent successfully");
+    }
+    
+    return { error };
+  } catch (err: any) {
+    console.error("Unexpected error in sendPasswordResetEmail:", err);
+    return { error: err };
   }
-  
-  console.log(`Sending password reset email with redirect to: ${redirectUrl}`);
-  
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: redirectUrl
-  });
-  
-  if (error) {
-    console.error("Error sending password reset email:", error);
-  } else {
-    console.log("Password reset email sent successfully");
-  }
-  
-  return { error };
 };
 
 // Update password
