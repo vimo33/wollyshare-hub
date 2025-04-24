@@ -21,29 +21,13 @@ export const useBorrowedItems = () => {
 
       console.log("Fetching borrowed items for user:", user.id);
 
-      // Get approved borrow requests with item details in a single query
-      const { data: borrowedItems, error: borrowError } = await supabase
+      // First, get all approved borrow requests for the current user
+      const { data: borrowRequests, error: borrowError } = await supabase
         .from("borrow_requests")
         .select(`
           item_id,
           owner_id,
-          created_at,
-          items (
-            id,
-            name,
-            category,
-            description,
-            image_url,
-            weekday_availability,
-            weekend_availability,
-            location,
-            condition
-          ),
-          profiles!owner_id (
-            username,
-            full_name,
-            location
-          )
+          created_at
         `)
         .eq("borrower_id", user.id)
         .eq("status", "approved");
@@ -52,26 +36,71 @@ export const useBorrowedItems = () => {
         throw borrowError;
       }
 
-      console.log("Found borrowed items:", borrowedItems?.length || 0);
+      console.log("Found borrow requests:", borrowRequests?.length || 0);
+
+      if (!borrowRequests || borrowRequests.length === 0) {
+        setItems([]);
+        return;
+      }
+
+      // Collect all item IDs and owner IDs
+      const itemIds = borrowRequests.map(br => br.item_id);
+      const ownerIds = borrowRequests.map(br => br.owner_id);
+
+      // Get all the items
+      const { data: itemsData, error: itemsError } = await supabase
+        .from("items")
+        .select("*")
+        .in("id", itemIds);
+
+      if (itemsError) {
+        throw itemsError;
+      }
+
+      // Get owner profiles
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, username, full_name, location")
+        .in("id", ownerIds);
+
+      if (profilesError) {
+        throw profilesError;
+      }
+
+      // Create a map for quick lookup
+      const profilesMap = new Map();
+      profiles?.forEach(profile => {
+        profilesMap.set(profile.id, profile);
+      });
+
+      // Map borrow requests to their respective items and owners
+      const borrowMap = new Map();
+      borrowRequests.forEach(br => {
+        borrowMap.set(br.item_id, br);
+      });
 
       // Transform the data to match the Item type
-      const transformedItems: Item[] = borrowedItems
-        .filter(bi => bi.items) // Filter out any null items
-        .map((bi) => ({
-          id: bi.items.id,
-          name: bi.items.name,
-          category: bi.items.category as Item['category'],
-          description: bi.items.description,
-          image_url: bi.items.image_url,
-          weekday_availability: bi.items.weekday_availability,
-          weekend_availability: bi.items.weekend_availability,
-          user_id: bi.owner_id,
-          location: bi.items.location,
-          condition: bi.items.condition,
-          created_at: bi.created_at,
-          ownerName: bi.profiles?.username || bi.profiles?.full_name || "Unknown Owner",
-          locationAddress: bi.profiles?.location
-        }));
+      const transformedItems: Item[] = itemsData
+        .map((item) => {
+          const borrowRequest = borrowMap.get(item.id);
+          const ownerProfile = borrowRequest ? profilesMap.get(borrowRequest.owner_id) : null;
+
+          return {
+            id: item.id,
+            name: item.name,
+            category: item.category as Item['category'],
+            description: item.description,
+            image_url: item.image_url,
+            weekday_availability: item.weekday_availability,
+            weekend_availability: item.weekend_availability,
+            user_id: borrowRequest?.owner_id,
+            location: item.location,
+            condition: item.condition,
+            created_at: borrowRequest?.created_at,
+            ownerName: ownerProfile?.username || ownerProfile?.full_name || "Unknown Owner",
+            locationAddress: ownerProfile?.location
+          };
+        });
 
       setItems(transformedItems);
     } catch (err: any) {
