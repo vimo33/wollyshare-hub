@@ -1,3 +1,4 @@
+
 import CategoryPill from "../CategoryPill";
 
 type CategoryFilterProps = {
@@ -58,7 +59,7 @@ const CategoryFilter = ({ activeCategory, handleCategoryClick }: CategoryFilterP
       />
       <CategoryPill 
         label="Activities" 
-        color="yellow" /* Changed from "orange" to "yellow" which is an allowed color */
+        color="yellow"
         active={activeCategory === "activities"}
         onClick={() => handleCategoryClick("activities")}
       />
@@ -70,7 +71,7 @@ const CategoryFilter = ({ activeCategory, handleCategoryClick }: CategoryFilterP
       />
       <CategoryPill 
         label="Music" 
-        color="indigo"
+        color="purple"
         active={activeCategory === "music"}
         onClick={() => handleCategoryClick("music")}
       />

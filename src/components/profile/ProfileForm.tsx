@@ -10,6 +10,7 @@ import BasicInfoFields from "@/components/auth/BasicInfoFields";
 import LocationField from "@/components/auth/LocationField";
 import TelegramInfoFields from "@/components/auth/TelegramInfoFields";
 import ProfileSubmitButton from "./ProfileSubmitButton";
+import { supabase } from "@/integrations/supabase/client";
 
 const updateProfileSchema = z.object({
   username: z.string().min(2, "Username must be at least 2 characters").max(50),
