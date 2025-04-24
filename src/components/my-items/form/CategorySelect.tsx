@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Label } from "@/components/ui/label";
 import {
@@ -34,6 +33,7 @@ const CategorySelect: React.FC<CategorySelectProps> = ({ value, onChange }) => {
           <SelectItem value="games">Games</SelectItem>
           <SelectItem value="diy-craft">DIY & Craft</SelectItem>
           <SelectItem value="activities">Activities</SelectItem>
+          <SelectItem value="music">Music</SelectItem>
           <SelectItem value="other">Other</SelectItem>
         </SelectContent>
       </Select>

@@ -1,4 +1,3 @@
-
 import { useState, useCallback, memo, KeyboardEvent } from "react";
 import { Item } from "@/types/supabase";
 import { useToast } from "@/hooks/use-toast";
@@ -114,13 +113,22 @@ const ItemCard = memo(({
         <div className="p-4 flex flex-col flex-grow">
           <h3 className="font-semibold text-lg">{name}</h3>
           
-          {/* Description - only show if there is one */}
+          {/* Description with scrollable container */}
           {description && (
-            <div className="mt-1 mb-3">
-              <p className="text-sm text-gray-600 line-clamp-2">{description}</p>
+            <div className="mt-1 mb-3 relative">
+              <div 
+                className="text-sm text-gray-600 h-[4.5em] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
+                style={{
+                  display: '-webkit-box',
+                  WebkitBoxOrient: 'vertical',
+                  WebkitLineClamp: 3
+                }}
+              >
+                {description}
+              </div>
             </div>
           )}
-          
+        
           <ItemDetails 
             name={name}
             ownerName={ownerName}

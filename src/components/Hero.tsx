@@ -36,7 +36,8 @@ const Hero = () => {
         // Fetch ALL borrow requests count, regardless of status
         const { count: borrowedCount, error: borrowedError } = await supabase
           .from('borrow_requests')
-          .select('id', { count: 'exact', head: true });
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'approved');
 
         if (itemsError) {
           console.error('Error fetching items count:', itemsError);
@@ -148,7 +149,7 @@ const Hero = () => {
           </div>
           <div className="glass rounded-2xl p-6 text-center hover-lift">
             <div className="text-3xl font-bold mb-2">{stats.borrowedCount}</div>
-            <p className="text-muted-foreground">Borrows & Requests</p>
+            <p className="text-muted-foreground">Items Borrowed</p>
           </div>
         </div>
       </div>

@@ -5,11 +5,10 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { updateProfile } from "@/services/profileService";
 import { useToast } from "@/hooks/use-toast";
-
 import { Form } from "@/components/ui/form";
-import ProfileBasicFields from "./ProfileBasicFields";
-import ProfileLocationField from "./ProfileLocationField";
-import ProfileTelegramFields from "./ProfileTelegramFields";
+import BasicInfoFields from "@/components/auth/BasicInfoFields";
+import LocationField from "@/components/auth/LocationField";
+import TelegramInfoFields from "@/components/auth/TelegramInfoFields";
 import ProfileSubmitButton from "./ProfileSubmitButton";
 
 const updateProfileSchema = z.object({
@@ -25,6 +24,18 @@ type UpdateProfileSchema = z.infer<typeof updateProfileSchema>;
 const ProfileForm = ({ profile, userEmail, onProfileUpdate }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const [locations, setLocations] = useState([]);
+
+  React.useEffect(() => {
+    const fetchLocations = async () => {
+      const { data } = await supabase
+        .from('community_locations')
+        .select('*')
+        .order('name');
+      setLocations(data || []);
+    };
+    fetchLocations();
+  }, []);
 
   const form = useForm<UpdateProfileSchema>({
     resolver: zodResolver(updateProfileSchema),
@@ -69,16 +80,9 @@ const ProfileForm = ({ profile, userEmail, onProfileUpdate }) => {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 px-6 py-4">
-        <ProfileBasicFields control={form.control} userEmail={userEmail} />
-        
-        <ProfileLocationField 
-          control={form.control} 
-          name="location" 
-          label="Location" 
-        />
-        
-        <ProfileTelegramFields control={form.control} />
-        
+        <BasicInfoFields control={form.control} />
+        <LocationField control={form.control} locations={locations} />
+        <TelegramInfoFields control={form.control} />
         <ProfileSubmitButton isSubmitting={isSubmitting} />
       </form>
     </Form>
