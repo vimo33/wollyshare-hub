@@ -30,6 +30,9 @@ const CategorySelect: React.FC<CategorySelectProps> = ({ value, onChange }) => {
           <SelectItem value="kitchen">Kitchen</SelectItem>
           <SelectItem value="electronics">Electronics</SelectItem>
           <SelectItem value="sports">Sports</SelectItem>
+          <SelectItem value="books">Books</SelectItem>
+          <SelectItem value="games">Games</SelectItem>
+          <SelectItem value="diy-craft">DIY & Craft</SelectItem>
           <SelectItem value="activities">Activities</SelectItem>
           <SelectItem value="other">Other</SelectItem>
         </SelectContent>

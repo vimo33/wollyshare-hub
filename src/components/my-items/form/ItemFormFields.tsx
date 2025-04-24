@@ -1,4 +1,3 @@
-
 import { UseFormReturn } from "react-hook-form";
 import { ItemFormValues } from "../types";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
@@ -70,6 +69,7 @@ const ItemFormFields = ({
                 <SelectItem value="books">Books</SelectItem>
                 <SelectItem value="games">Games</SelectItem>
                 <SelectItem value="diy-craft">DIY & Craft</SelectItem>
+                <SelectItem value="activities">Activities</SelectItem>
                 <SelectItem value="other">Other</SelectItem>
               </SelectContent>
             </Select>
