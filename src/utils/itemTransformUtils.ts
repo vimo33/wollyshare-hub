@@ -1,6 +1,8 @@
 
 import { Item } from "@/types/item";
-import { LocationMap } from "@/hooks/useItemsQuery";
+
+// Define the LocationMap type locally since it's not exported from useItemsQuery
+type LocationMap = Map<string, { name: string; address: string; }>;
 
 /**
  * Transform an item from raw data into a fully populated Item object
