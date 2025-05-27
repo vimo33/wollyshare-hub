@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { getTotalMembers } from '@/services/memberService';
+import { retryWithBackoff } from '@/services/connectionService';
 
 const Hero = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [stats, setStats] = useState({
     itemsCount: '0',
     membersCount: '0',
-    borrowedCount: '0'  // Changed from categoriesCount to borrowedCount
+    borrowedCount: '0'
   });
 
   useEffect(() => {
@@ -24,37 +25,48 @@ const Hero = () => {
       try {
         console.log("Fetching total stats from all users");
         
-        // Fetch total items count
-        const { count: itemsCount, error: itemsError } = await supabase
-          .from('items')
-          .select('id', { count: 'exact', head: true });
+        // Fetch total items count with retry logic
+        const itemsOperation = async () => {
+          const { count: itemsCount, error: itemsError } = await supabase
+            .from('items')
+            .select('id', { count: 'exact', head: true });
+          
+          if (itemsError) throw itemsError;
+          return itemsCount || 0;
+        };
 
-        // Fetch total members count
-        const totalMembers = await getTotalMembers();
-        console.log("Total members count fetched:", totalMembers);
+        // Fetch total members count with retry logic
+        const membersOperation = async () => {
+          return await getTotalMembers();
+        };
 
-        // Fetch ALL borrow requests - no status filter
-        const { count: borrowedCount, error: borrowedError } = await supabase
-          .from('borrow_requests')
-          .select('id', { count: 'exact', head: true });
+        // Fetch ALL borrow requests (no status filter - auto-approved)
+        const borrowedOperation = async () => {
+          const { count: borrowedCount, error: borrowedError } = await supabase
+            .from('borrow_requests')
+            .select('id', { count: 'exact', head: true });
 
-        if (itemsError) {
-          console.error('Error fetching items count:', itemsError);
-        }
+          if (borrowedError) throw borrowedError;
+          return borrowedCount || 0;
+        };
 
-        if (borrowedError) {
-          console.error('Error fetching borrowed count:', borrowedError);
-        }
+        // Execute all operations with retry logic
+        const [itemsCount, totalMembers, borrowedCount] = await Promise.all([
+          retryWithBackoff(itemsOperation),
+          retryWithBackoff(membersOperation),
+          retryWithBackoff(borrowedOperation)
+        ]);
 
         console.log(`Stats: ${itemsCount} items, ${totalMembers} members, ${borrowedCount} items borrowed`);
         
         setStats({
-          itemsCount: itemsCount?.toString() || '0',
+          itemsCount: itemsCount.toString(),
           membersCount: totalMembers.toString(),
-          borrowedCount: borrowedCount?.toString() || '0'
+          borrowedCount: borrowedCount.toString()
         });
       } catch (error) {
         console.error('Error fetching statistics:', error);
+        // Don't update stats on error to keep showing last known values
       }
     };
 
@@ -120,7 +132,7 @@ const Hero = () => {
           </p>
         </div>
         
-        {/* Statistics - Updated to show all borrow requests, not just approved ones */}
+        {/* Statistics - Shows all borrow requests as items are auto-approved */}
         <div className={cn(
           "grid grid-cols-1 md:grid-cols-3 gap-8 transition-all duration-1000 delay-300",
           isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"

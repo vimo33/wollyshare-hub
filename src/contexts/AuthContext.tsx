@@ -4,6 +4,7 @@ import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { Profile, AdminProfile } from '@/types/supabase';
 import { getProfile, getAdminProfile } from '@/services/profileService';
+import { checkSupabaseConnection, retryWithBackoff } from '@/services/connectionService';
 
 type AuthContextType = {
   user: User | null;
@@ -12,6 +13,7 @@ type AuthContextType = {
   isLoading: boolean;
   isAdmin: boolean;
   isMember: boolean;
+  connectionStatus: boolean;
 };
 
 const AuthContext = createContext<AuthContextType>({
@@ -21,6 +23,7 @@ const AuthContext = createContext<AuthContextType>({
   isLoading: true,
   isAdmin: false,
   isMember: false,
+  connectionStatus: false,
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -28,16 +31,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<Profile | null>(null);
   const [adminProfile, setAdminProfile] = useState<AdminProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [connectionStatus, setConnectionStatus] = useState(false);
 
   useEffect(() => {
-    // Get initial session
     const initAuth = async () => {
       try {
         setIsLoading(true);
         
+        // First, check if Supabase is accessible
+        console.log('Checking Supabase connection on auth init...');
+        const connectionCheck = await checkSupabaseConnection();
+        setConnectionStatus(connectionCheck.isConnected);
+        
+        if (!connectionCheck.isConnected) {
+          console.error('Supabase connection failed:', connectionCheck.error);
+          setIsLoading(false);
+          return;
+        }
+        
+        console.log('Supabase connection established, setting up auth listener...');
+        
         // Set up the auth state listener FIRST
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-          console.log('Auth state changed:', event);
+          console.log('Auth state changed:', event, 'Session exists:', !!session);
           
           // Update user state synchronously first
           setUser(session?.user || null);
@@ -46,14 +62,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (session?.user) {
             // Use setTimeout to avoid Supabase Auth deadlock
             setTimeout(async () => {
-              console.log("Fetching user profile data after auth change");
-              const userProfile = await getProfile();
-              setProfile(userProfile);
-              
-              const adminProfileData = await getAdminProfile();
-              setAdminProfile(adminProfileData);
-              
-              setIsLoading(false);
+              try {
+                console.log("Fetching user profile data after auth change");
+                
+                const userProfile = await retryWithBackoff(() => getProfile());
+                setProfile(userProfile);
+                
+                const adminProfileData = await retryWithBackoff(() => getAdminProfile());
+                setAdminProfile(adminProfileData);
+                
+                setIsLoading(false);
+              } catch (error) {
+                console.error('Error fetching profile data:', error);
+                setIsLoading(false);
+              }
             }, 0);
           } else {
             setProfile(null);
@@ -62,19 +84,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         });
         
-        // THEN check for existing session
-        const { data } = await supabase.auth.getSession();
-        setUser(data.session?.user || null);
+        // THEN check for existing session with retry logic
+        const sessionData = await retryWithBackoff(async () => {
+          const { data, error } = await supabase.auth.getSession();
+          if (error) throw error;
+          return data;
+        });
         
-        if (data.session?.user) {
-          const userProfile = await getProfile();
+        setUser(sessionData.session?.user || null);
+        
+        if (sessionData.session?.user) {
+          const userProfile = await retryWithBackoff(() => getProfile());
           setProfile(userProfile);
           
-          const adminProfileData = await getAdminProfile();
+          const adminProfileData = await retryWithBackoff(() => getAdminProfile());
           setAdminProfile(adminProfileData);
 
           // Set up realtime subscription for profile changes
-          // This ensures membership status updates are reflected immediately
           const profileChanges = supabase
             .channel('profile-changes')
             .on(
@@ -83,13 +109,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 event: 'UPDATE',
                 schema: 'public',
                 table: 'profiles',
-                filter: `id=eq.${data.session.user.id}`,
+                filter: `id=eq.${sessionData.session.user.id}`,
               },
               async (payload) => {
                 console.log('Profile updated in realtime:', payload);
-                // Refresh user profile data
-                const refreshedProfile = await getProfile();
-                setProfile(refreshedProfile);
+                try {
+                  const refreshedProfile = await retryWithBackoff(() => getProfile());
+                  setProfile(refreshedProfile);
+                } catch (error) {
+                  console.error('Error refreshing profile:', error);
+                }
               }
             )
             .subscribe();
@@ -97,21 +126,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Return cleanup function
           return () => {
             supabase.removeChannel(profileChanges);
+            subscription.unsubscribe();
           };
         }
         
         setIsLoading(false);
+        
+        return () => {
+          subscription.unsubscribe();
+        };
       } catch (error) {
         console.error("Error initializing auth:", error);
+        setConnectionStatus(false);
         setIsLoading(false);
       }
     };
     
     initAuth();
-    
-    return () => {
-      // Cleanup handled within initAuth
-    };
   }, []);
   
   const isAdmin = !!adminProfile;
@@ -124,7 +155,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       adminProfile, 
       isLoading, 
       isAdmin, 
-      isMember 
+      isMember,
+      connectionStatus
     }}>
       {children}
     </AuthContext.Provider>

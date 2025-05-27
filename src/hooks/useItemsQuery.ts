@@ -1,166 +1,163 @@
 
-import { useQuery, UseQueryResult } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Item } from "@/types/item";
-import { transformItemData } from "@/utils/itemTransformUtils";
+import { retryWithBackoff, checkSupabaseConnection } from "@/services/connectionService";
 
-// Define query keys for better cache management
-export const itemsQueryKeys = {
-  all: ['items'] as const,
-  byUser: (userId: string) => [...itemsQueryKeys.all, 'user', userId] as const,
-  locations: ['locations'] as const,
-  profiles: ['profiles'] as const,
-};
-
-// Valid category types for type-checking
-const validCategories = ["tools", "kitchen", "electronics", "sports", "books", "games", "diy-craft", "other"] as const;
-export type ValidCategory = typeof validCategories[number];
-
-// Helper to validate if a category is one of the allowed values
-export const isValidCategory = (category: string): category is ValidCategory => {
-  return validCategories.includes(category as ValidCategory);
-};
-
-export interface UseItemsQueryOptions {
+interface ItemsQueryOptions {
   userId?: string;
-  enabled?: boolean;
-  queryKey?: any[];
 }
 
-export interface LocationInfo {
-  name: string;
-  address: string;
+export interface ItemsQueryResult {
+  data: Item[];
+  isLoading: boolean;
+  error: Error | null;
+  refetch: () => void;
+  locationData: Map<string, { name: string; address: string; }>;
 }
 
-export type LocationMap = Map<string, LocationInfo>;
+const fetchItems = async (userId?: string): Promise<Item[]> => {
+  console.log("useItemsQuery: Fetching all items");
+  
+  // Check connection health first
+  const connectionStatus = await checkSupabaseConnection();
+  if (!connectionStatus.isConnected) {
+    throw new Error(`Database connection failed: ${connectionStatus.error}`);
+  }
 
-export interface ItemsQueryResult extends Omit<UseQueryResult<Item[], Error>, 'data'> {
-  data?: Item[];
-  locationData: LocationMap;
-  locationError?: Error;
-}
+  const itemsOperation = async () => {
+    let query = supabase
+      .from("items")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-export const useLocationsQuery = () => {
-  return useQuery({
-    queryKey: itemsQueryKeys.locations,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('community_locations')
-        .select('*');
-        
-      if (error) {
-        console.error('Error fetching locations:', error);
-        throw error;
-      }
-      
-      const locMap = new Map<string, LocationInfo>();
-      data?.forEach(location => {
-        locMap.set(location.id, {
-          name: location.name,
-          address: location.address
-        });
-      });
-      
-      return locMap;
-    },
-    staleTime: 1000 * 60 * 5, // Keep 5 minutes cache for subsequent loads
+    if (userId) {
+      query = query.eq("user_id", userId);
+    }
+
+    const { data: items, error: itemsError } = await query;
+
+    if (itemsError) {
+      console.error("Error fetching items:", itemsError);
+      throw itemsError;
+    }
+
+    return items || [];
+  };
+
+  const profilesOperation = async () => {
+    const { data: profiles, error: profilesError } = await supabase
+      .from("profiles")
+      .select("id, username, full_name, location");
+
+    if (profilesError) {
+      console.error("Error fetching user profiles:", profilesError);
+      throw profilesError;
+    }
+
+    return profiles || [];
+  };
+
+  const locationsOperation = async () => {
+    const { data: locations, error: locationsError } = await supabase
+      .from("community_locations")
+      .select("*");
+
+    if (locationsError) {
+      console.error("Error fetching locations:", locationsError);
+      throw locationsError;
+    }
+
+    return locations || [];
+  };
+
+  // Execute all operations with retry logic
+  const [items, profiles, locations] = await Promise.all([
+    retryWithBackoff(itemsOperation),
+    retryWithBackoff(profilesOperation),
+    retryWithBackoff(locationsOperation)
+  ]);
+
+  console.log(`Fetched ${items.length} items, ${profiles.length} profiles, ${locations.length} locations`);
+
+  // Create lookup maps
+  const profilesMap = new Map();
+  profiles.forEach(profile => {
+    profilesMap.set(profile.id, profile);
   });
+
+  const locationsMap = new Map();
+  locations.forEach(location => {
+    locationsMap.set(location.id, location);
+  });
+
+  // Transform items with owner information
+  const transformedItems: Item[] = items.map(item => {
+    const ownerProfile = profilesMap.get(item.user_id);
+    const locationData = locationsMap.get(ownerProfile?.location);
+
+    return {
+      ...item,
+      ownerName: ownerProfile ? (ownerProfile.username || ownerProfile.full_name || "Unknown") : "Unknown",
+      locationAddress: locationData ? `${locationData.name}, ${locationData.address}` : undefined,
+    };
+  });
+
+  console.log(`Transformed ${transformedItems.length} items with owner data`);
+  return transformedItems;
 };
 
-// New hook to fetch all user profiles
-export const useProfilesQuery = () => {
-  return useQuery({
-    queryKey: itemsQueryKeys.profiles,
-    queryFn: async () => {
-      console.log('Fetching all user profiles');
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, username, full_name, location');
-        
-      if (error) {
-        console.error('Error fetching user profiles:', error);
-        throw error;
-      }
-      
-      // Create a map of user IDs to profile information
-      const userMap = new Map();
-      data?.forEach(profile => {
-        userMap.set(profile.id, {
-          name: profile.username || profile.full_name || 'Unknown User',
-          location: profile.location || null
-        });
-      });
-      
-      console.log(`Fetched ${userMap.size} user profiles`);
-      return userMap;
-    },
-    staleTime: 1000 * 60 * 5, // Keep 5 minutes cache for subsequent loads
+const fetchLocationData = async (): Promise<Map<string, { name: string; address: string; }>> => {
+  const locationOperation = async () => {
+    const { data: locations, error } = await supabase
+      .from("community_locations")
+      .select("*");
+
+    if (error) {
+      console.error("Error fetching locations:", error);
+      throw error;
+    }
+
+    return locations || [];
+  };
+
+  const locations = await retryWithBackoff(locationOperation);
+  
+  const locationData = new Map();
+  locations.forEach(location => {
+    locationData.set(location.id, {
+      name: location.name,
+      address: location.address
+    });
   });
+
+  return locationData;
 };
 
-export const useItemsQuery = ({ userId, enabled = true, queryKey }: UseItemsQueryOptions = {}): ItemsQueryResult => {
-  // Use the locations query
-  const { 
-    data: locationData = new Map(), 
-    isLoading: isLocationLoading, 
-    error: locationError 
-  } = useLocationsQuery();
-
-  // Use the profiles query to get all user profiles
-  const {
-    data: userMap = new Map(),
-    isLoading: isProfilesLoading,
-    error: profilesError
-  } = useProfilesQuery();
-
-  // Use React Query to fetch items
+export const useItemsQuery = ({ userId }: ItemsQueryOptions = {}) => {
   const itemsQuery = useQuery({
-    queryKey: queryKey || (userId ? itemsQueryKeys.byUser(userId) : itemsQueryKeys.all),
-    queryFn: async () => {
-      console.log(`useItemsQuery: ${userId ? `Fetching items for user ${userId}` : 'Fetching all items'}`);
-      
-      let queryBuilder = supabase.from('items').select('*');
-      
-      // Only filter by userId if provided
-      if (userId) {
-        queryBuilder = queryBuilder.eq('user_id', userId);
-      }
-      
-      const { data: itemsData, error: itemsError } = await queryBuilder;
+    queryKey: ["items", userId],
+    queryFn: () => fetchItems(userId),
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+  });
 
-      if (itemsError) {
-        console.error('Error fetching items:', itemsError);
-        throw itemsError;
-      }
-
-      if (itemsData.length === 0) {
-        console.log('No items found');
-        return [];
-      }
-
-      console.log(`Found ${itemsData.length} items`);
-
-      // Combine items with owner names and locations directly from userMap
-      return itemsData.map(item => {
-        const userInfo = userMap.get(item.user_id) || { name: 'Unknown User', location: null };
-        return transformItemData(item, userInfo, locationData);
-      });
-    },
-    // Ensure data fetching is enabled when dependencies are ready
-    enabled: enabled && !isLocationLoading && !isProfilesLoading,
-    // Lower staleTime to ensure fresh data on initial mount
-    staleTime: 1000 * 60 * 2, // 2 minutes
-    // Set retry on error
-    retry: 2,
-    // Set refetch on window focus
-    refetchOnWindowFocus: true
+  const locationQuery = useQuery({
+    queryKey: ["locations"],
+    queryFn: fetchLocationData,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    staleTime: 1000 * 60 * 10, // 10 minutes
   });
 
   return {
-    ...itemsQuery,
-    isLoading: itemsQuery.isLoading || isLocationLoading || isProfilesLoading,
-    locationData,
-    locationError: locationError || profilesError
+    data: itemsQuery.data || [],
+    isLoading: itemsQuery.isLoading || locationQuery.isLoading,
+    error: itemsQuery.error || locationQuery.error,
+    refetch: itemsQuery.refetch,
+    locationData: locationQuery.data || new Map(),
   };
 };

@@ -245,8 +245,8 @@ export type Database = {
         Returns: boolean
       }
       delete_member_complete: {
-        Args: { member_id: string }
-        Returns: boolean
+        Args: Record<PropertyKey, never> | { member_id: string }
+        Returns: undefined
       }
       get_members: {
         Args: Record<PropertyKey, never>

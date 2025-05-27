@@ -6,6 +6,13 @@ import type { Database } from './types';
 const SUPABASE_URL = "https://hvwftdcqgaqurygqnfyv.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh2d2Z0ZGNxZ2FxdXJ5Z3FuZnl2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI1NzM2MjksImV4cCI6MjA1ODE0OTYyOX0.vBqNFFpuGxe6OKzsB6X8VT42VXEbTSOt9F2tl75w1wM";
 
+// Validate configuration
+if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+  throw new Error('Missing Supabase configuration. Please check your environment variables.');
+}
+
+console.log('Initializing Supabase client with URL:', SUPABASE_URL);
+
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
@@ -17,7 +24,39 @@ export const supabase = createClient<Database>(
       storage: localStorage,
       autoRefreshToken: true,
       persistSession: true,
-      detectSessionInUrl: true
+      detectSessionInUrl: true,
+      flowType: 'pkce'
+    },
+    global: {
+      headers: {
+        'X-Client-Info': 'supabase-js-web'
+      }
+    },
+    db: {
+      schema: 'public'
+    },
+    realtime: {
+      params: {
+        eventsPerSecond: 2
+      }
     }
   }
 );
+
+// Test the connection and log the result
+const testConnection = async () => {
+  try {
+    console.log('Testing Supabase connection...');
+    const { data, error } = await supabase.from('profiles').select('count').limit(1).single();
+    if (error) {
+      console.error('Supabase connection test failed:', error);
+    } else {
+      console.log('Supabase connection test successful');
+    }
+  } catch (err) {
+    console.error('Supabase connection test error:', err);
+  }
+};
+
+// Test connection on initialization
+testConnection();
